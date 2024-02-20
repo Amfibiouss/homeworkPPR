@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <header class="color1" th:fragment="public_header">
+        <div>
+            <div id="logo">
+                <p style="font-family: fantasy; font-size: 55px;
+                        margin-block-start: 0; margin-block-end: 0;">
+                    F<sup>F</sup>F<sub>F</sub><sup>F</sup>OR<sub>U</sub>M
+                </p>
+            </div>
+            <div id="menu" class="color2">
+                <nav id="menu_nav">
+                    <li>
+                        <a th:href="@{/public/index}">Форум</a>
+                    </li>
+                    <li>
+                        <a th:href="@{/public/rules}">Правила</a>
+                    </li>
+                    <li>
+                        <a th:href="@{/login}"> Вход или регистрация </a>
+                    </li>
+                </nav>
+
+                <div id="name_and_ava">
+                    <img src="/public_static/who_i_am.jpg" width="50" height="50"
+                         id="your_ava" alt="изображение знак вопроса">
+                    <p th:text="${@securityService.getUsername()}"></p>
+                </div>
+
+                <button id="switch_theme">
+                </button>
+            </div>
+        </div>
+    </header>
+
+
+
+    <header class="color1" th:fragment="user_header">
+        <div>
+            <div id="logo">
+                <p style="font-family: fantasy; font-size: 55px;
+                                        margin-block-start: 0; margin-block-end: 0;">
+                    F<sup>F</sup>F<sub>F</sub><sup>F</sup>OR<sub>U</sub>M
+                </p>
+            </div>
+
+
+            <div id="menu" class="color2">
+                <nav id="menu_nav">
+                    <li>
+                        <a th:href="@{/public/index}">Форум</a>
+                    </li>
+                    <li>
+                        <a th:href="@{/public/rules}">Правила</a>
+                    </li>
+                    <li>
+                        <a th:href="@{/private/profile}"> Профиль </a>
+                    </li>
+                    <li>
+                        <a th:href="@{/logout}"> Выйти </a>
+                    </li>
+                </nav>
+                <div id="name_and_ava">
+                    <img th:src="'/public/photo/' + ${@securityService.getUserId()}" width="50" height="50"
+                         id="your_ava" alt="ваша аватарка">
+                    <p th:text="${@securityService.getUsername()}"></p>
+                </div>
+                <button id="switch_theme">
+                </button>
+            </div>
+        </div>
+    </header>
+
+
+
+    <header class="color1" th:fragment="admin_header">
+        <div>
+            <div id="logo">
+                <p style="font-family: fantasy; font-size: 55px;
+                                        margin-block-start: 0; margin-block-end: 0;">
+                    F<sup>F</sup>F<sub>F</sub><sup>F</sup>OR<sub>U</sub>M
+                </p>
+            </div>
+
+
+            <div id="menu" class="color2">
+                <nav id="menu_nav">
+                    <li>
+                        <a th:href="@{/public/index}">Форум</a>
+                    </li>
+                    <li>
+                        <a th:href="@{/public/rules}">Правила</a>
+                    </li>
+                    <li>
+                        <a th:href="@{/private/profile}"> Профиль </a>
+                    </li>
+                    <li>
+                        <a th:href="@{/logout}"> Выйти </a>
+                    </li>
+                </nav>
+                <div id="name_and_ava">
+                    <img th:src="'/public/photo/' + ${@securityService.getUserId()}" width="50" height="50"
+                         id="your_ava" alt="ваша аватарка">
+                    <p th:text="${@securityService.getUsername()}"></p>
+                </div>
+                <button id="switch_theme">
+                </button>
+            </div>
+        </div>
+    </header>
+</body>
+</html>

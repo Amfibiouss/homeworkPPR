@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import static jakarta.persistence.FetchType.LAZY;
 
 @Entity
-public class Messages {
+public class Message {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
@@ -38,6 +38,6 @@ public class Messages {
         this.text = text;
     }
 
-    public Messages() {
+    public Message() {
     }
 }

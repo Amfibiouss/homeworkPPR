@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>форум</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="keywords" content="форум правила">
+    <link rel=stylesheet href="/public_static/main.css" type="text/css">
+    <link id="theme" rel=stylesheet th:href="|/public_static/${@themeService.getTheme()}_theme.css|" type="text/css">
+    <script src="/public_static/theme.js"></script>
+</head>
+<body>
+<header th:replace="public/header :: |${@securityService.getAccess()}_header|"></header>
+<main>
+    <h3 id="rules">Правила форума</h3>
+    <ol type="1">
+        <li> <u>Запрещены</u> реклама и спам (бан на 3 дня). </li>
+        <li> <u>Запрещено</u> упоминание политики или других слов, которые могут восприниматься как провокация (бан на 7 дней).</li>
+        <li> <u>Запрещены</u> любые оскорбления в чью-либо сторону. Исключение - оскорбление администрации ресурса. (бан на 3 дней).</li>
+        <li> <u>Запрещена</u> ненормативная лексика (бан на 1 день). </li>
+        <li> <u>Запрещен</u> Запрещенный / непотребный контент (бан на месяц).
+            К такому контенту относятся:
+            <ul>
+                <li>
+                    Способы самоубийства, побуждение к самоубийству, обсуждение суицида.
+                </li>
+                <li>
+                    Разжигание вражды: призыв к насилию или травле человека либо группы лиц.
+                </li>
+                <li>
+                    Расчленёнка, насилие и жестокость в любом их проявлении.
+                </li>
+                <li>
+                    Сексуальный контент.
+                </li>
+                <li>
+                    Запрещены любые виды пропаганды.
+                </li>
+                <li>
+                    Контент, внесенный в федеральные реестры запрещенных и экстремистских материалов.
+                </li>
+            </ul>
+        </li>
+        <li style="font-size: 5px;">
+            Последнее, но самое важное правило: Не оскорблять администрацию (перманентное превращение в кошкогорничную).
+        </li>
+    </ol>
+    <p>
+        При рецедиве срок удваивается.
+        Например, если кто-то 45 раз нарушил правило 1, то наказание составит 3*2=6 дней.
+    </p>
+</main>
+<footer th:replace="public/footer :: footer"></footer>
+</body>

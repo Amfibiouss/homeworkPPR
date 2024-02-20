@@ -1,0 +1,80 @@
+body {
+    margin-left:0;
+    margin-right:0;
+    font-family: monospace;
+    font-size: 16px;
+}
+
+header {
+    position:fixed;
+    top:0;
+    right:0;
+    left:0;
+    height:70px;
+    border-bottom:solid;
+    border-bottom-width:10px;
+    padding-left: 50px;
+    z-index:10;
+}
+
+main {
+    margin-top:120px;
+    margin-left:200px;
+    margin-right:200px;
+}
+
+#menu {
+    float:right;
+    list-style: none;
+    border-radius: 9px;
+    height: 80px;
+    padding-left: 20px;
+    font-size: 20px;
+}
+
+#menu > nav > li {
+    display: inline-block;
+    height: 10px;
+    padding-right: 10px;
+    padding-top: 33px;
+    padding-bottom: 37px;
+    border-right: solid;
+    border-right-width: 2px;
+}
+
+#menu > nav {
+    float:left;
+    margin-right: 20px;
+}
+#name_and_ava {
+    float:left;
+    margin-right: 20px;
+}
+#switch_theme {
+    float:left;
+    width: 80px;
+    height: 80px;
+    border: 0px;
+    background-size: 80px, 80px;
+}
+
+#name_and_ava > p{
+    font-size: 15px;
+    margin: 0px;
+    padding: 0px;
+    overflow:hidden;
+}
+
+div#logo {
+    float:left;
+}
+
+footer {
+    padding: 8px;
+    border-top:solid;
+    border-top-width:10px;
+}
+
+#your_ava {
+    border-radius: 50%;
+}

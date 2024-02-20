@@ -1,12 +1,11 @@
 package com.example.laba;
 
-import com.example.laba.entities.Messages;
+import com.example.laba.entities.Message;
 import com.example.laba.entities.Users;
 import com.example.laba.repositories.MessagesRepository;
 import com.example.laba.repositories.UsersRepository;
-import com.example.laba.structures.Message;
+import com.example.laba.structures.MessageForm;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -17,8 +16,6 @@ import org.springframework.core.io.Resource;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
 
 @SpringBootApplication
 public class LabaApplication {
@@ -56,28 +53,36 @@ public class LabaApplication {
 
 			user1.setLogin("Холмс");
 			user1.setPhoto(photo1);
+			user1.setPassword("1");
+			user1.setAdmin(false);
 			usersRepository.save(user1);
 
 			user2.setLogin("Уотсон");
 			user2.setPhoto(photo2);
+			user2.setPassword("2");
+			user2.setAdmin(false);
 			usersRepository.save(user2);
 
 			user3.setLogin("Стэмфорд");
 			user3.setPhoto(photo3);
+			user3.setPassword("3");
+			user3.setAdmin(false);
 			usersRepository.save(user3);
 
 			user4.setLogin("Админ");
 			user4.setPhoto(photo4);
+			user4.setPassword("4");
+			user4.setAdmin(true);
 			usersRepository.save(user4);
 
 			Resource chat = new ClassPathResource("static/chat.json");
 			ObjectMapper objectMapper = new ObjectMapper();
-			Message[] messages = objectMapper.readValue(chat.getFile(), Message[].class);
+			MessageForm[] messageForms = objectMapper.readValue(chat.getFile(), MessageForm[].class);
 
-			for (Message message : messages) {
-				Messages mes = new Messages();
-				mes.setText(message.text);
-				mes.setUser(usersRepository.findByLogin(message.login).getFirst());
+			for (MessageForm messageForm : messageForms) {
+				Message mes = new Message();
+				mes.setText(messageForm.text);
+				mes.setUser(usersRepository.findByLogin(messageForm.login).getFirst());
 				messagesRepository.save(mes);
 			}
 

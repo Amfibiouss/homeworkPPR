@@ -1,0 +1,31 @@
+body {
+    background-color:#e6e6e6;
+    color:black;
+}
+header {
+    border-bottom-color:#cecece;
+}
+footer {
+    border-top-color:#cecece;
+}
+#menu > nav > li {
+    border-right-color:#e6e6e6;
+}
+main a, footer a {
+    color: #0000cc;
+}
+main a:hover, footer a:hover {
+    color: #8800cc;
+}
+header a{
+    color:black;
+}
+#switch_theme{
+    background-image:url("/public_static/morning.jpg");
+}
+.color1 {
+    background-color: #e6e6e6;
+}
+.color2 {
+    background-color: #cecece;
+}

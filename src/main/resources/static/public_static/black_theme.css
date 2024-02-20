@@ -1,0 +1,31 @@
+body {
+    background-color:#4b4b4b;
+    color:white;
+}
+header {
+    border-bottom-color:#777777;
+}
+footer {
+    border-top-color:#777777;
+}
+#menu > nav > li {
+    border-right-color:#4b4b4b;
+}
+main a, footer a {
+    color: #6666ff;
+}
+main a:hover, footer a:hover {
+    color: #c284e0;
+}
+header a{
+    color:white;
+}
+#switch_theme{
+    background-image:url("/public_static/night.jpg");
+}
+.color1 {
+    background-color: #4b4b4b;
+}
+.color2 {
+    background-color: #777777;
+}

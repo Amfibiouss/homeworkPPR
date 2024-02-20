@@ -13,6 +13,23 @@ public class Users {
     private String login;
     @Column(length=LONG32, columnDefinition="BLOB")
     private byte[] photo;
+    private String password;
+    private Boolean Admin;
+
+    public Boolean  getAdmin() {
+        return Admin;
+    }
+    public void setAdmin(Boolean admin) {
+        Admin = admin;
+    }
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     public Long getId() {
         return id;
     }

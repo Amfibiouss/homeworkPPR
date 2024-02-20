@@ -1,72 +1,63 @@
-package com.example.laba;
+package com.example.laba.controllers;
 
-import com.example.laba.entities.Messages;
+import com.example.laba.entities.Message;
 import com.example.laba.entities.Users;
 import com.example.laba.repositories.MessagesRepository;
 import com.example.laba.repositories.UsersRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
+import com.example.laba.services.SecurityService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
-import com.example.laba.structures.Message;
+import com.example.laba.structures.MessageForm;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.IOException;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 @Controller
 public class MainPageController {
-
-    @Value("classpath:static/chat.json")
-    Resource chat;
-
     @Autowired
     MessagesRepository messagesRepository;
-
     @Autowired
     UsersRepository usersRepository;
+    @Autowired
+    SecurityService securityService;
 
-    @GetMapping("/index")
+
+    @RequestMapping(value = {"/", "/public/index"}, method = { RequestMethod.GET, RequestMethod.POST })
     public String index(Model model) {
 
-        List<Messages> messages = messagesRepository.findAll();
-        List<Message> result = new ArrayList<>();
+        List<Message> messages = messagesRepository.findAll();
+        List<MessageForm> result = new ArrayList<>();
 
-        for (Messages mes : messages) {
+        for (Message mes : messages) {
             Users user = mes.getUser();
-            result.add(new Message(user.getId(), user.getLogin(), mes.getText()));
+            result.add(new MessageForm(user.getId(), user.getLogin(), mes.getText()));
         }
 
         model.addAttribute("messages", result);
 
-        return "main_page";
+        return "public/main_page";
     }
 
     @PostMapping("/send")
     public void send(@RequestParam String text, HttpServletResponse response) {
-        Messages message = new Messages();
-        message.setUser(usersRepository.getReferenceById(4L));
+        Message message = new Message();
+        message.setUser(usersRepository.getReferenceById(securityService.getUserId()));
         message.setText(text);
         messagesRepository.save(message);
 
-        response.setHeader("Location", "/index");
+        response.setHeader("Location", "/public/index");
         response.setStatus(302);
     }
 
-    @GetMapping("/photo/{id}")
+    @GetMapping("/public/photo/{id}")
     public ResponseEntity<byte[]> photo(@PathVariable long id) throws IOException {
 
         byte[] photo = usersRepository.getReferenceById(id).getPhoto();

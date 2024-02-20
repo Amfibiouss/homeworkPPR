@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>форум</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="keywords" content="форум правила">
+    <link rel=stylesheet href="/public_static/main.css" type="text/css">
+    <link id="theme" rel=stylesheet th:href="|/public_static/${@themeService.getTheme()}_theme.css|" type="text/css">
+    <script src="/public_static/theme.js"></script>
+
+    <style>
+        form {
+            margin: 30px;
+            padding: 30px;
+            border-radius:20px;
+            display: inline-block;
+        }
+        main {
+            text-align: center;
+        }
+        input {
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header th:replace="public/header :: |${@securityService.getAccess()}_header|"></header>
+    <main>
+        <form class="color2" th:action="@{/login}" method="post">
+            <div>
+                <input type="text" name="username" placeholder="логин" required/>
+            </div>
+            <div>
+                <input type="text" name="password" placeholder="пароль" required/>
+            </div>
+            <input type="submit" value="Войти"/>
+        </form>
+
+        <p><a th:href="@{/registration}">Зарегестрироватся</a></p>
+        <p><a th:href="@{/dont_remember_password}">Не помню пароль</a></p>
+    </main>
+    <footer th:replace="public/footer :: footer"></footer>
+</body>
+</html>
