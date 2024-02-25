@@ -5,22 +5,39 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="keywords" content="форум правила">
-    <link rel=stylesheet href="/public_static/main.css" type="text/css">
-    <link id="theme" rel=stylesheet th:href="|/public_static/${@themeService.getTheme()}_theme.css|" type="text/css">
-    <script src="/public_static/theme.js"></script>
+    <link rel=stylesheet type="text/css" href="/public_static/css/bootstrap.css">
+    <link rel=stylesheet type="text/css" href="/public_static/white_theme.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/public_static/js/bootstrap.bundle.js"></script>
+    <style>
+        ol {
+            list-style-type: none;
+            counter-reset:  item;
+        }
+        #rules > li:before {
+            content: counter(item) ') ';
+            counter-increment: item;
+            color: #aaaaaa;
+        }
+        #rule5 > li:before {
+            content: '5.' counter(item) ') ';
+            counter-increment: item;
+            color: #aaaaaa;
+        }
+    </style>
 </head>
 <body>
-<header th:replace="public/header :: |${@securityService.getAccess()}_header|"></header>
-<main>
-    <h3 id="rules">Правила форума</h3>
-    <ol type="1">
+<header th:replace="~{public/header :: |${@securityService.getAccess()}_header|}"></header>
+<main class="container">
+    <h2 style="text-align:center">Правила форума</h2>
+    <ol id="rules">
         <li> <u>Запрещены</u> реклама и спам (бан на 3 дня). </li>
         <li> <u>Запрещено</u> упоминание политики или других слов, которые могут восприниматься как провокация (бан на 7 дней).</li>
         <li> <u>Запрещены</u> любые оскорбления в чью-либо сторону. Исключение - оскорбление администрации ресурса. (бан на 3 дней).</li>
         <li> <u>Запрещена</u> ненормативная лексика (бан на 1 день). </li>
         <li> <u>Запрещен</u> Запрещенный / непотребный контент (бан на месяц).
             К такому контенту относятся:
-            <ul>
+            <ol id="rule5">
                 <li>
                     Способы самоубийства, побуждение к самоубийству, обсуждение суицида.
                 </li>
@@ -39,7 +56,7 @@
                 <li>
                     Контент, внесенный в федеральные реестры запрещенных и экстремистских материалов.
                 </li>
-            </ul>
+            </ol>
         </li>
         <li style="font-size: 5px;">
             Последнее, но самое важное правило: Не оскорблять администрацию (перманентное превращение в кошкогорничную).
@@ -50,5 +67,5 @@
         Например, если кто-то 45 раз нарушил правило 1, то наказание составит 3*2=6 дней.
     </p>
 </main>
-<footer th:replace="public/footer :: footer"></footer>
+<footer th:replace="~{public/footer :: footer}"></footer>
 </body>

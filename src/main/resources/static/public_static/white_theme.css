@@ -1,31 +1,15 @@
-body {
-    background-color:#e6e6e6;
-    color:black;
+.bg-color1 {
+    background-color: #eeeeee;
 }
-header {
-    border-bottom-color:#cecece;
+.bg-color2 {
+    background-color: #dddddd;
 }
-footer {
-    border-top-color:#cecece;
+.bg-color3 {
+    background-color: #cccccc;
 }
-#menu > nav > li {
-    border-right-color:#e6e6e6;
+.depends-of-parity:nth-child(even) {
+    background-color: #eeeeee;
 }
-main a, footer a {
-    color: #0000cc;
-}
-main a:hover, footer a:hover {
-    color: #8800cc;
-}
-header a{
-    color:black;
-}
-#switch_theme{
-    background-image:url("/public_static/morning.jpg");
-}
-.color1 {
-    background-color: #e6e6e6;
-}
-.color2 {
-    background-color: #cecece;
+.depends-of-parity:nth-child(odd) {
+    background-color: #dddddd;
 }

@@ -1,6 +1,6 @@
 package com.example.laba.services;
 
-import com.example.laba.entities.Users;
+import com.example.laba.entities.FUser;
 import com.example.laba.repositories.UsersRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -41,7 +41,7 @@ public class SecurityService {
                 (UsernamePasswordAuthenticationToken) context.getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-        List<Users> res = usersRepository.findByLogin(userDetails.getUsername());
+        List<FUser> res = usersRepository.findByLogin(userDetails.getUsername());
         if (res.isEmpty())
             return 0;
         return res.getFirst().getId();

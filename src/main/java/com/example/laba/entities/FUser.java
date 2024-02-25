@@ -2,10 +2,12 @@ package com.example.laba.entities;
 
 import jakarta.persistence.*;
 
+import java.util.Objects;
+
 import static org.hibernate.Length.LONG32;
 
 @Entity
-public class Users {
+public class FUser {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -15,6 +17,18 @@ public class Users {
     private byte[] photo;
     private String password;
     private Boolean Admin;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof FUser fUser)) return false;
+        return Objects.equals(id, fUser.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 
     public Boolean  getAdmin() {
         return Admin;
@@ -54,6 +68,6 @@ public class Users {
         this.photo = photo;
     }
 
-    public Users() {
+    public FUser() {
     }
 }

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>форум</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="keywords" content="форум разделы">
+    <link rel=stylesheet type="text/css" href="/public_static/css/bootstrap.css">
+    <link rel=stylesheet type="text/css" href="/public_static/white_theme.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/public_static/js/bootstrap.bundle.js"></script>
+    <style>
+        #sections li {
+            margin-bottom: 10px;
+            border-radius:10px;
+            padding: 10px;
+        }
+        #sections {
+            list-style: none;
+        }
+    </style>
+</head>
+<body>
+<header th:replace="~{public/header :: |${@securityService.getAccess()}_header|}"></header>
+<main class="container">
+    <div class="row">
+        <div class="dropdown col-12 gy-2">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="addSectionButton"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="/public_static/plus.svg" width="30" height="30">
+            </button>
+            <div class="dropdown-menu p-2" aria-labelledby="addSectionButton">
+                <form th:action="@{/user/add_section}" method="post">
+                    <label for="name" class="form-label">тема:</label>
+                    <input id="name" class="form-control" type="text" name="section_name">
+                    <label for="description" class="form-label">описание:</label>
+                    <textarea id=description class="form-control" name="section_description"></textarea>
+                    <input class="mt-2" type="submit">
+                </form>
+            </div>
+        </div>
+        <nav id="sections" class="col-12 gy-2 row">
+            <li class="col-12 depends-of-parity" th:each="section : ${sections}">
+                <p>
+                    <a class = "text-primary" style="text-decoration:none;"
+                       th:text="${section.name}" th:href="@{'/public/index/' + ${section.id}}"></a>
+                </p>
+                <p class="text-secondary" style="font-size:0.75rem;" th:text="${section.description}"></p>
+                <p class="text-secondary" style="font-size:0.75rem;" th:text="'создатель:' + ${section.creator}"></p>
+            </li>
+        </nav>
+    </div>
+</main>
+<footer th:replace="~{public/footer :: footer}"></footer>
+</body>
+</html>

@@ -1,6 +1,6 @@
 package com.example.laba.services;
 
-import com.example.laba.entities.Users;
+import com.example.laba.entities.FUser;
 import com.example.laba.repositories.UsersRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.User;
@@ -12,20 +12,20 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-public class CustomUserDetailService implements UserDetailsService {
+public class CustomUserDetailsService implements UserDetailsService {
 
     @Autowired
     UsersRepository usersRepository;
 
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        List<Users> users = usersRepository.findByLogin(username);
+        List<FUser> users = usersRepository.findByLogin(username);
 
         if (users.isEmpty()) {
             throw new UsernameNotFoundException("username " + username + " not found");
         }
 
-        Users user = users.getFirst();
+        FUser user = users.getFirst();
 
         if (user.getAdmin()) {
             return User.withDefaultPasswordEncoder()

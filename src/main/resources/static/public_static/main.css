@@ -61,6 +61,8 @@ main {
 #name_and_ava > p{
     font-size: 15px;
     margin: 0px;
+
+
     padding: 0px;
     overflow:hidden;
 }
@@ -71,10 +73,14 @@ div#logo {
 
 footer {
     padding: 8px;
-    border-top:solid;
-    border-top-width:10px;
+    border:solid;
+    border-width:10px;
 }
 
 #your_ava {
     border-radius: 50%;
+}
+
+nav a {
+    text-decoration-line: none;
 }

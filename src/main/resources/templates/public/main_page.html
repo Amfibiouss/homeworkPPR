@@ -1,44 +1,55 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" >
 <head>
-    <title>форум</title>
+    <link rel=stylesheet type="text/css" href="/public_static/css/bootstrap.css">
+    <link rel=stylesheet type="text/css" href="/public_static/white_theme.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/public_static/js/bootstrap.bundle.js"></script>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta name="keywords" content="форум практическая работа">
-    <link rel=stylesheet href="/public_static/main.css" type="text/css">
-    <link id="theme" rel=stylesheet th:href="|/public_static/${@themeService.getTheme()}_theme.css|" type="text/css">
-    <script src="/public_static/theme.js"></script>
-    <style>
-        article {
-            position: relative;
-            margin-top: 35px;
-        }
-
-        article img {
-            position: absolute;
-            left: -80px;
-            border-radius: 50%;
-        }
-    </style>
+    <title>Title</title>
 </head>
 <body>
-    <header th:replace="public/header :: |${@securityService.getAccess()}_header|"></header>
-    <main>
-        <h3 id="forum">Форум</h3>
-        <article th:each="mes, iter : ${messages}">
-            <img class=.ava th:src="'/public/photo/' + ${mes.id}" width="60" height="60"
-                 th:alt="'аватарка пользователя' + ${mes.login}">
-            <p><b th:text="${mes.login}"></b></p>
-            <p th:text="${mes.text}"></p>
-        </article>
+<header th:replace="~{public/header :: |${@securityService.getAccess()}_header|}"></header>
+<main class="container">
+    <style>
+        article img {
+            border-radius: 50%;
+        }
+        .username {
+            text-decoration:none;
+        }
+    </style>
+    <script>
+        const xhr = new XMLHttpRequest();
 
-        <form th:action="@{/send}" method="post">
-            <label>Введите текст:
-                <input type="text" name="text"/>
-            </label>
-            <input type="submit" value="Отправить"/>
+    </script>
+    <div class="row">
+        <article class="col-12 py-2 row" th:each="mes, iter : ${messages}">
+            <a class="col-auto" href="#">
+                <img th:src="'/public/photo/' + ${mes.id}" width="60" height="60"
+                     th:alt="'аватарка пользователя' + ${mes.login}">
+            </a>
+            <div class="col-sm col-xs-12">
+                <div>
+                    <b><a class="username" th:text="${mes.login}" href="#"></a></b>
+                </div>
+                <div th:text="${mes.text}"></div>
+            </div>
+        </article>
+        <form id="send_message_form" class="col-12 py-2 row"
+              th:action="@{'/send/' + ${section}}" method="post"
+              style="position:sticky;bottom:0;">
+            <div class="col-11">
+                <textarea class="form-control" rows="3" name="text"></textarea>
+            </div>
+            <div class="col-1 px-0">
+                <button class="px-0" type="submit">
+                    <img src="/public_static/send.svg" width="30" height="30">
+                </button>
+            </div>
         </form>
-    </main>
-    <footer th:replace="public/footer :: footer"></footer>
+    </div>
+</main>
+<footer th:replace="~{public/footer :: footer}"></footer>
 </body>
-</html>
+</html>   
