@@ -28,7 +28,8 @@
                     <a class="nav-link" th:href="@{/public/support}">Поддержка</a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                       data-bs-toggle="dropdown" aria-expanded="false" style="padding-left:45%;">
                         <img src="/public_static/who_i_am.jpg" width="50px" height="50px"
                              alt="ваша аватарка" style="margin-left=45%; border-radius:50%;">
                     </a>
@@ -70,12 +71,13 @@
                     <a class="nav-link" th:href="@{/public/support}">Поддержка</a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                       data-bs-toggle="dropdown" aria-expanded="false" style="padding-left:45%;">
                         <img th:src="'/public/photo/' + ${@securityService.getUserId()}" width="50px" height="50px"
                              alt="ваша аватарка" style="margin-left=45%; border-radius:50%;">
                     </a>
                     <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-                        <a class="dropdown-item" th:href="@{/profile}">профиль</a>
+                        <a class="dropdown-item" th:href="@{'/public/profile/'+${@securityService.getUserId()}}">профиль</a>
                         <a class="dropdown-item" th:href="@{/logout}">выйти</a>
                     </div>
                 </li>
@@ -90,7 +92,7 @@
 
 <header th:fragment="admin_header" class="container-fluid" style="position:sticky;top:0;z-index:1001;">
     <nav class="navbar navbar-expand-sm navbar-light bg-light">
-        <a class="navbar-brand" href="#" style="font-family: fantasy; font-size: 33px;">
+        <a class="navbar-brand" th:href="@{/public/sections}" style="font-family: fantasy; font-size: 33px;">
             F<sup>F</sup>F<sub>F</sub><sup>F</sup>OR<sub>U</sub>M
         </a>
 
@@ -110,12 +112,13 @@
                     <a class="nav-link" th:href="@{/admin/support}">Поддержка</a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                       data-bs-toggle="dropdown" aria-expanded="false" style="padding-left:45%;">
                         <img th:src="'/public/photo/' + ${@securityService.getUserId()}" width="50px" height="50px"
                              alt="ваша аватарка" style="margin-left=45%; border-radius:50%;">
                     </a>
                     <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-                        <a class="dropdown-item" th:href="@{/profile}">профиль</a>
+                        <a class="dropdown-item" th:href="@{'/public/profile/'+${@securityService.getUserId()}}">профиль</a>
                         <a class="dropdown-item" th:href="@{/logout}">выйти</a>
                     </div>
                 </li>

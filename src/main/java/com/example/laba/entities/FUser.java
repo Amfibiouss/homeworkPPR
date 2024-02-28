@@ -13,10 +13,13 @@ public class FUser {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private String login;
+
+    private String password;
     @Column(length=LONG32, columnDefinition="BLOB")
     private byte[] photo;
-    private String password;
     private Boolean Admin;
+    private String description;
+    private String sex;
 
     @Override
     public boolean equals(Object o) {
@@ -66,6 +69,22 @@ public class FUser {
 
     public void setPhoto(byte[] photo) {
         this.photo = photo;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getSex() {
+        return sex;
+    }
+
+    public void setSex(String sex) {
+        this.sex = sex;
     }
 
     public FUser() {

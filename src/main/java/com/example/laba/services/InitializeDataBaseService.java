@@ -57,24 +57,32 @@ public class InitializeDataBaseService {
         user1.setPhoto(photo1);
         user1.setPassword("1");
         user1.setAdmin(false);
+        user1.setSex("мужской");
+        user1.setDescription("Люблю брейкданс, китайскую оперу и разводить кенгуру.");
         usersRepository.save(user1);
 
         user2.setLogin("Уотсон");
         user2.setPhoto(photo2);
         user2.setPassword("2");
         user2.setAdmin(false);
+        user2.setSex("мужской");
+        user2.setDescription("Люблю брейкданс, китайскую оперу и разводить кенгуру.");
         usersRepository.save(user2);
 
         user3.setLogin("Стэмфорд");
         user3.setPhoto(photo3);
         user3.setPassword("3");
         user3.setAdmin(false);
+        user3.setSex("мужской");
+        user3.setDescription("Люблю брейкданс, китайскую оперу и разводить кенгуру.");
         usersRepository.save(user3);
 
         user4.setLogin("Админ");
         user4.setPhoto(photo4);
         user4.setPassword("4");
         user4.setAdmin(true);
+        user4.setSex("мужской");
+        user4.setDescription("Админ всегда прав");
         usersRepository.save(user4);
 
         for (int i = 0; i < 15; i++) {

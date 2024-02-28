@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>форум</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel=stylesheet type="text/css" href="/public_static/css/bootstrap.css">
+    <link rel=stylesheet type="text/css" href="/public_static/white_theme.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/public_static/js/bootstrap.bundle.js"></script>
+</head>
+<body>
+<header th:replace="~{public/header :: |${@securityService.getAccess()}_header|}"></header>
+<main class="container">
+    <div class="row justify-content-center">
+        <form class="col-auto bg-color2 mt-5 p-3" th:action="@{/user/edit_profile}"
+              method="post" enctype="multipart/form-data">
+            <div class="row">
+                <label class="col-auto mb-3">
+                    Пол:
+                    <select class="form-select bg-color1" name="sex">
+                        <option th:value = "${t_user.sex} == 'мужской'? 'male':'female'" th:text="${t_user.sex}" selected></option>
+                        <option th:value = "${t_user.sex} == 'мужской'? 'female':'male'"
+                                th:text = "${t_user.sex} == 'мужской'? 'женский':'мужской'"></option>
+                    </select>
+                </label>
+                <label class="col-12 mb-3">
+                    Дополнительная информация:
+                    <textarea class="form-control bg-color1" rows="3" name="description" th:text="${t_user.description}"></textarea>
+                </label>
+                <label class="col-auto mb-3">
+                    Загрузить фотографию в формате jpeg размером не более 5 мб:
+                    <input class="form-control bg-color1" type="file" name="file">
+                </label>
+                <div class="col-12">
+                    <input class="btn btn-primary mb-3" type="submit" value="Сохранить"/>
+                </div>
+            </div>
+        </form>
+    </div>
+</main>
+<footer th:replace="~{public/footer :: footer}"></footer>
+</body>
+</html>

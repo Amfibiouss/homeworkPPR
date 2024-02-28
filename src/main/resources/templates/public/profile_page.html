@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>форум</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="keywords" content="форум профиль">
+    <link rel=stylesheet type="text/css" href="/public_static/css/bootstrap.css">
+    <link rel=stylesheet type="text/css" href="/public_static/white_theme.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/public_static/js/bootstrap.bundle.js"></script>
+</head>
+<body>
+<header th:replace="~{public/header :: |${@securityService.getAccess()}_header|}"></header>
+<main class="container">
+    <div class = "row">
+        <div class = "col-12 col-sm-6">
+            <img th:src = "@{'/public/photo/' + ${t_user.id}}" style="width:100%;" alt="аватарка">
+        </div>
+        <div class = "col col-sm-6">
+            <div class = "row p-2 gy-4 bg-color1">
+                <section class="col-12">
+                    <h6>Ник:</h6>
+                    <span th:text="${t_user.login}"></span>
+                </section>
+                <section class="col-12">
+                    <h6>Пол:</h6>
+                    <span th:text="${t_user.sex}"></span>
+                </section>
+                <section class="col-12" style="overflow:overlay;">
+                    <h6>Дополнительная информация:</h6>
+                    <span th:text="${t_user.description}"></span>
+                </section>
+
+                <div th:if = "${t_user.id} == ${@securityService.getUserId()}" class="col-auto bg-color2">
+                    <a th:href = "@{/user/edit_profile}" style="text-decoration:none;">
+                        Редактировать
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{public/footer :: footer}"></footer>
+</body>
+</html>
