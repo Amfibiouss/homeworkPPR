@@ -1,5 +1,7 @@
 package com.example.laba.objects_to_fill_templates;
 
+import com.example.laba.entities.FUser;
+
 public class TmplUser {
     public long id;
     public String login;
@@ -46,4 +48,13 @@ public class TmplUser {
     public void setSex(String sex) {
         this.sex = sex;
     }
+
+    public TmplUser(FUser user) {
+        this.Admin = user.getAdmin();
+        this.login = user.getLogin();
+        this.sex = user.getSex();
+        this.description = user.getDescription();
+        this.id = user.getId();
+    }
+    public TmplUser(){}
 }

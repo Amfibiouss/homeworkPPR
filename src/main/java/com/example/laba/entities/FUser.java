@@ -3,6 +3,7 @@ package com.example.laba.entities;
 import jakarta.persistence.*;
 
 import java.util.Objects;
+import org.hibernate.annotations.NaturalId;
 
 import static org.hibernate.Length.LONG32;
 
@@ -12,8 +13,8 @@ public class FUser {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+    @NaturalId
     private String login;
-
     private String password;
     @Column(length=LONG32, columnDefinition="BLOB")
     private byte[] photo;

@@ -1,8 +1,7 @@
 package com.example.laba.controllers;
 
-import com.example.laba.entities.FSection;
-import com.example.laba.repositories.SectionsRepository;
-import com.example.laba.repositories.UsersRepository;
+import com.example.laba.objects_to_fill_templates.TmplSection;
+import com.example.laba.services.OverturningTheEarthAndTramplingTheHeavensDAOService;
 import com.example.laba.services.SecurityService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,14 +9,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.HashSet;
-
 @Controller
 public class AddSectionController {
     @Autowired
-    SectionsRepository sectionsRepository;
-    @Autowired
-    UsersRepository usersRepository;
+    OverturningTheEarthAndTramplingTheHeavensDAOService DAOService;
     @Autowired
     SecurityService securityService;
     @PostMapping("/user/add_section")
@@ -25,13 +20,12 @@ public class AddSectionController {
                      @RequestParam String section_description,
                      HttpServletResponse response) {
 
-        FSection section = new FSection();
+        TmplSection section = new TmplSection();
         section.setName(section_name);
         section.setDescription(section_description);
-        section.setCreator(usersRepository.getReferenceById(securityService.getUserId()));
-        section.setMessages(new HashSet<>());
+        section.setCreator(securityService.getUsername());
 
-        sectionsRepository.save(section);
+        DAOService.add_section(section);
 
         response.setHeader("Location", "/public/index/" + section.getId());
         response.setStatus(302);

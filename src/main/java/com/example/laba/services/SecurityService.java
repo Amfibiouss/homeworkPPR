@@ -1,7 +1,6 @@
 package com.example.laba.services;
 
-import com.example.laba.entities.FUser;
-import com.example.laba.repositories.UsersRepository;
+import com.example.laba.objects_to_fill_templates.TmplUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -11,13 +10,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 @Component("securityService")
 public class SecurityService {
 
     @Autowired
-    UsersRepository usersRepository;
+    OverturningTheEarthAndTramplingTheHeavensDAOService DAOService;
 
     public String getUsername() {
         SecurityContext context = SecurityContextHolder.getContext();
@@ -41,10 +38,12 @@ public class SecurityService {
                 (UsernamePasswordAuthenticationToken) context.getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-        List<FUser> res = usersRepository.findByLogin(userDetails.getUsername());
-        if (res.isEmpty())
+        try {
+            TmplUser user = DAOService.get_user_by_login(userDetails.getUsername());
+            return user.getId();
+        } catch (Exception e) {
             return 0;
-        return res.getFirst().getId();
+        }
     }
 
     public String getAccess() {

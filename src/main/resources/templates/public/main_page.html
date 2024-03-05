@@ -25,13 +25,13 @@
     </script>
     <div class="row">
         <article class="col-12 py-2 row" th:each="mes, iter : ${messages}">
-            <a class="col-auto" th:href="@{'/public/profile/'+${mes.id}}">
-                <img th:src="'/public/photo/' + ${mes.id}" width="60" height="60"
+            <a class="col-auto" th:href="@{'/public/profile/'+${mes.user_id}}">
+                <img th:src="'/public/photo/' + ${mes.user_id}" width="60" height="60"
                      th:alt="'аватарка пользователя' + ${mes.login}">
             </a>
             <div class="col-sm col-xs-12">
                 <div>
-                    <b><a class="username" th:text="${mes.login}" th:href="@{'/public/profile/'+${mes.id}}"></a></b>
+                    <b><a class="username" th:text="${mes.login}" th:href="@{'/public/profile/'+${mes.user_id}}"></a></b>
                 </div>
                 <div th:text="${mes.text}"></div>
             </div>

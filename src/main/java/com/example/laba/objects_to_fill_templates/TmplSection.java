@@ -44,4 +44,6 @@ public class TmplSection {
         this.name = name;
         this.description = description;
     }
+
+    public TmplSection () {}
 }

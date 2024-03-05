@@ -4,11 +4,10 @@ import com.example.laba.entities.FMessage;
 import com.example.laba.entities.FSection;
 import com.example.laba.entities.FUser;
 import com.example.laba.objects_to_fill_templates.TmplMessage;
-import com.example.laba.repositories.MessagesRepository;
-import com.example.laba.repositories.SectionsRepository;
-import com.example.laba.repositories.UsersRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.persistence.PersistenceUnit;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -21,89 +20,64 @@ import java.util.HashSet;
 
 @Component
 public class InitializeDataBaseService {
-    @Autowired
-    UsersRepository usersRepository;
-    @Autowired
-    MessagesRepository messagesRepository;
-    @Autowired
-    SectionsRepository sectionsRepository;
-
+    @PersistenceUnit
+    SessionFactory sessionFactory;
     @Transactional
     public void initialize() throws IOException {
-        FUser user1 = new FUser(), user2 = new FUser(), user3 = new FUser(), user4 = new FUser();
-        Resource resource1 = new ClassPathResource("static/Холмс.jpg");
-        Resource resource2 = new ClassPathResource("static/Уотсон.jpg");
-        Resource resource3 = new ClassPathResource("static/Стэмфорд.jpg");
-        Resource resource4 = new ClassPathResource("static/Админ.jpg");
-        byte[] photo1 = new byte[(int)resource1.contentLength()];
-        byte[] photo2 = new byte[(int)resource2.contentLength()];
-        byte[] photo3 = new byte[(int)resource3.contentLength()];
-        byte[] photo4 = new byte[(int)resource4.contentLength()];
+        String[] login = {"Холмс", "Уотсон", "Стэмфорд", "Админ"};
+        String[] password = {"1", "2", "3", "4"};
+        String[] photo_path = {"static/Холмс.jpg", "static/Уотсон.jpg", "static/Стэмфорд.jpg", "static/Админ.jpg"};
+        String[] description = {
+                "Люблю брейкданс, китайскую оперу и разводить кенгуру.",
+                "Люблю брейкданс, китайскую оперу и разводить кенгуру.",
+                "Люблю брейкданс, китайскую оперу и разводить кенгуру.",
+                "Админ всегда прав."
+        };
+        String[] sex = {"мужской", "мужской", "мужской", "мужской"};
+        boolean[] admin = {false, false, false, true};
 
-        try(InputStream inputStream1 = new FileInputStream(resource1.getFile());
-            InputStream inputStream2 = new FileInputStream(resource2.getFile());
-            InputStream inputStream3 = new FileInputStream(resource3.getFile());
-            InputStream inputStream4 = new FileInputStream(resource4.getFile())){
+        Session session = sessionFactory.getCurrentSession();
 
-            inputStream1.read(photo1);
-            inputStream2.read(photo2);
-            inputStream3.read(photo3);
-            inputStream4.read(photo4);
-        } catch(IOException e) {
-            System.out.println(e);
+        for (int i = 0; i < 4; i++) {
+            FUser user = new FUser();
+
+            Resource resource = new ClassPathResource(photo_path[i]);
+            byte[] photo = new byte[(int)resource.contentLength()];
+
+            try(InputStream inputStream1 = new FileInputStream(resource.getFile());){
+                inputStream1.read(photo);
+            } catch(IOException e) {
+                System.out.println(e);
+            }
+
+            user.setLogin(login[i]);
+            user.setPhoto(photo);
+            user.setPassword(password[i]);
+            user.setAdmin(admin[i]);
+            user.setSex(sex[i]);
+            user.setDescription(description[i]);
+            session.persist(user);
         }
 
-        user1.setLogin("Холмс");
-        user1.setPhoto(photo1);
-        user1.setPassword("1");
-        user1.setAdmin(false);
-        user1.setSex("мужской");
-        user1.setDescription("Люблю брейкданс, китайскую оперу и разводить кенгуру.");
-        usersRepository.save(user1);
-
-        user2.setLogin("Уотсон");
-        user2.setPhoto(photo2);
-        user2.setPassword("2");
-        user2.setAdmin(false);
-        user2.setSex("мужской");
-        user2.setDescription("Люблю брейкданс, китайскую оперу и разводить кенгуру.");
-        usersRepository.save(user2);
-
-        user3.setLogin("Стэмфорд");
-        user3.setPhoto(photo3);
-        user3.setPassword("3");
-        user3.setAdmin(false);
-        user3.setSex("мужской");
-        user3.setDescription("Люблю брейкданс, китайскую оперу и разводить кенгуру.");
-        usersRepository.save(user3);
-
-        user4.setLogin("Админ");
-        user4.setPhoto(photo4);
-        user4.setPassword("4");
-        user4.setAdmin(true);
-        user4.setSex("мужской");
-        user4.setDescription("Админ всегда прав");
-        usersRepository.save(user4);
-
-        for (int i = 0; i < 15; i++) {
+        for (int i = 1; i <= 4; i++) {
             FSection section = new FSection();
             section.setName("Этюд в багровых тонах");
             section.setDescription("Повесть Артура Конан Дойла 'Этюд в багровых тонах'");
-            section.setCreator(user4);
+            section.setCreator(session.get(FUser.class, i));
             section.setMessages(new HashSet<>());
-            sectionsRepository.save(section);
+            session.persist(section);
         }
 
         Resource chat = new ClassPathResource("static/chat.json");
         ObjectMapper objectMapper = new ObjectMapper();
-        TmplMessage[] messageForms = objectMapper.readValue(chat.getFile(), TmplMessage[].class);
+        TmplMessage[] messages = objectMapper.readValue(chat.getFile(), TmplMessage[].class);
 
-        for (TmplMessage messageForm : messageForms) {
+        for (TmplMessage message : messages) {
             FMessage mes = new FMessage();
-            mes.setSection(sectionsRepository.getReferenceById(1L));
-            mes.setText(messageForm.text);
-            mes.setUser(usersRepository.findByLogin(messageForm.login).getFirst());
-            messagesRepository.save(mes);
+            mes.setSection(session.getReference(FSection.class, 1));
+            mes.setText(message.text);
+            mes.setUser(session.bySimpleNaturalId(FUser.class).load(message.login));
+            session.persist(mes);
         }
     }
 }
