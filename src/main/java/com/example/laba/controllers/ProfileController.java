@@ -16,10 +16,10 @@ public class ProfileController {
     @Autowired
     OverturningTheEarthAndTramplingTheHeavensDAOService DAOService;
 
-    @GetMapping("/public/profile/{user_id}")
-    String get_profile(Model model, @PathVariable long user_id) {
+    @GetMapping("/public/profile/{username}")
+    String get_profile(Model model, @PathVariable String username) {
         try {
-            TmplUser user = DAOService.get_user(user_id);
+            TmplUser user = DAOService.get_user_by_login(username);
             model.addAttribute("t_user", user);
         } catch (Exception e) {
             System.out.println(e);

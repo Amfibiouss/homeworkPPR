@@ -56,7 +56,7 @@ public class EditProfileController {
         DAOService.update_user(securityService.getUsername(),
                 (sex.equals("male"))? "мужской" : "женский", description, photo);
 
-        response.setHeader("Location", "/public/profile/" + securityService.getUserId());
+        response.setHeader("Location", "/public/profile/" + securityService.getUsername());
         response.setStatus(302);
     }
 }

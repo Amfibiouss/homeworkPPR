@@ -3,7 +3,7 @@ package com.example.laba.services;
 import com.example.laba.entities.FMessage;
 import com.example.laba.entities.FSection;
 import com.example.laba.entities.FUser;
-import com.example.laba.objects_to_fill_templates.TmplMessage;
+import com.example.laba.json_objects.OutputMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.PersistenceUnit;
 import org.hibernate.Session;
@@ -24,7 +24,7 @@ public class InitializeDataBaseService {
     SessionFactory sessionFactory;
     @Transactional
     public void initialize() throws IOException {
-        String[] login = {"Холмс", "Уотсон", "Стэмфорд", "Админ"};
+        String[] login = {"Holmes", "Watson", "Stamford", "Admin"};
         String[] password = {"1", "2", "3", "4"};
         String[] photo_path = {"static/Холмс.jpg", "static/Уотсон.jpg", "static/Стэмфорд.jpg", "static/Админ.jpg"};
         String[] description = {
@@ -70,13 +70,13 @@ public class InitializeDataBaseService {
 
         Resource chat = new ClassPathResource("static/chat.json");
         ObjectMapper objectMapper = new ObjectMapper();
-        TmplMessage[] messages = objectMapper.readValue(chat.getFile(), TmplMessage[].class);
+        OutputMessage[] messages = objectMapper.readValue(chat.getFile(), OutputMessage[].class);
 
-        for (TmplMessage message : messages) {
+        for (OutputMessage message : messages) {
             FMessage mes = new FMessage();
             mes.setSection(session.getReference(FSection.class, 1));
             mes.setText(message.text);
-            mes.setUser(session.bySimpleNaturalId(FUser.class).load(message.login));
+            mes.setUser(session.bySimpleNaturalId(FUser.class).load(message.username));
             session.persist(mes);
         }
     }

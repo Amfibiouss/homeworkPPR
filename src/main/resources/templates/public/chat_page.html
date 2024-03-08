@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" >
+<head>
+    <link rel=stylesheet type="text/css" href="/public_static/css/bootstrap.css">
+    <link rel=stylesheet type="text/css" href="/public_static/white_theme.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/public_static/js/bootstrap.bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"> </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"> </script>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <style>
+        article img {
+            border-radius: 50%;
+        }
+        article {
+            overflow-wrap: break-word;
+        }
+        .username {
+            text-decoration:none;
+        }
+    </style>
+</head>
+<body>
+<header th:replace="~{public/header :: |${@securityService.getAccess()}_header|}"></header>
+<main class="container">
+    <script>
+
+        function errorCallback(error) {
+            alert(error.headers.message);
+        }
+
+        function getHtmlForArticle(mes) {
+            var article_string = `
+                <article class="row py-2">
+                    <a class="col-auto" href="/public/profile/${mes.username}">
+                        <img src="/public/photo/${mes.username}" width="60" height="60"
+                            alt="аватарка пользователя ${mes.username}">
+                    </a>
+                    <div class="col-sm col-xs-12">
+                        <div>
+                            <b><a class="username" href="/public/profile/${mes.username}">${mes.username}</a></b>
+                        </div>
+                        <div>${mes.text}</div>
+                    </div>
+                </article>`;
+
+            return article_string;
+        }
+
+        function receiveCallback(messageOutput) {
+            var elem = document.getElementById('articles');
+            elem.innerHTML = elem.innerHTML + getHtmlForArticle(JSON.parse(messageOutput.body));
+        }
+
+        function connectCallback(frame) {
+            fetch('/public/chat/get_messages/' + section_id.value, {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            }).then(
+            function(response) {
+                if (response.status !== 200) {
+                    console.log("Can't load messages. Status Code: " + response.status);
+                    return;
+                }
+                response.json().then(function(data) {
+                    string_articles = "";
+
+                    for (const mes of data) {
+                        string_articles += getHtmlForArticle(mes);
+                    }
+
+                    var elem = document.getElementById('articles');
+                    elem.innerHTML = string_articles;
+                });
+            }).catch(function(err) {
+                console.log('Fetch Error :-S', err);
+            });
+
+            stompClient.subscribe('/topic/messages/' + section_id.value, receiveCallback);
+        }
+
+        function connect() {
+
+            if (!document.getElementById('guestMenu')) {
+                document.getElementById('form_wrapper').style.visibility='visible';
+            }
+
+            var socket = new SockJS('/public/stomp/chat');
+            stompClient = Stomp.over(socket);
+            stompClient.connect({}, connectCallback, errorCallback);
+        }
+
+        function sendMessage(event) {
+            event.preventDefault();
+
+            var csrf_token = document.getElementById('_csrf').value;
+            var text = document.getElementById('text').value;
+            stompClient.send("/app/message/" + section_id.value, {'x-csrf-token':csrf_token},
+                JSON.stringify({'text':text}));
+            document.getElementById('send_message_form').reset();
+        }
+
+        document.addEventListener("DOMContentLoaded", connect);
+    </script>
+
+    <div class="row">
+        <div class = "col-12" id="articles">
+
+        </div>
+        <div class = "col-12" id = "form_wrapper" style="visibility:hidden;">
+            <form onsubmit="sendMessage(event)" id="send_message_form" class="row py-2" style="position:sticky;bottom:0;">
+                <input type="hidden"
+                       th:name="${_csrf.parameterName}"
+                       th:value="${_csrf.token}"
+                        id = "_csrf"/>
+                <input type="hidden"
+                       name = "section_id"
+                       th:value="${section_id}"
+                       id = "section_id"/>
+                <div class="col-11">
+                    <textarea class="form-control" rows="3" name="text" id="text"></textarea>
+                </div>
+                <div class="col-1 px-0">
+                    <button class="px-0">
+                        <img src="/public_static/send.svg" width="30" height="30" alt="кнопка отправить">
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{public/footer :: footer}"></footer>
+</body>
+</html>

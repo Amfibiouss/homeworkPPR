@@ -27,7 +27,10 @@ public class AddSectionController {
 
         DAOService.add_section(section);
 
-        response.setHeader("Location", "/public/index/" + section.getId());
+        response.setHeader("Location", "/public/sections");
         response.setStatus(302);
     }
+
+
+
 }

@@ -43,7 +43,7 @@
             <li class="col-12 depends-of-parity" th:each="section : ${sections}">
                 <p>
                     <a class = "text-primary" style="text-decoration:none;"
-                       th:text="${section.name}" th:href="@{'/public/index/' + ${section.id}}"></a>
+                       th:text="${section.name}" th:href="@{'/public/chat/' + ${section.id}}"></a>
                 </p>
                 <p class="text-secondary" style="font-size:0.75rem;" th:text="${section.description}"></p>
                 <p class="text-secondary" style="font-size:0.75rem;" th:text="'создатель:' + ${section.creator}"></p>

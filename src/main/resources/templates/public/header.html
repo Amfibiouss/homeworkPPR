@@ -28,12 +28,12 @@
                     <a class="nav-link" th:href="@{/public/support}">Поддержка</a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                    <a class="nav-link dropdown-toggle" href="#" role="button" id="guestMenu"
                        data-bs-toggle="dropdown" aria-expanded="false" style="padding-left:45%;">
                         <img src="/public_static/who_i_am.jpg" width="50px" height="50px"
                              alt="ваша аватарка" style="margin-left=45%; border-radius:50%;">
                     </a>
-                    <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                    <div class="dropdown-menu" aria-labelledby="guestMenu">
                         <a class="dropdown-item" th:href="@{/login}">войти</a>
                         <a class="dropdown-item" th:href="@{/register}">регистрация</a>
                     </div>
@@ -71,13 +71,13 @@
                     <a class="nav-link" th:href="@{/public/support}">Поддержка</a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                    <a class="nav-link dropdown-toggle" href="#" role="button" id="userMenu"
                        data-bs-toggle="dropdown" aria-expanded="false" style="padding-left:45%;">
-                        <img th:src="'/public/photo/' + ${@securityService.getUserId()}" width="50px" height="50px"
+                        <img th:src="'/public/photo/' + ${@securityService.getUsername()}" width="50px" height="50px"
                              alt="ваша аватарка" style="margin-left=45%; border-radius:50%;">
                     </a>
-                    <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-                        <a class="dropdown-item" th:href="@{'/public/profile/'+${@securityService.getUserId()}}">профиль</a>
+                    <div class="dropdown-menu" aria-labelledby="userMenu">
+                        <a class="dropdown-item" th:href="@{'/public/profile/'+${@securityService.getUsername()}}">профиль</a>
                         <a class="dropdown-item" th:href="@{/logout}">выйти</a>
                     </div>
                 </li>
@@ -112,13 +112,13 @@
                     <a class="nav-link" th:href="@{/admin/support}">Поддержка</a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                    <a class="nav-link dropdown-toggle" href="#" role="button" id="adminMenu"
                        data-bs-toggle="dropdown" aria-expanded="false" style="padding-left:45%;">
-                        <img th:src="'/public/photo/' + ${@securityService.getUserId()}" width="50px" height="50px"
+                        <img th:src="'/public/photo/' + ${@securityService.getUsername()}" width="50px" height="50px"
                              alt="ваша аватарка" style="margin-left=45%; border-radius:50%;">
                     </a>
-                    <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-                        <a class="dropdown-item" th:href="@{'/public/profile/'+${@securityService.getUserId()}}">профиль</a>
+                    <div class="dropdown-menu" aria-labelledby="adminMenu">
+                        <a class="dropdown-item" th:href="@{'/public/profile/'+${@securityService.getUsername()}}">профиль</a>
                         <a class="dropdown-item" th:href="@{/logout}">выйти</a>
                     </div>
                 </li>

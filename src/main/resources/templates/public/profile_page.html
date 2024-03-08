@@ -15,7 +15,7 @@
 <main class="container">
     <div class = "row">
         <div class = "col-12 col-sm-6">
-            <img th:src = "@{'/public/photo/' + ${t_user.id}}" style="width:100%;" alt="аватарка">
+            <img th:src = "@{'/public/photo/' + ${t_user.login}}" style="width:100%;" alt="аватарка">
         </div>
         <div class = "col col-sm-6">
             <div class = "row p-2 gy-4 bg-color1">
@@ -27,12 +27,12 @@
                     <h6>Пол:</h6>
                     <span th:text="${t_user.sex}"></span>
                 </section>
-                <section class="col-12" style="overflow:overlay;">
+                <section class="col-12" style="overflow-wrap: break-word;">
                     <h6>Дополнительная информация:</h6>
                     <span th:text="${t_user.description}"></span>
                 </section>
 
-                <div th:if = "${t_user.id} == ${@securityService.getUserId()}" class="col-auto bg-color2">
+                <div th:if = "${t_user.login} == ${@securityService.getUsername()}" class="col-auto bg-color2">
                     <a th:href = "@{/user/edit_profile}" style="text-decoration:none;">
                         Редактировать
                     </a>

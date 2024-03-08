@@ -3,7 +3,7 @@ package com.example.laba.services;
 import com.example.laba.entities.FMessage;
 import com.example.laba.entities.FSection;
 import com.example.laba.entities.FUser;
-import com.example.laba.objects_to_fill_templates.TmplMessage;
+import com.example.laba.json_objects.OutputMessage;
 import com.example.laba.objects_to_fill_templates.TmplSection;
 import com.example.laba.objects_to_fill_templates.TmplUser;
 import jakarta.persistence.PersistenceUnit;
@@ -55,9 +55,9 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
     }
 
     @Transactional
-    public byte[] get_photo(long user_id) {
+    public byte[] get_photo(String username) {
         Session session = sessionFactory.getCurrentSession();
-        FUser user = session.get(FUser.class, user_id);
+        FUser user =  session.bySimpleNaturalId(FUser.class).load(username);
 
         if (user == null)
             throw new ServiceException("the user_id don't exist.");
@@ -66,7 +66,7 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
     }
 
     @Transactional
-    public List<TmplMessage> get_messages(long section_id, long offset, long limit) {
+    public List<OutputMessage> get_messages(long section_id, long offset, long limit) {
         Session session = sessionFactory.getCurrentSession();
         FSection section = session.get(FSection.class, section_id);
 
@@ -80,10 +80,10 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
                         .setParameter("limit", limit)
                         .getResultList();
 
-        List<TmplMessage> result = new ArrayList<>();
+        List<OutputMessage> result = new ArrayList<>();
 
         for (FMessage message : messages) {
-            result.add(new TmplMessage(message.getUser().getId(), message.getUser().getLogin(), message.getText()));
+            result.add(new OutputMessage(message.getUser().getLogin(), message.getText()));
         }
 
         return result;
@@ -146,12 +146,12 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
     }
 
     @Transactional
-    public void add_message(TmplMessage message, long section_id) {
+    public void add_message(OutputMessage message, long section_id) {
         FMessage new_message = new FMessage();
         new_message.setText(message.text);
 
         Session session = sessionFactory.getCurrentSession();
-        FUser user = session.bySimpleNaturalId(FUser.class).load(message.login);
+        FUser user = session.bySimpleNaturalId(FUser.class).load(message.username);
         FSection section = session.get(FSection.class, section_id);
 
         if (user == null)

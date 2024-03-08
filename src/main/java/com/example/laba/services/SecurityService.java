@@ -27,25 +27,6 @@ public class SecurityService {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         return userDetails.getUsername();
     }
-
-    public long getUserId() {
-        SecurityContext context = SecurityContextHolder.getContext();
-
-        if (context.getAuthentication() instanceof AnonymousAuthenticationToken)
-            return 0;
-
-        UsernamePasswordAuthenticationToken authentication =
-                (UsernamePasswordAuthenticationToken) context.getAuthentication();
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-
-        try {
-            TmplUser user = DAOService.get_user_by_login(userDetails.getUsername());
-            return user.getId();
-        } catch (Exception e) {
-            return 0;
-        }
-    }
-
     public String getAccess() {
         SecurityContext context = SecurityContextHolder.getContext();
 
