@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 public class LoginController {
 
-    @GetMapping("/login")
+    @GetMapping("/public/login")
     String login(@RequestParam(required = false) String error) {
         return "public/login_page";
     }

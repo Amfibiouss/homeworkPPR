@@ -1,7 +1,6 @@
 package com.example.laba.controllers;
 
 import com.example.laba.services.OverturningTheEarthAndTramplingTheHeavensDAOService;
-import com.example.laba.services.SecurityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -16,13 +15,10 @@ import java.io.IOException;
 import java.io.InputStream;
 
 @Controller
-public class MainPageController {
+public class LoudPhotoController {
 
     @Autowired
     OverturningTheEarthAndTramplingTheHeavensDAOService DAOService;
-
-    @Autowired
-    SecurityService securityService;
 
     @GetMapping("/public/photo/{username}")
     public ResponseEntity<byte[]> photo(@PathVariable String username) throws IOException {

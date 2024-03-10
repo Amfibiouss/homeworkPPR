@@ -3,6 +3,7 @@ package com.example.laba.controllers;
 import com.example.laba.json_objects.InputMessage;
 import com.example.laba.json_objects.OutputMessage;
 import com.example.laba.services.OverturningTheEarthAndTramplingTheHeavensDAOService;
+import com.example.laba.services.SecurityService;
 import org.hibernate.service.spi.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -27,13 +28,16 @@ public class MessageController {
     @Autowired
     OverturningTheEarthAndTramplingTheHeavensDAOService DAOService;
 
+    @Autowired
+    SecurityService securityService;
+
     @MessageMapping("/message/{section_id}")
     @SendTo("/topic/messages/{section_id}")
     public OutputMessage send(SimpMessageHeaderAccessor accessor,
                               InputMessage message,
                               @DestinationVariable long section_id) {
 
-        if (accessor.getUser() == null) {
+        if (accessor.getUser() == null || securityService.hasBan(accessor.getUser().getName())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "only users can send messages");
         }
 

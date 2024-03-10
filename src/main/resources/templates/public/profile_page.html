@@ -18,7 +18,7 @@
             <img th:src = "@{'/public/photo/' + ${t_user.login}}" style="width:100%;" alt="аватарка">
         </div>
         <div class = "col col-sm-6">
-            <div class = "row p-2 gy-4 bg-color1">
+            <div class = "row p-2 gy-4 bg-color3">
                 <section class="col-12">
                     <h6>Ник:</h6>
                     <span th:text="${t_user.login}"></span>
@@ -37,6 +37,71 @@
                         Редактировать
                     </a>
                 </div>
+
+                <section th:if="${@securityService.getAccess()} == 'admin'" class="col-12">
+                    <form th:action="@{/admin/punish}" method="post">
+                        <h6>Наказать</h6>
+                        <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with punish button groups">
+                            <div class="btn-group" role="group" aria-label="punish_buttons13">
+                                <input type="hidden" name="username" th:value="${t_user.login}">
+                                <input type="checkbox" class="btn-check" name="rule1" id="btncheck1" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="btncheck1"> п1</label>
+                                <input type="checkbox" class="btn-check" name="rule2" id="btncheck2" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="btncheck2">п2</label>
+                                <input type="checkbox" class="btn-check" name="rule3" id="btncheck3" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="btncheck3">п3</label>
+                            </div>
+                            <div class="btn-group" role="group" aria-label="punish_buttons46">
+                                <input type="checkbox" class="btn-check" name="rule4" id="btncheck4" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="btncheck4">п4</label>
+                                <input type="checkbox" class="btn-check" name="rule5" id="btncheck5" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="btncheck5">п5</label>
+                                <input type="checkbox" class="btn-check" name="UwU" id="btncheckUWU" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="btncheckUWU">UwU</label>
+                            </div>
+                        </div>
+                        <label for="description"></label>
+                        <textarea class="form-control" rows="3" name="description" id="description"></textarea>
+                        <input class="btn btn-primary mt-2" type="submit">
+                    </form>
+                </section>
+                <section th:if="${@securityService.getAccess()} == 'admin'" class="col-12">
+                    <form th:action="@{/admin/forgive}" method="post">
+                        <h6>Простить</h6>
+                        <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with forgive button groups">
+                            <div class="btn-group" role="group" aria-label="forgive_buttons13">
+                                <input type="hidden" name="username" th:value="${t_user.login}">
+                                <input type="checkbox" class="btn-check" name="rule1" id="rule1" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="rule1"> п1</label>
+                                <input type="checkbox" class="btn-check" name="rule2" id="rule2" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="rule2">п2</label>
+                                <input type="checkbox" class="btn-check" name="rule3" id="rule3" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="rule3">п3</label>
+                            </div>
+                            <div class="btn-group" role="group" aria-label="forgive_buttons46">
+                                <input type="checkbox" class="btn-check" name="rule4" id="rule4" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="rule4">п4</label>
+                                <input type="checkbox" class="btn-check" name="rule5" id="rule5" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="rule5">п5</label>
+                                <input type="checkbox" class="btn-check" name="UwU" id="UwU" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="UwU">UwU</label>
+                            </div>
+                        </div>
+                        <input class="btn btn-primary mt-2" type="submit">
+                    </form>
+                </section>
+                <section th:if="${@securityService.getAccess()} == 'admin'" class="col-12">
+                    <h6>Активные наказания</h6>
+                    <div style = "overflow-y:auto; overflow-wrap: break-word; max-height: 300px;">
+                        <article th:each="pnmt : ${punishments}" class="depends-of-parity p-2">
+                            <p th:text="'Id: ' + ${pnmt.id}"></p>
+                            <p th:text="'Нарушено правило: ' + ${pnmt.rule}"></p>
+                            <p th:text="'Дата начала наказания: ' + ${pnmt.date_start}"></p>
+                            <p th:text="'Дата конца наказания: ' + ${pnmt.date_finish}"></p>
+                            <p th:text="'Описание: ' + ${pnmt.description}"></p>
+                        </article>
+                    </div>
+                </section>
             </div>
         </div>
     </div>

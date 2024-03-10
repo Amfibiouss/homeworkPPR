@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" >
+<head>
+    <link rel=stylesheet type="text/css" href="/public_static/css/bootstrap.css">
+    <link rel=stylesheet type="text/css" href="/public_static/white_theme.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/public_static/js/bootstrap.bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"> </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"> </script>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<header th:replace="~{public/header :: |${@securityService.getAccess()}_header|}"></header>
+<main class="container">
+    <form class="row">
+
+    </form>
+</main>
+<footer th:replace="~{public/footer :: footer}"></footer>
+</body>
+</html>

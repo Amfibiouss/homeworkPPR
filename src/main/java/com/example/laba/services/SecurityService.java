@@ -1,5 +1,6 @@
 package com.example.laba.services;
 
+import com.example.laba.objects_to_fill_templates.TmplPunishment;
 import com.example.laba.objects_to_fill_templates.TmplUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -9,6 +10,8 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component("securityService")
 public class SecurityService {
@@ -39,5 +42,27 @@ public class SecurityService {
         } else {
             return "user";
         }
+    }
+
+    public boolean hasBan(String username) {
+
+        if (username == null) {
+            return false;
+        }
+
+        DAOService.update_punishments_status(username);
+
+        return DAOService.has_ban(username);
+    }
+
+    public boolean hasUwU(String username) {
+
+        if (username == null) {
+            return false;
+        }
+
+        DAOService.update_punishments_status(username);
+
+        return DAOService.has_UwU(username);
     }
 }

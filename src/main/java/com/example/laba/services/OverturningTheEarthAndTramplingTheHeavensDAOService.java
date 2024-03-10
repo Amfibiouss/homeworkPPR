@@ -1,17 +1,22 @@
 package com.example.laba.services;
 
 import com.example.laba.entities.FMessage;
+import com.example.laba.entities.FPunishment;
 import com.example.laba.entities.FSection;
 import com.example.laba.entities.FUser;
 import com.example.laba.json_objects.OutputMessage;
+import com.example.laba.objects_to_fill_templates.TmplPunishment;
 import com.example.laba.objects_to_fill_templates.TmplSection;
 import com.example.laba.objects_to_fill_templates.TmplUser;
 import jakarta.persistence.PersistenceUnit;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.service.spi.ServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -164,5 +169,118 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
         new_message.setUser(user);
 
         session.persist(new_message);
+    }
+
+    @Transactional
+    public void update_punishments_status(String username) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+
+        session.createMutationQuery(
+                "update FPunishment p set p.active=false " +
+                        "where p.user = :user and p.active = true and p.date_finish < :time_now")
+                .setParameter("user", user)
+                .setParameter("time_now", OffsetDateTime.now()).executeUpdate();
+    }
+
+    @Transactional
+    public void try_punish(String username, long rule, String description) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+
+        if (user == null)
+            throw new ServiceException("the user_id don't exist.");
+
+        FPunishment punishment = session.createSelectionQuery(
+                "from FPunishment p where p.user = :user and p.rule = :rule and p.active = true", FPunishment.class)
+                .setParameter("user", user)
+                .setParameter("rule", rule)
+                .getSingleResultOrNull();
+
+        if (punishment != null)
+            return;
+
+        punishment = new FPunishment();
+        punishment.setDate_start(OffsetDateTime.now());
+        punishment.setDate_finish(punishment.getDate_start().plusSeconds(30));
+        //punishment.setDate_finish(punishment.getDate_start().plusDays(1));
+        punishment.setRule(rule);
+        punishment.setDescription(description);
+        punishment.setUser(user);
+        punishment.setActive(true);
+
+        session.persist(punishment);
+    }
+
+    @Transactional
+    public void try_forgive(String username, long rule) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+
+        if (user == null)
+            throw new ServiceException("the user_id don't exist.");
+
+        FPunishment punishment = session.createSelectionQuery(
+                        "from FPunishment p where p.user = :user and p.rule = :rule and p.active = true", FPunishment.class)
+                .setParameter("user", user)
+                .setParameter("rule", rule)
+                .getSingleResultOrNull();
+
+        if (punishment != null) {
+            session.remove(punishment);
+        }
+    }
+
+    @Transactional
+    public List<TmplPunishment> get_punishments(String username, boolean active) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+
+        List<TmplPunishment> punishments = new ArrayList<>();
+
+        for (FPunishment punishment : user.getPunishments()) {
+
+            if (punishment.getActive() == active) {
+
+                TmplPunishment punishment1 = new TmplPunishment();
+
+                punishment1.setUsername(username);
+                punishment1.setId(punishment.getId());
+                punishment1.setDescription(punishment.getDescription());
+                punishment1.setDate_start(punishment.getDate_start());
+                punishment1.setDate_finish(punishment.getDate_finish());
+                punishment1.setRule(punishment.getRule());
+
+                punishments.add(punishment1);
+            }
+        }
+
+        return punishments;
+    }
+
+    @Transactional
+    public boolean has_ban(String username) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+
+        FPunishment punishment = session.createSelectionQuery(
+                        "from FPunishment p where p.user = :user and p.rule <> 6 and p.active = true", FPunishment.class)
+                .setParameter("user", user)
+                .getSingleResultOrNull();
+
+        return (punishment != null);
+    }
+
+    @Transactional
+    public boolean has_UwU(String username) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+
+        FPunishment punishment = session.createSelectionQuery(
+                        "from FPunishment p where p.user = :user and p.rule = 6 and p.active = true", FPunishment.class)
+                .setParameter("user", user)
+                .getSingleResultOrNull();
+
+        return (punishment != null);
     }
 }

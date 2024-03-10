@@ -15,10 +15,10 @@
             show_password.onclick = function() {
                 if (password.getAttribute("type") == "password") {
                     password.setAttribute("type", "text");
-                    eye.setAttribute("src", "/public_static/eye.svg");
+                    eye.setAttribute("src", "/public_static/icons/eye.svg");
                 } else {
                     password.setAttribute("type", "password");
-                    eye.setAttribute("src", "/public_static/eye-slash.svg");
+                    eye.setAttribute("src", "/public_static/icons/eye-slash.svg");
                 }
             };
         });
@@ -40,7 +40,7 @@
                 </div>
                 <div class="col-2 px-0">
                     <a href="#" id="show_password" style="text-decoration:none;">
-                        <img id="eye" src="/public_static/eye-slash.svg" width="30" height="30">
+                        <img id="eye" src="/public_static/icons/eye-slash.svg" width="30" height="30">
                     </a>
                 </div>
             </div>

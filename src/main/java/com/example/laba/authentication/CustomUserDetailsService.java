@@ -1,6 +1,7 @@
-package com.example.laba.services;
+package com.example.laba.authentication;
 
 import com.example.laba.objects_to_fill_templates.TmplUser;
+import com.example.laba.services.OverturningTheEarthAndTramplingTheHeavensDAOService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,14 +20,14 @@ public class CustomUserDetailsService implements UserDetailsService {
             String password = DAOService.get_password(username);
 
             if (user.getAdmin()) {
-                return User.withDefaultPasswordEncoder()
+                return User.builder()
                         .username(username)
                         .password(password)
                         .roles("USER", "ADMIN")
                         .build();
             }
             else {
-                return User.withDefaultPasswordEncoder()
+                return User.builder()
                         .username(username)
                         .password(password)
                         .roles("USER")

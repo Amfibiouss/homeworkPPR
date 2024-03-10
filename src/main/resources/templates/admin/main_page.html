@@ -19,10 +19,6 @@
             text-decoration:none;
         }
     </style>
-    <script>
-        const xhr = new XMLHttpRequest();
-
-    </script>
     <div class="row">
         <article class="col-12 py-2 row" th:each="mes, iter : ${messages}">
             <a class="col-auto" th:href="@{'/public/profile/'+${mes.username}}">

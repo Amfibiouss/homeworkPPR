@@ -2,6 +2,7 @@ package com.example.laba.entities;
 
 import jakarta.persistence.*;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -14,7 +15,7 @@ public class FSection {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     @OneToMany(mappedBy="section")
-    private Set<FMessage> messages;
+    private Set<FMessage> messages = new HashSet<>();
     @ManyToOne(fetch=LAZY)
     private FUser creator;
     private String name;

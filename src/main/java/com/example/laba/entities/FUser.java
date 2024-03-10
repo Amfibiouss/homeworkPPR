@@ -2,7 +2,10 @@ package com.example.laba.entities;
 
 import jakarta.persistence.*;
 
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
+
 import org.hibernate.annotations.NaturalId;
 
 import static org.hibernate.Length.LONG32;
@@ -21,6 +24,8 @@ public class FUser {
     private Boolean Admin;
     private String description;
     private String sex;
+    @OneToMany(mappedBy="user")
+    private Set<FPunishment> punishments = new HashSet<>();
 
     @Override
     public boolean equals(Object o) {
@@ -86,6 +91,14 @@ public class FUser {
 
     public void setSex(String sex) {
         this.sex = sex;
+    }
+
+    public Set<FPunishment> getPunishments() {
+        return punishments;
+    }
+
+    public void setPunishments(Set<FPunishment> punishments) {
+        this.punishments = punishments;
     }
 
     public FUser() {
