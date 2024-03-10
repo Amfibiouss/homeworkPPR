@@ -59,6 +59,7 @@ public class MessageController {
         return "public/chat_page";
     }
 
+
     @ResponseBody
     @GetMapping("/public/chat/get_messages/{section_id}")
     List<OutputMessage> get_messages(@PathVariable long section_id) {
