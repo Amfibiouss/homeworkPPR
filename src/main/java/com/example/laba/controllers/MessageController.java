@@ -2,6 +2,8 @@ package com.example.laba.controllers;
 
 import com.example.laba.json_objects.InputMessage;
 import com.example.laba.json_objects.OutputMessage;
+import com.example.laba.objects_to_fill_templates.TmplUser;
+import com.example.laba.services.CatMaidService;
 import com.example.laba.services.OverturningTheEarthAndTramplingTheHeavensDAOService;
 import com.example.laba.services.SecurityService;
 import org.hibernate.service.spi.ServiceException;
@@ -31,6 +33,9 @@ public class MessageController {
     @Autowired
     SecurityService securityService;
 
+    @Autowired
+    CatMaidService catMaidService;
+
     @MessageMapping("/message/{section_id}")
     @SendTo("/topic/messages/{section_id}")
     public OutputMessage send(SimpMessageHeaderAccessor accessor,
@@ -41,13 +46,22 @@ public class MessageController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "only users can send messages");
         }
 
+        String username = accessor.getUser().getName();
+        String text = message.getText();
+
+        if (securityService.hasUwU(username)) {
+            text = catMaidService.addCatMaidAccent(text);
+        }
+
+        TmplUser user = DAOService.get_user_by_login(username);
+
         try {
-            DAOService.add_message(new OutputMessage(accessor.getUser().getName(), message.getText()), section_id);
+            DAOService.add_message(new OutputMessage(username, text), section_id);
         } catch (ServiceException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the user or the section don't exist");
         }
 
-        return new OutputMessage(accessor.getUser().getName(), message.getText());
+        return new OutputMessage(username, text, user.getDegreeUwU());
     }
 
     @MessageExceptionHandler

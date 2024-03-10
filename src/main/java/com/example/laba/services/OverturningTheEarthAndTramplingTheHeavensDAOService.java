@@ -23,19 +23,12 @@ import java.util.List;
 
 @Component
 public class OverturningTheEarthAndTramplingTheHeavensDAOService {
+
+    @Autowired
+    CatMaidService catMaidService;
+
     @PersistenceUnit
     SessionFactory sessionFactory;
-
-    @Transactional
-    public TmplUser get_user(long user_id) {
-        Session session = sessionFactory.getCurrentSession();
-        FUser user = session.get(FUser.class, user_id);
-
-        if (user == null)
-            throw new ServiceException("the user_id don't exist.");
-
-        return new TmplUser(user);
-    }
 
     @Transactional
     public TmplUser get_user_by_login(String login) {
@@ -45,7 +38,7 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
         if (user == null)
             throw new ServiceException("the login don't exist.");
 
-        return new TmplUser(user);
+        return new TmplUser(user, catMaidService.getUwUDegree(user.getDate_UwU()));
     }
 
     @Transactional
@@ -88,7 +81,10 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
         List<OutputMessage> result = new ArrayList<>();
 
         for (FMessage message : messages) {
-            result.add(new OutputMessage(message.getUser().getLogin(), message.getText()));
+            result.add(new OutputMessage(
+                    message.getUser().getLogin(),
+                    message.getText(),
+                    catMaidService.getUwUDegree(message.getUser().getDate_UwU())));
         }
 
         return result;
@@ -264,7 +260,7 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
         FUser user = session.bySimpleNaturalId(FUser.class).load(username);
 
         FPunishment punishment = session.createSelectionQuery(
-                        "from FPunishment p where p.user = :user and p.rule <> 6 and p.active = true", FPunishment.class)
+                        "from FPunishment p where p.user = :user and p.active = true", FPunishment.class)
                 .setParameter("user", user)
                 .getSingleResultOrNull();
 
@@ -272,15 +268,31 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
     }
 
     @Transactional
+    public void punish_UwU(String username) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+
+        if (user.getDate_UwU() == null)
+            user.setDate_UwU(OffsetDateTime.now());
+    }
+
+    @Transactional
+    public void forgive_UwU(String username) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+
+        user.setDate_UwU(null);
+    }
+
+    @Transactional
     public boolean has_UwU(String username) {
         Session session = sessionFactory.getCurrentSession();
         FUser user = session.bySimpleNaturalId(FUser.class).load(username);
 
-        FPunishment punishment = session.createSelectionQuery(
-                        "from FPunishment p where p.user = :user and p.rule = 6 and p.active = true", FPunishment.class)
-                .setParameter("user", user)
-                .getSingleResultOrNull();
+        if (user.getDate_UwU() != null) {
+            return true;
+        }
 
-        return (punishment != null);
+        return false;
     }
 }

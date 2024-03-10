@@ -40,7 +40,10 @@ public class ForgiveController {
 
             for (String violation : violations) {
                 if (violation != null) {
-                    DAOService.try_forgive(username, cnt);
+                    if (cnt != 6)
+                        DAOService.try_forgive(username, cnt);
+                    else
+                        DAOService.forgive_UwU(username);
                 }
                 cnt++;
             }

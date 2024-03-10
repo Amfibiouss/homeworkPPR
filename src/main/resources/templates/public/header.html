@@ -72,9 +72,13 @@
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" id="userMenu"
-                       data-bs-toggle="dropdown" aria-expanded="false" style="padding-left:45%;">
+                       data-bs-toggle="dropdown" aria-expanded="false" style="padding-left:45%; position:relative;">
                         <img th:src="'/public/photo/' + ${@securityService.getUsername()}" width="50px" height="50px"
                              alt="ваша аватарка" style="margin-left=45%; border-radius:50%;">
+
+                        <img src = "/public_static/catmaid.jpg" alt="кошкогорничная" width="50px" height="50px"
+                             th:style="'position: absolute; z-index: 99; left:45%; border-radius:50%;
+                                        opacity: ' + ${@securityService.getUser().getDegreeUwU()} + ';'">
                     </a>
                     <div class="dropdown-menu" aria-labelledby="userMenu">
                         <a class="dropdown-item" th:href="@{'/public/profile/'+${@securityService.getUsername()}}">профиль</a>
@@ -113,9 +117,12 @@
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" id="adminMenu"
-                       data-bs-toggle="dropdown" aria-expanded="false" style="padding-left:45%;">
+                       data-bs-toggle="dropdown" aria-expanded="false" style="padding-left:45%;position:relative;">
                         <img th:src="'/public/photo/' + ${@securityService.getUsername()}" width="50px" height="50px"
                              alt="ваша аватарка" style="margin-left=45%; border-radius:50%;">
+                        <img src = "/public_static/catmaid.jpg" alt="кошкогорничная" width="50px" height="50px"
+                             th:style="'position: absolute; z-index: 99; left:45%; border-radius:50%;
+                                        opacity: ' + ${@securityService.getUser().getDegreeUwU()} + ';'">
                     </a>
                     <div class="dropdown-menu" aria-labelledby="adminMenu">
                         <a class="dropdown-item" th:href="@{'/public/profile/'+${@securityService.getUsername()}}">профиль</a>

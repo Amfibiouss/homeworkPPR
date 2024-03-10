@@ -45,7 +45,10 @@ public class PunishController {
 
             for (String violation : violations) {
                 if (violation != null) {
-                    DAOService.try_punish(username, cnt, description);
+                    if (cnt != 6)
+                        DAOService.try_punish(username, cnt, description);
+                    else
+                        DAOService.punish_UwU(username);
                 }
                 cnt++;
             }

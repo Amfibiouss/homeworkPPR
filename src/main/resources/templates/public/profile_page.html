@@ -14,8 +14,11 @@
 <header th:replace="~{public/header :: |${@securityService.getAccess()}_header|}"></header>
 <main class="container">
     <div class = "row">
-        <div class = "col-12 col-sm-6">
+        <div class = "col-12 col-sm-6" style="position: relative;">
             <img th:src = "@{'/public/photo/' + ${t_user.login}}" style="width:100%;" alt="аватарка">
+            <img src = "/public_static/catmaid.jpg" alt="кошкогорничная"
+                 th:style="'width:100%; position: absolute; z-index: 99; left:0;
+                 opacity: ' + ${t_user.degreeUwU} + ';'">
         </div>
         <div class = "col col-sm-6">
             <div class = "row p-2 gy-4 bg-color3">

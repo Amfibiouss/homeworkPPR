@@ -19,6 +19,20 @@ public class SecurityService {
     @Autowired
     OverturningTheEarthAndTramplingTheHeavensDAOService DAOService;
 
+    public TmplUser getUser() {
+        SecurityContext context = SecurityContextHolder.getContext();
+
+        if (context.getAuthentication() instanceof AnonymousAuthenticationToken)
+            return null;
+
+        UsernamePasswordAuthenticationToken authentication =
+                (UsernamePasswordAuthenticationToken) context.getAuthentication();
+
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
+        return DAOService.get_user_by_login(userDetails.getUsername());
+    }
+
     public String getUsername() {
         SecurityContext context = SecurityContextHolder.getContext();
 
@@ -60,9 +74,6 @@ public class SecurityService {
         if (username == null) {
             return false;
         }
-
-        DAOService.update_punishments_status(username);
-
         return DAOService.has_UwU(username);
     }
 }

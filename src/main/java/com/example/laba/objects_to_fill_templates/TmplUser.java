@@ -2,12 +2,16 @@ package com.example.laba.objects_to_fill_templates;
 
 import com.example.laba.entities.FUser;
 
+import java.time.OffsetDateTime;
+
 public class TmplUser {
     public long id;
     public String login;
     public boolean Admin;
+
     public String description;
     public String sex;
+    public double degreeUwU;
 
     public Long getId() {
         return id;
@@ -49,12 +53,21 @@ public class TmplUser {
         this.sex = sex;
     }
 
-    public TmplUser(FUser user) {
+    public double getDegreeUwU() {
+        return degreeUwU;
+    }
+
+    public void setDegreeUwU(double degreeUwU) {
+        this.degreeUwU = degreeUwU;
+    }
+
+    public TmplUser(FUser user, double degree) {
         this.Admin = user.getAdmin();
         this.login = user.getLogin();
         this.sex = user.getSex();
         this.description = user.getDescription();
         this.id = user.getId();
+        this.degreeUwU = degree;
     }
     public TmplUser(){}
 }

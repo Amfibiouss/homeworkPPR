@@ -2,6 +2,7 @@ package com.example.laba.entities;
 
 import jakarta.persistence.*;
 
+import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -24,6 +25,8 @@ public class FUser {
     private Boolean Admin;
     private String description;
     private String sex;
+    private OffsetDateTime date_UwU;
+
     @OneToMany(mappedBy="user")
     private Set<FPunishment> punishments = new HashSet<>();
 
@@ -99,6 +102,14 @@ public class FUser {
 
     public void setPunishments(Set<FPunishment> punishments) {
         this.punishments = punishments;
+    }
+
+    public OffsetDateTime getDate_UwU() {
+        return date_UwU;
+    }
+
+    public void setDate_UwU(OffsetDateTime date_UwU) {
+        this.date_UwU = date_UwU;
     }
 
     public FUser() {

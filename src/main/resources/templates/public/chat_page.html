@@ -34,9 +34,12 @@
         function getHtmlForArticle(mes) {
             var article_string = `
                 <article class="row py-2">
-                    <a class="col-auto" href="/public/profile/${mes.username}">
+                    <a class="col-auto" href="/public/profile/${mes.username}" style="position:relative;padding:0;">
                         <img src="/public/photo/${mes.username}" width="60" height="60"
                             alt="аватарка пользователя ${mes.username}">
+                        <img src="/public_static/catmaid.jpg" width="60" height="60"
+                            alt="кошкогорничная" style="position: absolute; z-index: 99; left:0; border-radius:50%;
+                            opacity: ${mes.opacity};">
                     </a>
                     <div class="col-sm col-xs-12">
                         <div>
