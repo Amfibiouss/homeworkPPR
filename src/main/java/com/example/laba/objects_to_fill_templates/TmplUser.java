@@ -12,6 +12,7 @@ public class TmplUser {
     public String description;
     public String sex;
     public double degreeUwU;
+    public  String email;
 
     public Long getId() {
         return id;
@@ -61,6 +62,14 @@ public class TmplUser {
         this.degreeUwU = degreeUwU;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public TmplUser(FUser user, double degree) {
         this.Admin = user.getAdmin();
         this.login = user.getLogin();
@@ -68,6 +77,7 @@ public class TmplUser {
         this.description = user.getDescription();
         this.id = user.getId();
         this.degreeUwU = degree;
+        this.email = user.getEmail();
     }
     public TmplUser(){}
 }

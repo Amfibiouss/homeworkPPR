@@ -1,4 +1,4 @@
-package com.example.laba;
+package com.example.laba.configs;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,7 +27,7 @@ public class SecurityConfig {
 
         http
                 .authorizeHttpRequests((authorize) -> authorize
-                        .requestMatchers("/public/**", "/", "/public_static/**", "/register").permitAll()
+                        .requestMatchers("/public/**", "/", "/public_static/**").permitAll()
                         .requestMatchers("/user/**").hasRole("USER")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

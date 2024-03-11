@@ -42,6 +42,18 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
     }
 
     @Transactional
+    public TmplUser get_user_by_email(String email) {
+        Session session = sessionFactory.getCurrentSession();
+
+        FUser user = session.createSelectionQuery(
+                "from FUser u where u.email=:email", FUser.class)
+                        .setParameter("email", email)
+                        .getSingleResult();
+
+        return new TmplUser(user, catMaidService.getUwUDegree(user.getDate_UwU()));
+    }
+
+    @Transactional
     public String get_password(String login) {
         Session session = sessionFactory.getCurrentSession();
         FUser user = session.bySimpleNaturalId(FUser.class).load(login);
@@ -106,12 +118,21 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
     }
 
     @Transactional
-    public void add_user(String username, String password, boolean admin) {
+    public void update_password(String username, String password) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+
+        user.setPassword(password);
+    }
+
+    @Transactional
+    public void add_user(String username, String password, String email, String sex, boolean admin) {
         FUser user = new FUser();
         user.setLogin(username);
         user.setPassword(password);
         user.setAdmin(admin);
-        user.setSex("мужской");
+        user.setSex(sex);
+        user.setEmail(email);
 
         Session session = sessionFactory.getCurrentSession();
         session.persist(user);
@@ -289,10 +310,7 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
         Session session = sessionFactory.getCurrentSession();
         FUser user = session.bySimpleNaturalId(FUser.class).load(username);
 
-        if (user.getDate_UwU() != null) {
-            return true;
-        }
 
-        return false;
+        return user.getDate_UwU() != null;
     }
 }

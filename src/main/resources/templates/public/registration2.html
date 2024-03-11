@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>форум</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel=stylesheet type="text/css" href="/public_static/css/bootstrap.css">
+    <link rel=stylesheet type="text/css" href="/public_static/white_theme.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/public_static/js/bootstrap.bundle.js"></script>
+</head>
+<body>
+<header th:replace="~{public/header :: |${@securityService.getAccess()}_header|}"></header>
+<main class="container">
+    <div class="row justify-content-center">
+        <form class="col-auto bg-color2 mt-5 p-3" th:action="@{/public/register/2}" method="post">
+            <div th:if="${param.error}!=null" class="form-text mb-3 text-danger">
+                <span th:text="${param.error}"></span>
+            </div>
+            <label for="secret">Введите секретную строку, отправленную вам на почту.</label>
+            <input class="form-control mb-3 bg-color1" type="text" name="secret" id="secret" required/>
+            <input class="btn btn-primary mb-3" type="submit" value="Подтвердить"/>
+        </form>
+    </div>
+</main>
+<footer th:replace="~{public/footer :: footer}"></footer>
+</body>

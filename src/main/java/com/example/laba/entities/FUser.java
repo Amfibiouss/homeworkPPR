@@ -26,6 +26,7 @@ public class FUser {
     private String description;
     private String sex;
     private OffsetDateTime date_UwU;
+    private String email;
 
     @OneToMany(mappedBy="user")
     private Set<FPunishment> punishments = new HashSet<>();
@@ -110,6 +111,14 @@ public class FUser {
 
     public void setDate_UwU(OffsetDateTime date_UwU) {
         this.date_UwU = date_UwU;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public FUser() {

@@ -1,4 +1,4 @@
-package com.example.laba;
+package com.example.laba.configs;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
