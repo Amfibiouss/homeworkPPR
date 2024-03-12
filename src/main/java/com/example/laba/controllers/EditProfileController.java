@@ -2,6 +2,7 @@ package com.example.laba.controllers;
 
 import com.example.laba.entities.FUser;
 import com.example.laba.objects_to_fill_templates.TmplUser;
+import com.example.laba.services.HandleImageService;
 import com.example.laba.services.OverturningTheEarthAndTramplingTheHeavensDAOService;
 import com.example.laba.services.SecurityService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,6 +24,9 @@ public class EditProfileController {
     OverturningTheEarthAndTramplingTheHeavensDAOService DAOService;
     @Autowired
     SecurityService securityService;
+
+    @Autowired
+    HandleImageService handleImageService;
 
     @GetMapping("/user/edit_profile")
     String get_form_for_edit_profile(Model model) {
@@ -47,7 +51,7 @@ public class EditProfileController {
         byte[] photo = {};
         if (!file.isEmpty()) {
             try {
-                photo = file.getBytes();
+                photo = handleImageService.cropping_scaling(file.getBytes());
             } catch (IOException e) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "error during file processing");
             }

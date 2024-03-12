@@ -1,0 +1,46 @@
+package com.example.laba.services;
+
+import org.springframework.stereotype.Component;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
+import static java.lang.Math.abs;
+
+@Component
+public class HandleImageService {
+
+    public byte[] cropping_scaling(byte[] photo) throws IOException {
+
+
+        BufferedImage image = ImageIO.read(new ByteArrayInputStream(photo));
+
+        int width = image.getWidth();
+        int height = image.getHeight();
+        int diff = abs(width - height);
+
+        if (width > height) {
+            image = image.getSubimage(diff/2, 0, width - diff, height);
+        } else {
+            image = image.getSubimage(0, diff/2, width, height - diff);
+        }
+
+        if (image.getWidth() > 480) {
+            Image result = image.getScaledInstance(480, 480, Image.SCALE_DEFAULT);
+            BufferedImage outputImage = new BufferedImage(480, 480, BufferedImage.TYPE_INT_RGB);
+            outputImage.getGraphics().drawImage(result, 0, 0, null);
+            image = outputImage;
+        }
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        ImageIO.write(image, "jpg", out);
+
+        return out.toByteArray();
+    }
+
+}

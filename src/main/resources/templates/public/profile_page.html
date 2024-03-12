@@ -14,7 +14,7 @@
 <header th:replace="~{public/header :: |${@securityService.getAccess()}_header|}"></header>
 <main class="container">
     <div class = "row">
-        <div class = "col-12 col-sm-6" style="position: relative;">
+        <div class = "col-12 col-sm-6" style="position: relative; padding:0;">
             <img th:src = "@{'/public/photo/' + ${t_user.login}}" style="width:100%;" alt="аватарка">
             <img src = "/public_static/catmaid.jpg" alt="кошкогорничная"
                  th:style="'width:100%; position: absolute; z-index: 99; left:0;

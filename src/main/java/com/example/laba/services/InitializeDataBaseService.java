@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.PersistenceUnit;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -20,8 +21,13 @@ import java.util.HashSet;
 
 @Component
 public class InitializeDataBaseService {
+
+    @Autowired
+    HandleImageService handleImageService;
+
     @PersistenceUnit
     SessionFactory sessionFactory;
+
     @Transactional
     public void initialize() throws IOException {
         String[] login = {"Holmes", "Watson", "Stamford", "Admin"};
@@ -51,7 +57,7 @@ public class InitializeDataBaseService {
             }
 
             user.setLogin(login[i]);
-            user.setPhoto(photo);
+            user.setPhoto(handleImageService.cropping_scaling(photo));
             user.setPassword(password[i]);
             user.setAdmin(admin[i]);
             user.setSex(sex[i]);
