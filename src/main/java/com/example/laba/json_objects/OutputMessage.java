@@ -2,6 +2,7 @@ package com.example.laba.json_objects;
 
 public class OutputMessage {
     public String username;
+
     public String text;
     public double opacity;
 

@@ -2,6 +2,7 @@ package com.example.laba.entities;
 
 import jakarta.persistence.*;
 
+import java.time.OffsetDateTime;
 import java.util.Objects;
 
 import static jakarta.persistence.FetchType.LAZY;
@@ -17,6 +18,7 @@ public class FMessage {
     private FSection section;
     @Column(length=10000)
     private String text;
+    private OffsetDateTime date;
 
     @Override
     public boolean equals(Object o) {
@@ -61,6 +63,14 @@ public class FMessage {
 
     public void setText(String text) {
         this.text = text;
+    }
+
+    public OffsetDateTime getDate() {
+        return date;
+    }
+
+    public void setDate(OffsetDateTime date) {
+        this.date = date;
     }
 
     public FMessage() {

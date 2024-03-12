@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -182,6 +183,7 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
         if (section == null)
             throw new ServiceException("the section_id don't exist.");
 
+        new_message.setDate(OffsetDateTime.now());
         new_message.setSection(section);
         new_message.setUser(user);
 
@@ -312,5 +314,37 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
 
 
         return user.getDate_UwU() != null;
+    }
+
+    @Transactional
+    public boolean too_much_messages(String username) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+
+        List<FMessage> messages = session.createSelectionQuery(
+                        "from FMessage m where m.user = :user and m.date > :date order by m.date desc",
+                        FMessage.class)
+                .setParameter("user", user)
+                .setParameter("date", OffsetDateTime.now().minusSeconds(5))
+                .getResultList();
+
+        if (messages.isEmpty())
+            return false;
+
+        if (messages.size() >= 5) {
+            return true;
+        }
+
+        long sum = 0;
+
+        for (FMessage message: messages) {
+            sum += message.getText().length();
+        }
+
+        if (messages.size() > 1 && sum * 1.0 / 5 > 50) {
+            return true;
+        }
+
+        return false;
     }
 }

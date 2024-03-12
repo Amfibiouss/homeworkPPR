@@ -57,6 +57,18 @@
             elem.innerHTML = elem.innerHTML + getHtmlForArticle(JSON.parse(messageOutput.body));
         }
 
+        function receiveAnnouncementCallback(messageOutput) {
+            var announcement_string = `
+                <article class="row py-2">
+                    <div class="col-sm col-xs-12 text-danger" style="font-size:1.25rem;">
+                        <div>Вы отправили слишком много текста в слишком короткий промежуток времени</div>
+                    </div>
+                </article>`;
+
+            var elem = document.getElementById('articles');
+            elem.innerHTML = elem.innerHTML + announcement_string;
+        }
+
         function connectCallback(frame) {
             fetch('/public/chat/get_messages/' + section_id.value, {
                 headers: {
@@ -78,11 +90,13 @@
                     var elem = document.getElementById('articles');
                     elem.innerHTML = string_articles;
                 });
+
+                stompClient.subscribe('/topic/messages/' + section_id.value, receiveCallback);
+
+                stompClient.subscribe('/topic/user/' + username.value, receiveAnnouncementCallback);
             }).catch(function(err) {
                 console.log('Fetch Error :-S', err);
             });
-
-            stompClient.subscribe('/topic/messages/' + section_id.value, receiveCallback);
         }
 
         function connect() {
@@ -123,6 +137,10 @@
                        name = "section_id"
                        th:value="${section_id}"
                        id = "section_id"/>
+                <input type="hidden"
+                       name = "username"
+                       th:value="${@securityService.getUsername()}"
+                       id = "username"/>
                 <div class="col-11">
                     <textarea class="form-control" rows="3" name="text" id="text"></textarea>
                 </div>
