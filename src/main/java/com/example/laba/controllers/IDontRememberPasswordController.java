@@ -87,7 +87,7 @@ public class IDontRememberPasswordController {
 
             helper.setText("<div style=\"text-align:center;\"><div> Здраствуйте, " + username
                     + "! После подтверждения вашим новым паролем будет: " + password +
-                    ". Ваш код для восстановления логина и пароля:</div><div style=\"font-size:1.5rem;\">"
+                    ". Ваш код для восстановления пароля:</div><div style=\"font-size:1.5rem;\">"
                     + random_string + "</div></div>", true);
             helper.setFrom("ffffforum@yandex.ru");
             helper.setSubject("Код для восстановления пароля на сайте FFFFFORUM");
@@ -105,6 +105,7 @@ public class IDontRememberPasswordController {
         session.setAttribute("random_string", random_string);
         session.setAttribute("password", password);
         session.setAttribute("username", username);
+        session.setAttribute("email", email);
 
         response.setHeader("Location", "/public/i_dont_remember_password/2");
         response.setStatus(302);
@@ -116,21 +117,42 @@ public class IDontRememberPasswordController {
                                         @RequestParam String secret) {
 
         HttpSession session = request.getSession();
+
         String random_string = (String) session.getAttribute("random_string");
         String password = (String) session.getAttribute("password");
-        String username = (String) session.getAttribute("username");
         session.setAttribute("random_string", null);
         session.setAttribute("password", null);
 
         if (!Objects.equals(random_string, secret)) {
-            response.setHeader("Location", "/public/register/finish?error="
+            response.setHeader("Location", "/public/i_dont_remember_password/2?error="
                     + URLEncoder.encode("Секретная строка другая.", StandardCharsets.UTF_8));
             response.setStatus(302);
             return;
         }
 
-        DAOService.update_password(username, password);
+        String username = (String) session.getAttribute("username");
+        String email = (String) session.getAttribute("email");
 
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+            helper.setTo(email);
+
+            helper.setText("<div style=\"text-align:center;\"><div> Здраствуйте, " + username + "! " +
+                    " Поздравляем с успешным восстановлением доступа к аккаунту. </div>", true);
+
+            helper.setFrom("ffffforum@yandex.ru");
+            helper.setSubject("Вы успешно восстановили пароль на сайте FFFFFORUM");
+
+            mailSender.send(mimeMessage);
+        } catch (Exception e) {
+            response.setHeader("Location", "/public/i_dont_remember_password/2?error="
+                    + URLEncoder.encode("Не удалось отправить письмо на данную почту.", StandardCharsets.UTF_8));
+            response.setStatus(302);
+            return;
+        }
+
+        DAOService.update_password(username, password);
 
         response.setHeader("Location", "/public/i_dont_remember_password/3");
         response.setStatus(302);

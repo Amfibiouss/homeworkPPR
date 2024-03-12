@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 @Controller
-public class LoudPhotoController {
+public class LoadPhotoController {
 
     @Autowired
     OverturningTheEarthAndTramplingTheHeavensDAOService DAOService;

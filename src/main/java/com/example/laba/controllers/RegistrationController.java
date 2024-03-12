@@ -134,8 +134,28 @@ public class RegistrationController {
         }
 
         String username = (String) session.getAttribute("username");
-        String password = (String) session.getAttribute("password");
         String email = (String) session.getAttribute("email");
+
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+            helper.setTo(email);
+
+            helper.setText("<div style=\"text-align:center;\"><div> Здраствуйте, " + username + "! " +
+                    " Поздравляем с успешной регистрацией на нашем сайте. </div>", true);
+
+            helper.setFrom("ffffforum@yandex.ru");
+            helper.setSubject("Вы успешно зарегестрировались на сайте FFFFFORUM");
+
+            mailSender.send(mimeMessage);
+        } catch (Exception e) {
+            response.setHeader("Location", "/public/register/2?error="
+                    + URLEncoder.encode("Не удалось отправить письмо на данную почту.", StandardCharsets.UTF_8));
+            response.setStatus(302);
+            return;
+        }
+
+        String password = (String) session.getAttribute("password");
         String sex = (String) session.getAttribute("sex");
         session.setAttribute("random_string", null);
         session.setAttribute("password", null);
