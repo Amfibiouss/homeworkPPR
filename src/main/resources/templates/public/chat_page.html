@@ -94,17 +94,17 @@
                 stompClient.subscribe('/topic/messages/' + section_id.value, receiveCallback);
 
                 stompClient.subscribe('/topic/user/' + username.value, receiveAnnouncementCallback);
+
+                if (!document.getElementById('guestMenu')) {
+                    document.getElementById('form_wrapper').style.visibility='visible';
+                }
             }).catch(function(err) {
                 console.log('Fetch Error :-S', err);
             });
+
         }
 
         function connect() {
-
-            if (!document.getElementById('guestMenu')) {
-                document.getElementById('form_wrapper').style.visibility='visible';
-            }
-
             var socket = new SockJS('/public/stomp/chat');
             stompClient = Stomp.over(socket);
             stompClient.connect({}, connectCallback, errorCallback);

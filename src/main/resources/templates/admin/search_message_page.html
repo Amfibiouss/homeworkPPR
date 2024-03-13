@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>форум</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel=stylesheet type="text/css" href="/public_static/css/bootstrap.css">
+    <link rel=stylesheet type="text/css" href="/public_static/white_theme.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/public_static/js/bootstrap.bundle.js"></script>
+</head>
+<body>
+<header th:replace="~{public/header :: |${@securityService.getAccess()}_header|}"></header>
+<main class="container">
+
+    <h6 th:text="'Сообщения пользователя ' + ${t_user.login}"></h6>
+
+    <div style = "overflow-wrap: break-word;">
+        <article th:each="mes : ${messages}" class="depends-of-parity p-2">
+            <p th:text="'Id: ' + ${mes.id}"></p>
+            <p th:text="'Раздел: ' + ${mes.section}"></p>
+            <p th:text="'Дата: ' + ${mes.date}"></p>
+            <p th:text="'Текст: ' + ${mes.text}"></p>
+        </article>
+    </div>
+    <div>
+        <span th:each="page : ${pages}">
+            <a th:href = "'/admin/search_message/' + ${t_user.login} + '/' + ${page}" th:text="${page}"></a>
+        </span>
+    </div>
+</main>
+<footer th:replace="~{public/footer :: footer}"></footer>
+</body>

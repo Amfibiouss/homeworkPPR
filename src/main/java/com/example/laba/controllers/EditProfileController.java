@@ -11,12 +11,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.util.Objects;
 
 @Controller
 public class EditProfileController {
@@ -28,12 +30,19 @@ public class EditProfileController {
     @Autowired
     HandleImageService handleImageService;
 
-    @GetMapping("/user/edit_profile")
-    String get_form_for_edit_profile(Model model) {
+    @GetMapping("/user/edit_profile/{username}")
+    String get_form_for_edit_profile(@PathVariable String username,
+                                     Model model) {
+
+        if (!Objects.equals(securityService.getUsername(), username)
+                && !Objects.equals(securityService.getAccess(), "admin")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "you can`t edit the profile of " + username);
+        }
+
         TmplUser user;
 
         try {
-            user = DAOService.get_user_by_login(securityService.getUsername());
+            user = DAOService.get_user_by_login(username);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the user_id don't exist.");
         }
@@ -43,11 +52,19 @@ public class EditProfileController {
         return "user/edit_profile";
     }
 
-    @PostMapping("/user/edit_profile")
+    @PostMapping("/user/edit_profile/{username}")
     void edit_profile(@RequestParam String sex,
                       @RequestParam String description,
                       @RequestParam MultipartFile file,
+                      @PathVariable String username,
                       HttpServletResponse response) {
+
+        if (!Objects.equals(securityService.getUsername(), username)
+                && !Objects.equals(securityService.getAccess(), "admin")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "you can`t edit the profile of " + username);
+        }
+
+
         byte[] photo = {};
         if (!file.isEmpty()) {
             try {
@@ -57,10 +74,10 @@ public class EditProfileController {
             }
         }
 
-        DAOService.update_user(securityService.getUsername(),
+        DAOService.update_user(username,
                 (sex.equals("male"))? "мужской" : "женский", description, photo);
 
-        response.setHeader("Location", "/public/profile/" + securityService.getUsername());
+        response.setHeader("Location", "/public/profile/" + username);
         response.setStatus(302);
     }
 }

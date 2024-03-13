@@ -5,6 +5,7 @@ import com.example.laba.entities.FPunishment;
 import com.example.laba.entities.FSection;
 import com.example.laba.entities.FUser;
 import com.example.laba.json_objects.OutputMessage;
+import com.example.laba.objects_to_fill_templates.TmplMessage;
 import com.example.laba.objects_to_fill_templates.TmplPunishment;
 import com.example.laba.objects_to_fill_templates.TmplSection;
 import com.example.laba.objects_to_fill_templates.TmplUser;
@@ -17,7 +18,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -74,6 +74,38 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
             throw new ServiceException("the user_id don't exist.");
 
         return user.getPhoto();
+    }
+
+    @Transactional
+    public List<TmplMessage> get_messages_of_user(String username, long offset, long limit) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+
+        if (user == null)
+            throw new ServiceException("the user don't exist.");
+
+        List <FMessage> messages =
+                session.createSelectionQuery("from FMessage m join fetch m.section where m.user = :user order by m.id limit :limit offset :offset", FMessage.class)
+                        .setParameter("user", user)
+                        .setParameter("offset", offset)
+                        .setParameter("limit", limit)
+                        .getResultList();
+
+        List<TmplMessage> result = new ArrayList<>();
+
+        for (FMessage message : messages) {
+            TmplMessage tmplMessage = new TmplMessage();
+
+            tmplMessage.setId(message.getId());
+            tmplMessage.setUsername(username);
+            tmplMessage.setText(message.getText());
+            tmplMessage.setSection(message.getSection().getId());
+            tmplMessage.setDate(message.getDate());
+
+            result.add(tmplMessage);
+        }
+
+        return result;
     }
 
     @Transactional
@@ -146,8 +178,10 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
         user.setSex(sex);
         user.setDescription(description);
 
-        if (photo.length > 0)
+        if (photo.length > 0) {
             user.setPhoto(photo);
+            user.setPhoto_eTag(System.currentTimeMillis());
+        }
     }
 
     @Transactional
@@ -341,10 +375,12 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
             sum += message.getText().length();
         }
 
-        if (messages.size() > 1 && sum * 1.0 / 5 > 50) {
-            return true;
-        }
+        return messages.size() > 1 && sum * 1.0 / 5 > 50;
+    }
 
-        return false;
+    @Transactional
+    public long get_eTag(String username) {
+        Session session = sessionFactory.getCurrentSession();
+        return session.bySimpleNaturalId(FUser.class).load(username).getPhoto_eTag();
     }
 }

@@ -77,7 +77,7 @@ public class IDontRememberPasswordController {
         }
 
         String random_string = BCrypt.hashpw(
-                System.currentTimeMillis() + email,
+                System.currentTimeMillis() + email + password,
                 BCrypt.gensalt());
 
         try {

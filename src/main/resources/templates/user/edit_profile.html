@@ -13,7 +13,7 @@
 <header th:replace="~{public/header :: |${@securityService.getAccess()}_header|}"></header>
 <main class="container">
     <div class="row justify-content-center">
-        <form class="col-auto bg-color2 mt-5 p-3" th:action="@{/user/edit_profile}"
+        <form class="col-auto bg-color2 mt-5 p-3" th:action="'/user/edit_profile/' + ${t_user.login}"
               method="post" enctype="multipart/form-data">
             <div class="row">
                 <label class="col-auto mb-3">

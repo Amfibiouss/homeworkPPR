@@ -21,7 +21,9 @@ public class FUser {
     private String login;
     private String password;
     @Column(length=LONG32, columnDefinition="BLOB")
+    @Basic(fetch=FetchType.LAZY)
     private byte[] photo;
+    long photo_eTag;
     private Boolean Admin;
     private String description;
     private String sex;
@@ -119,6 +121,14 @@ public class FUser {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public long getPhoto_eTag() {
+        return photo_eTag;
+    }
+
+    public void setPhoto_eTag(long photo_eTag) {
+        this.photo_eTag = photo_eTag;
     }
 
     public FUser() {

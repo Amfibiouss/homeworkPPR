@@ -35,9 +35,15 @@
                     <span th:text="${t_user.description}"></span>
                 </section>
 
-                <div th:if = "${t_user.login} == ${@securityService.getUsername()}" class="col-auto bg-color2">
-                    <a th:href = "@{/user/edit_profile}" style="text-decoration:none;">
+                <div th:if = "${t_user.login} == ${@securityService.getUsername()} or ${@securityService.getAccess()} == 'admin'" class="col-auto bg-color2">
+                    <a th:href = "'/user/edit_profile/' + ${t_user.login}" style="text-decoration:none;">
                         Редактировать
+                    </a>
+                </div>
+
+                <div th:if = "${@securityService.getAccess()} == 'admin'" class="col-auto bg-color2">
+                    <a th:href = "'/admin/search_message/' + ${t_user.login} + '/1'" style="text-decoration:none;">
+                        Просмотреть сообщения пользователя
                     </a>
                 </div>
 
