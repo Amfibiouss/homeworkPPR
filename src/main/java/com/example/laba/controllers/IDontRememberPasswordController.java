@@ -102,10 +102,10 @@ public class IDontRememberPasswordController {
         }
 
         HttpSession session = request.getSession();
-        session.setAttribute("random_string", random_string);
-        session.setAttribute("password", password);
-        session.setAttribute("username", username);
-        session.setAttribute("email", email);
+        session.setAttribute("random_string", new StringBuffer(random_string));
+        session.setAttribute("password",  new StringBuffer(BCrypt.hashpw(password, BCrypt.gensalt())));
+        session.setAttribute("username",  new StringBuffer(username));
+        session.setAttribute("email",  new StringBuffer(email));
 
         response.setHeader("Location", "/public/i_dont_remember_password/2");
         response.setStatus(302);
@@ -118,8 +118,8 @@ public class IDontRememberPasswordController {
 
         HttpSession session = request.getSession();
 
-        String random_string = (String) session.getAttribute("random_string");
-        String password = (String) session.getAttribute("password");
+        String random_string =  new String((StringBuffer) session.getAttribute("random_string"));
+        String password =  new String((StringBuffer) session.getAttribute("password"));
         session.setAttribute("random_string", null);
         session.setAttribute("password", null);
 
@@ -130,8 +130,8 @@ public class IDontRememberPasswordController {
             return;
         }
 
-        String username = (String) session.getAttribute("username");
-        String email = (String) session.getAttribute("email");
+        String username = new String((StringBuffer) session.getAttribute("username"));
+        String email =  new String((StringBuffer) session.getAttribute("email"));
 
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();

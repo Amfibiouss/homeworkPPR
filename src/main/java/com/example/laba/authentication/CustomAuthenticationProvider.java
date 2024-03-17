@@ -8,6 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
@@ -33,7 +34,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         try {
             detailsFromDAO = userDetailsService.loadUserByUsername(username);
 
-            if (!Objects.equals(detailsFromDAO.getPassword(), password))
+            if (!BCrypt.checkpw(password, detailsFromDAO.getPassword()))
                 throw new BadCredentialsException("invalid username or password");
 
         } catch (UsernameNotFoundException e) {

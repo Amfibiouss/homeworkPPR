@@ -108,11 +108,11 @@ public class RegistrationController {
 
         HttpSession session = request.getSession();
 
-        session.setAttribute("random_string", random_string);
-        session.setAttribute("username", username);
-        session.setAttribute("password", password);
-        session.setAttribute("email", email);
-        session.setAttribute("sex", sex);
+        session.setAttribute("random_string", new StringBuffer(random_string));
+        session.setAttribute("username", new StringBuffer(username));
+        session.setAttribute("password", new StringBuffer(BCrypt.hashpw(password, BCrypt.gensalt())));
+        session.setAttribute("email", new StringBuffer(email));
+        session.setAttribute("sex", new StringBuffer(sex));
 
         response.setHeader("Location", "/public/register/2");
         response.setStatus(302);
@@ -124,7 +124,7 @@ public class RegistrationController {
 
         HttpSession session = request.getSession();
 
-        String random_string = (String) session.getAttribute("random_string");
+        String random_string =  new String((StringBuffer) session.getAttribute("random_string"));
 
         if (!Objects.equals(random_string, secret)) {
             response.setHeader("Location", "/public/register/2?error="
@@ -133,8 +133,8 @@ public class RegistrationController {
             return;
         }
 
-        String username = (String) session.getAttribute("username");
-        String email = (String) session.getAttribute("email");
+        String username = new String((StringBuffer) session.getAttribute("username"));
+        String email = new String((StringBuffer)  session.getAttribute("email"));
 
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
@@ -155,8 +155,8 @@ public class RegistrationController {
             return;
         }
 
-        String password = (String) session.getAttribute("password");
-        String sex = (String) session.getAttribute("sex");
+        String password = new String((StringBuffer) session.getAttribute("password"));
+        String sex = new String((StringBuffer) session.getAttribute("sex"));
         session.setAttribute("random_string", null);
         session.setAttribute("password", null);
 

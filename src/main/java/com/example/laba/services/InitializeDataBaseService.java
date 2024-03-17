@@ -12,6 +12,7 @@ import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,7 +62,7 @@ public class InitializeDataBaseService {
 
             user.setLogin(login[i]);
             user.setPhoto(handleImageService.cropping_scaling(photo));
-            user.setPassword(password[i]);
+            user.setPassword(BCrypt.hashpw(password[i], BCrypt.gensalt()));
             user.setAdmin(admin[i]);
             user.setSex(sex[i]);
             user.setDescription(description[i]);
