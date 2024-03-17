@@ -1,9 +1,11 @@
 package com.example.laba.objects_to_fill_templates;
 
-public class TmplSection {
+public class TmplRoom {
     public long id;
     public String creator;
+
     public String name;
+
     public String description;
 
     public long getId() {
@@ -38,12 +40,12 @@ public class TmplSection {
         this.description = description;
     }
 
-    public TmplSection(long id, String creator, String name, String description) {
+    public TmplRoom(long id, String creator, String name, String description) {
         this.id = id;
         this.creator = creator;
         this.name = name;
         this.description = description;
     }
 
-    public TmplSection () {}
+    public TmplRoom() {}
 }

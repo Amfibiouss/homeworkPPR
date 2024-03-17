@@ -1,7 +1,8 @@
 package com.example.laba.services;
 
 import com.example.laba.entities.FMessage;
-import com.example.laba.entities.FSection;
+import com.example.laba.entities.FChannel;
+import com.example.laba.entities.FRoom;
 import com.example.laba.entities.FUser;
 import com.example.laba.json_objects.OutputMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,7 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.channels.Channel;
 import java.util.HashSet;
+import java.util.List;
 
 @Component
 public class InitializeDataBaseService {
@@ -66,12 +69,30 @@ public class InitializeDataBaseService {
         }
 
         for (int i = 1; i <= 4; i++) {
-            FSection section = new FSection();
-            section.setName("Этюд в багровых тонах");
-            section.setDescription("Повесть Артура Конан Дойла 'Этюд в багровых тонах'");
-            section.setCreator(session.get(FUser.class, i));
-            section.setMessages(new HashSet<>());
-            session.persist(section);
+            FRoom room = new FRoom();
+            room.setName("Этюд в багровых тонах");
+            room.setDescription("Повесть Артура Конан Дойла 'Этюд в багровых тонах'");
+            room.setCreator(session.get(FUser.class, i));
+            room.setStatus("not started");
+
+            FChannel channel_lobby = new FChannel();
+            channel_lobby.setName("лобби");
+            session.persist(channel_lobby);
+
+            FChannel channel_players = new FChannel();
+            channel_players.setName("игроки");
+            session.persist(channel_players);
+
+            FChannel channel_help = new FChannel();
+            channel_help.setName("помощь");
+            session.persist(channel_help);
+
+            room.addChannel(channel_lobby);
+            room.addChannel(channel_players);
+            room.addChannel(channel_help);
+
+
+            session.persist(room);
         }
 
         Resource chat = new ClassPathResource("static/chat.json");
@@ -80,7 +101,7 @@ public class InitializeDataBaseService {
 
         for (OutputMessage message : messages) {
             FMessage mes = new FMessage();
-            mes.setSection(session.getReference(FSection.class, 1));
+            mes.setChannel(session.getReference(FChannel.class, 1));
             mes.setText(message.text);
             mes.setUser(session.bySimpleNaturalId(FUser.class).load(message.username));
             session.persist(mes);

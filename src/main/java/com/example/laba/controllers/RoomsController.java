@@ -1,6 +1,6 @@
 package com.example.laba.controllers;
 
-import com.example.laba.objects_to_fill_templates.TmplSection;
+import com.example.laba.objects_to_fill_templates.TmplRoom;
 import com.example.laba.services.OverturningTheEarthAndTramplingTheHeavensDAOService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -10,18 +10,18 @@ import org.springframework.web.bind.annotation.GetMapping;
 import java.util.List;
 
 @Controller
-public class SectionsController {
+public class RoomsController {
     @Autowired
     OverturningTheEarthAndTramplingTheHeavensDAOService DAOService;
 
-    @GetMapping({"/public/sections", "/"})
-    String get_section(Model model) {
+    @GetMapping({"/public/rooms", "/"})
+    String get_rooms(Model model) {
 
-        List<TmplSection> sections = DAOService.get_sections();
+        List<TmplRoom> rooms = DAOService.get_rooms();
 
-        model.addAttribute("sections", sections);
+        model.addAttribute("rooms", rooms);
 
-        return "public/sections_page";
+        return "public/rooms_page";
     }
 }
 

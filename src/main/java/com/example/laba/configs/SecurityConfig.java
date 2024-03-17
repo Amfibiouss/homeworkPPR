@@ -34,7 +34,7 @@ public class SecurityConfig {
                 )
                 .formLogin(formLogin -> formLogin
                         .loginPage("/public/login")
-                        .defaultSuccessUrl("/public/sections", true)
+                        .defaultSuccessUrl("/public/rooms", true)
                         .failureHandler(handler)
                         .permitAll())
                 .logout(logout -> logout

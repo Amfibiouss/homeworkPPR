@@ -15,7 +15,7 @@ public class FMessage {
     @ManyToOne(fetch=LAZY)
     private FUser user;
     @ManyToOne(fetch=LAZY)
-    private FSection section;
+    private FChannel channel;
     @Column(length=10000)
     private String text;
     private OffsetDateTime date;
@@ -24,7 +24,7 @@ public class FMessage {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof FMessage message)) return false;
-        return Objects.equals(id, message.id);
+        return Objects.equals(id, message.getId());
     }
 
     @Override
@@ -32,12 +32,12 @@ public class FMessage {
         return Objects.hash(id);
     }
 
-    public FSection getSection() {
-        return section;
+    public FChannel getChannel() {
+        return channel;
     }
 
-    public void setSection(FSection section) {
-        this.section = section;
+    public void setChannel(FChannel section) {
+        this.channel = section;
         section.getMessages().add(this);
     }
 

@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.hibernate.annotations.NaturalId;
 
+import static jakarta.persistence.FetchType.LAZY;
 import static org.hibernate.Length.LONG32;
 
 @Entity
@@ -29,6 +30,9 @@ public class FUser {
     private String sex;
     private OffsetDateTime date_UwU;
     private String email;
+    @ManyToOne(fetch=LAZY)
+    FRoom room;
+
 
     @OneToMany(mappedBy="user")
     private Set<FPunishment> punishments = new HashSet<>();
@@ -37,7 +41,7 @@ public class FUser {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof FUser fUser)) return false;
-        return Objects.equals(id, fUser.id);
+        return Objects.equals(id, fUser.getId());
     }
 
     @Override
@@ -129,6 +133,14 @@ public class FUser {
 
     public void setPhoto_eTag(long photo_eTag) {
         this.photo_eTag = photo_eTag;
+    }
+
+    public FRoom getRoom() {
+        return room;
+    }
+
+    public void setRoom(FRoom room) {
+        this.room = room;
     }
 
     public FUser() {

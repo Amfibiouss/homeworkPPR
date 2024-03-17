@@ -22,7 +22,7 @@ public class FPunishment {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof FPunishment that)) return false;
-        return Objects.equals(id, that.id);
+        return Objects.equals(id, that.getId());
     }
 
     @Override

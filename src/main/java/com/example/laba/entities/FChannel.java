@@ -1,31 +1,30 @@
 package com.example.laba.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.NaturalId;
 
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import static jakarta.persistence.FetchType.EAGER;
 import static jakarta.persistence.FetchType.LAZY;
 
 @Entity
-public class FSection {
+public class FChannel {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    @OneToMany(mappedBy="section")
+    private String name;
+    @OneToMany(mappedBy="channel")
     private Set<FMessage> messages = new HashSet<>();
     @ManyToOne(fetch=LAZY)
-    private FUser creator;
-    private String name;
-    private String description;
+    FRoom room;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof FSection section)) return false;
-        return Objects.equals(id, section.id);
+        if (!(o instanceof FChannel section)) return false;
+        return Objects.equals(id, section.getId());
     }
 
     @Override
@@ -49,14 +48,6 @@ public class FSection {
         this.messages = messages;
     }
 
-    public FUser getCreator() {
-        return creator;
-    }
-
-    public void setCreator(FUser creator) {
-        this.creator = creator;
-    }
-
     public String getName() {
         return name;
     }
@@ -65,13 +56,13 @@ public class FSection {
         this.name = name;
     }
 
-    public String getDescription() {
-        return description;
+    public FRoom getRoom() {
+        return room;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setRoom(FRoom room) {
+        this.room = room;
     }
 
-    public FSection() {}
+    public FChannel() {}
 }

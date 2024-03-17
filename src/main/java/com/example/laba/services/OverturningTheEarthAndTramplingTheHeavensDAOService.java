@@ -1,13 +1,11 @@
 package com.example.laba.services;
 
-import com.example.laba.entities.FMessage;
-import com.example.laba.entities.FPunishment;
-import com.example.laba.entities.FSection;
-import com.example.laba.entities.FUser;
+import com.example.laba.entities.*;
+import com.example.laba.json_objects.InputRoom;
 import com.example.laba.json_objects.OutputMessage;
 import com.example.laba.objects_to_fill_templates.TmplMessage;
 import com.example.laba.objects_to_fill_templates.TmplPunishment;
-import com.example.laba.objects_to_fill_templates.TmplSection;
+import com.example.laba.objects_to_fill_templates.TmplRoom;
 import com.example.laba.objects_to_fill_templates.TmplUser;
 import jakarta.persistence.PersistenceUnit;
 import org.hibernate.Session;
@@ -18,9 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 @Component
 public class OverturningTheEarthAndTramplingTheHeavensDAOService {
@@ -85,7 +81,7 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
             throw new ServiceException("the user don't exist.");
 
         List <FMessage> messages =
-                session.createSelectionQuery("from FMessage m join fetch m.section where m.user = :user order by m.id limit :limit offset :offset", FMessage.class)
+                session.createSelectionQuery("from FMessage m join fetch m.channel where m.user = :user order by m.id limit :limit offset :offset", FMessage.class)
                         .setParameter("user", user)
                         .setParameter("offset", offset)
                         .setParameter("limit", limit)
@@ -99,7 +95,7 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
             tmplMessage.setId(message.getId());
             tmplMessage.setUsername(username);
             tmplMessage.setText(message.getText());
-            tmplMessage.setSection(message.getSection().getId());
+            tmplMessage.setChannel(message.getChannel().getId());
             tmplMessage.setDate(message.getDate());
 
             result.add(tmplMessage);
@@ -109,16 +105,33 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
     }
 
     @Transactional
-    public List<OutputMessage> get_messages(long section_id, long offset, long limit) {
+    public long get_channel_id(long room_id, String name) {
         Session session = sessionFactory.getCurrentSession();
-        FSection section = session.get(FSection.class, section_id);
+        FRoom room = session.getReference(FRoom.class, room_id);
 
-        if (section == null)
+        FChannel channel = session.createSelectionQuery(
+                "from FChannel c where c.room=:room and c.name=:name", FChannel.class)
+                        .setParameter("room", room)
+                        .setParameter("name", name)
+                        .getSingleResultOrNull();
+
+        if (channel == null)
+            throw new ServiceException("the channel name don't exist.");
+
+        return channel.getId();
+    }
+
+    @Transactional
+    public List<OutputMessage> get_messages(long channel_id, long offset, long limit) {
+        Session session = sessionFactory.getCurrentSession();
+        FChannel channel = session.get(FChannel.class, channel_id);
+
+        if (channel == null)
             throw new ServiceException("the section_id don't exist.");
 
         List <FMessage> messages =
-                session.createSelectionQuery("from FMessage m join fetch m.user where m.section.id=:section_id order by m.id limit :limit offset :offset", FMessage.class)
-                        .setParameter("section_id", section_id)
+                session.createSelectionQuery("from FMessage m join fetch m.user where m.channel.id=:channel_id order by m.id limit :limit offset :offset", FMessage.class)
+                        .setParameter("channel_id", channel_id)
                         .setParameter("offset", offset)
                         .setParameter("limit", limit)
                         .getResultList();
@@ -136,15 +149,15 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
     }
 
     @Transactional
-    public List<TmplSection> get_sections() {
+    public List<TmplRoom> get_rooms() {
         Session session = sessionFactory.getCurrentSession();
 
-        List <FSection> sections = session.createSelectionQuery("from FSection s join fetch s.creator", FSection.class).getResultList();
+        List <FRoom> rooms = session.createSelectionQuery("from FRoom r join fetch r.creator", FRoom.class).getResultList();
 
-        List<TmplSection> result = new ArrayList<>();
+        List<TmplRoom> result = new ArrayList<>();
 
-        for (FSection section : sections) {
-            result.add(new TmplSection(section.getId(), section.getCreator().getLogin(), section.getName(), section.getDescription()));
+        for (FRoom room : rooms) {
+            result.add(new TmplRoom(room.getId(), room.getCreator().getLogin(), room.getName(), room.getDescription()));
         }
 
         return result;
@@ -185,40 +198,65 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
     }
 
     @Transactional
-    public void add_section(TmplSection section) {
-        FSection new_section = new FSection();
-        new_section.setDescription(section.description);
-        new_section.setName(section.name);
-        new_section.setMessages(new HashSet<>());
+    public void add_room(InputRoom room, String creator) {
+        FRoom new_room = new FRoom();
+        new_room.setName(room.name);
+        new_room.setDescription(room.description);
+        new_room.setHandle_code(room.handle_code);
+        new_room.setInit_code(room.init_code);
+        new_room.setStatus("not started");
 
         Session session = sessionFactory.getCurrentSession();
-        FUser user = session.bySimpleNaturalId(FUser.class).load(section.creator);
+        FUser user = session.bySimpleNaturalId(FUser.class).load(creator);
 
         if (user == null)
             throw new ServiceException("the user_id don't exist.");
 
-        new_section.setCreator(user);
+        new_room.setCreator(user);
 
-        session.persist(new_section);
+        FChannel channel_lobby = new FChannel();
+        channel_lobby.setName("лобби");
+        session.persist(channel_lobby);
+
+        FChannel channel_players = new FChannel();
+        channel_players.setName("игроки");
+        session.persist(channel_players);
+
+        FChannel channel_help = new FChannel();
+        channel_help.setName("помощь");
+        session.persist(channel_help);
+
+        FMessage message = new FMessage();
+        message.setDate(OffsetDateTime.now());
+        message.setUser(user);
+        message.setText(room.help);
+        message.setChannel(channel_help);
+        session.persist(message);
+
+        new_room.addChannel(channel_lobby);
+        new_room.addChannel(channel_players);
+        new_room.addChannel(channel_help);
+
+        session.persist(new_room);
     }
 
     @Transactional
-    public void add_message(OutputMessage message, long section_id) {
+    public void add_message(String username, String text, long channel_id) {
         FMessage new_message = new FMessage();
-        new_message.setText(message.text);
+        new_message.setText(text);
 
         Session session = sessionFactory.getCurrentSession();
-        FUser user = session.bySimpleNaturalId(FUser.class).load(message.username);
-        FSection section = session.get(FSection.class, section_id);
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+        FChannel channel = session.get(FChannel.class, channel_id);
 
         if (user == null)
             throw new ServiceException("the user_id don't exist.");
 
-        if (section == null)
-            throw new ServiceException("the section_id don't exist.");
+        if (channel == null)
+            throw new ServiceException("the channel_id don't exist.");
 
         new_message.setDate(OffsetDateTime.now());
-        new_message.setSection(section);
+        new_message.setChannel(channel);
         new_message.setUser(user);
 
         session.persist(new_message);
@@ -316,12 +354,12 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
         Session session = sessionFactory.getCurrentSession();
         FUser user = session.bySimpleNaturalId(FUser.class).load(username);
 
-        FPunishment punishment = session.createSelectionQuery(
+        List<FPunishment> punishments = session.createSelectionQuery(
                         "from FPunishment p where p.user = :user and p.active = true", FPunishment.class)
                 .setParameter("user", user)
-                .getSingleResultOrNull();
+                .getResultList();
 
-        return (punishment != null);
+        return !punishments.isEmpty();
     }
 
     @Transactional
@@ -382,5 +420,68 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
     public long get_eTag(String username) {
         Session session = sessionFactory.getCurrentSession();
         return session.bySimpleNaturalId(FUser.class).load(username).getPhoto_eTag();
+    }
+
+    @Transactional
+    public void add_player(String username, long room_id) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser player = session.bySimpleNaturalId(FUser.class).load(username);
+
+        if (player == null) {
+            throw new ServiceException("the player does not exist");
+        }
+
+        FRoom room = session.get(FRoom.class, room_id);
+
+        if (player.getRoom() != null) {
+
+            //System.out.println(player.getRoom().getId());
+            //System.out.println(room.getId());
+            //System.out.println(player.getRoom().equals(room));
+
+
+            if (!player.getRoom().equals(room)) {
+                throw new ServiceException("the player have joined to another room yet");
+            } else {
+                return;
+            }
+        }
+
+        if (!Objects.equals(room.getStatus(), "not started")) {
+            throw new ServiceException("the game has already started");
+        }
+
+        room.addPlayer(player);
+    }
+
+    @Transactional
+    public long remove_player(String username, boolean force) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser player = session.bySimpleNaturalId(FUser.class).load(username);
+        FRoom room = player.getRoom();
+
+        if (room == null)
+            return -1;
+
+        if (force || Objects.equals(room.getStatus(), "not started")) {
+            room.removePlayer(player);
+            return room.getId();
+        }
+
+        return -1;
+    }
+
+    @Transactional
+    public List<TmplUser> get_players(long room_id) {
+        Session session = sessionFactory.getCurrentSession();
+        FRoom room = session.get(FRoom.class, room_id);
+        List<FUser> players = room.getPlayers();
+        List <TmplUser> result = new ArrayList<>();
+
+        for (FUser player : players) {
+            result.add(new TmplUser(player, catMaidService.getUwUDegree(player.getDate_UwU())));
+        }
+
+        return result;
     }
 }

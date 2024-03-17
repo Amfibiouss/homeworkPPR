@@ -5,7 +5,7 @@ import java.time.OffsetDateTime;
 public class TmplMessage {
     public long id;
     public String username;
-    public long section;
+    public long channel;
     public String text;
     public OffsetDateTime date;
 
@@ -25,12 +25,12 @@ public class TmplMessage {
         this.username = username;
     }
 
-    public long getSection() {
-        return section;
+    public long getChannel() {
+        return channel;
     }
 
-    public void setSection(long section) {
-        this.section = section;
+    public void setChannel(long channel) {
+        this.channel = channel;
     }
 
     public String getText() {

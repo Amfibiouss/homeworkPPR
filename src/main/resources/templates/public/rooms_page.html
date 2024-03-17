@@ -10,12 +10,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="/public_static/js/bootstrap.bundle.js"></script>
     <style>
-        #sections li {
+        #rooms li {
             margin-bottom: 10px;
             border-radius:10px;
             padding: 10px;
         }
-        #sections {
+        #rooms {
             list-style: none;
         }
     </style>
@@ -25,28 +25,27 @@
 <main class="container">
     <div class="row">
         <div class="dropdown col-12 gy-2">
-            <button class="btn btn-secondary dropdown-toggle" type="button" id="addSectionButton"
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="addRoomButton"
                     data-bs-toggle="dropdown" aria-expanded="false">
                 <img src="/public_static/icons/plus.svg" width="30" height="30">
             </button>
-            <div class="dropdown-menu p-2" aria-labelledby="addSectionButton">
-                <form th:action="@{/user/add_section}" method="post">
-                    <label for="name" class="form-label">тема:</label>
-                    <input id="name" class="form-control" type="text" name="section_name">
-                    <label for="description" class="form-label">описание:</label>
-                    <textarea id=description class="form-control" name="section_description"></textarea>
+            <div class="dropdown-menu p-2" aria-labelledby="addRoomButton">
+                <form th:action="@{/user/add_room}" method="post" enctype="multipart/form-data">
+                    <label>
+                        <input class="form-control" type="file" name="file">
+                    </label>
                     <input class="mt-2" type="submit">
                 </form>
             </div>
         </div>
-        <nav id="sections" class="col-12 gy-2 row">
-            <li class="col-12 depends-of-parity" th:each="section : ${sections}">
+        <nav id="rooms" class="col-12 gy-2 row">
+            <li class="col-12 depends-of-parity" th:each="room : ${rooms}">
                 <p>
                     <a class = "text-primary" style="text-decoration:none;"
-                       th:text="${section.name}" th:href="@{'/public/chat/' + ${section.id}}"></a>
+                       th:text="${room.name}" th:href="@{'/public/chat/' + ${room.id}}"></a>
                 </p>
-                <p class="text-secondary" style="font-size:0.75rem;" th:text="${section.description}"></p>
-                <p class="text-secondary" style="font-size:0.75rem;" th:text="'создатель:' + ${section.creator}"></p>
+                <p class="text-secondary" style="font-size:0.75rem;" th:text="${room.description}"></p>
+                <p class="text-secondary" style="font-size:0.75rem;" th:text="'создатель:' + ${room.creator}"></p>
             </li>
         </nav>
     </div>

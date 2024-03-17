@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>форум</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel=stylesheet type="text/css" href="/public_static/css/bootstrap.css">
+    <link rel=stylesheet type="text/css" href="/public_static/white_theme.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/public_static/js/bootstrap.bundle.js"></script>
+
+    <script>
+        function submit_form(event) {
+            event.preventDefault();
+
+            fetch('/user/create_room', {
+                method: 'post',
+                headers: {
+                    "X-CSRF-TOKEN" : _csrf.value,
+                    "Content-Type" : "application/json; charset=utf-8"
+                },
+                body: JSON.stringify({
+                    'name' : room_name.value,
+                    'description' : room_description.value,
+                    'help' : room_help.value,
+                    'min_players' : room_min_players.value,
+                    'max_players' : room_max_players.value,
+                    'init_code' : room_init_code.value,
+                    'handle_code' : room_handle_code.value
+                })
+            }).then( (response) => {
+                if (response.status !== 200) {
+                    console.log("Can't send form. Status Code: " + response.status);
+                    return;
+                }
+
+                load_room.innerHTML = `<a href="/user/load_room" download="room_config.json">Загрузить результат</a>`;
+            });
+        }
+    </script>
+
+
+</head>
+<body>
+<header th:replace="~{public/header :: |${@securityService.getAccess()}_header|}"></header>
+<main class="container">
+
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" id = "_csrf"/>
+
+    <div class="row justify-content-center">
+        <form class="col-auto bg-color1 mt-5 p-3" onsubmit="submit_form(event)">
+            <div class="row">
+                <label class="col-12 mb-3">
+                    <input class="form-control" type="text" name="room_name" id="room_name" placeholder="название.">
+                </label>
+                <label class="col-12 mb-3">
+                    <textarea class="form-control" rows="3" name="room_description" id="room_description" placeholder="описание."></textarea>
+                </label>
+                <label class="col-12 mb-3">
+                    <textarea class="form-control" rows="3" name="room_help" id="room_help"
+                              placeholder="сообщение, которое будет показано в чате с помощью."></textarea>
+                </label>
+                <div class="col-12 mb-3">
+
+                    <label for="room_min_players" id = "label_min_players"></label>
+                    <input type="range" class="form-range" id="room_min_players" min="2" max="32"
+                           oninput="input1Handler(event)">
+
+                    <script>
+                        function input1Handler() {
+                            document.getElementById('label_min_players').innerHTML =
+                               'минимальное количество игроков: ' + room_min_players.value;
+                        }
+                        input1Handler();
+                    </script>
+                </div>
+                <div class="col-12 mb-3">
+
+                    <label for="room_max_players" id = "label_max_players"></label>
+                    <input type="range" class="form-range" id="room_max_players" min="2" max="32"
+                           oninput="input2Handler(event)">
+
+                    <script>
+                        function input2Handler() {
+                            document.getElementById('label_max_players').innerHTML =
+                               'максимальное количество игроков: ' + room_max_players.value;
+                        }
+                        input2Handler();
+                    </script>
+                </div>
+
+                <label class="col-12 mb-3">
+                    <textarea class="form-control" rows="3" name="room_init_code" id="room_init_code"
+                              placeholder="код инициализации комнаты."></textarea>
+                </label>
+
+                <label class="col-12 mb-3">
+                    <textarea class="form-control" rows="3" name="room_handle_code" id="room_handle_code"
+                              placeholder="код который совершается во время смены состояния."></textarea>
+                </label>
+
+                <div class="col-12">
+                    <input class="btn btn-primary mb-3" type="submit" value="Создать"/>
+                </div>
+
+                <div id = "load_room">
+                </div>
+            </div>
+        </form>
+    </div>
+</main>
+<footer th:replace="~{public/footer :: footer}"></footer>
+</body>
+</html>
