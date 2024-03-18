@@ -69,6 +69,133 @@
             return player_string;
         }
 
+        function update_ui(status) {
+
+
+            if (status.body == 'processing')
+                return;
+
+            fetch('/user/status_room/' + room_id.value, {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            }).then(
+            function(response) {
+                if (response.status !== 200) {
+                    console.log("Can't load messages. Status Code: " + response.status);
+                    return;
+                }
+                response.json().then(function(data) {
+
+                    var finish = data.finish_stage * 1000;
+
+                    if (typeof intervalID !== 'undefined')
+                        clearInterval(intervalID);
+                    intervalID = setInterval(function() {
+                        var res = (finish - Date.now()) / 1000;
+
+                        if (res < 0) {
+                            time_until_new_stage.innerHTML = "Осталось 0 секунд";
+                            clearInterval(intervalID);
+                            return;
+                        }
+
+                        time_until_new_stage.innerHTML = "Осталось " + Math.floor(res) + " секунд";
+                    }, 1000);
+
+                    var string_pills = "";
+                    var string_tabs = "";
+                    var ind = 0;
+
+                    for (const channel of data.channels) {
+                        var html_string = `
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link ${((ind == 0)? 'active' : '')}"
+                                id="${channel.channel_id}-tab" data-bs-toggle="pill"
+                                data-bs-target="#pills-${channel.channel_id}" type="button" role="tab"
+                                aria-controls="pills-${channel.channel_id}" aria-selected="true">${channel.name}</button>
+                        </li>`
+                        string_pills += html_string;
+
+
+                        html_string = `
+                             <div class="tab-pane fade ${((ind == 0)? 'show active' : '')}"
+                             id="pills-${channel.channel_id}" role="tabpanel" aria-labelledby="${channel.channel_id}-tab">
+
+                            <div class="row">
+                                <div class = "col-12" id="articles${channel.channel_id}">
+                                </div>
+
+                                <div class = "col-12">
+                                    <form id="form${channel.channel_id}" onsubmit="sendMessage(event)" class="row py-2">
+                                        <input type="hidden"
+                                               name = "channel"
+                                               value="${channel.channel_id}"/>
+                                        <div class="col-11">
+                                            <textarea class="form-control" rows="3"
+                                                      name="text" id="text${channel.channel_id}"></textarea>
+                                        </div>
+                                        <div class="col-1 px-0">
+                                            <button class="px-0">
+                                                <img src="/public_static/icons/send.svg" width="30" height="30" alt="кнопка отправить">
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>`
+
+                        string_tabs += html_string;
+                        ind++;
+                    }
+
+                    var elem = document.getElementById('pills-tab');
+                    elem.innerHTML = string_pills;
+
+                    elem = document.getElementById('pills-tabContent');
+                    elem.innerHTML = string_tabs;
+
+                    for (const channel of data.channels) {
+
+                        fetch('/public/chat/get_messages/' + room_id.value + '/' + channel.channel_id, {
+                            headers: {
+                                'Accept': 'application/json'
+                            }
+                        }).then(
+                        function(response) {
+                            if (response.status !== 200) {
+                                console.log("Can't load messages. Status Code: " + response.status);
+                                return;
+                            }
+                            response.json().then(function(data) {
+                                string_articles = "";
+
+                                for (const mes of data) {
+                                    string_articles += getHtmlForArticle(mes);
+                                }
+
+                                var elem = document.getElementById('articles' + channel.channel_id);
+                                elem.innerHTML = string_articles;
+                            });
+
+                            if (subscriptions.has(channel.channel_id)) {
+                                var subscription = subscriptions.get(channel.channel_id);
+                                subscription.unsubscribe();
+                            }
+
+                            var subscription = stompClient.subscribe('/topic/messages/' + room_id.value + '/' + channel.channel_id,
+                                function(messageOutput) {
+                                    var elem = document.getElementById('articles' + channel.channel_id);
+                                    elem.innerHTML = elem.innerHTML + getHtmlForArticle(JSON.parse(messageOutput.body));
+                                }
+                            );
+                            subscriptions.set(channel.channel_id, subscription);
+                        });
+                    }
+                });
+            });
+        }
+
         function receiveCallback(players) {
             players = JSON.parse(players.body);
             var elem = document.getElementById('players');
@@ -86,7 +213,7 @@
         function connectCallback(frame) {
 
             for (const channel_id of channel_ids) {
-                fetch('/public/chat/get_messages/' + channel_id, {
+                fetch('/public/chat/get_messages/' + room_id.value + '/' + channel_id, {
                     headers: {
                         'Accept': 'application/json'
                     }
@@ -107,12 +234,15 @@
                         elem.innerHTML = string_articles;
                     });
 
-                    stompClient.subscribe('/topic/messages/' + channel_id,
+                    var subscription = stompClient.subscribe('/topic/messages/' + room_id.value + '/' + channel_id,
                         function(messageOutput) {
                             var elem = document.getElementById('articles' + channel_id);
                             elem.innerHTML = elem.innerHTML + getHtmlForArticle(JSON.parse(messageOutput.body));
                         }
                     );
+
+                    subscriptions.set(channel_id, subscription);
+
 
                     stompClient.subscribe('/topic/user/' + channel_id + '/' + username.value,
                         function(messageOutput){
@@ -154,6 +284,8 @@
 
                 stompClient.subscribe('/topic/players/' + room_id.value, receiveCallback);
             });
+
+            stompClient.subscribe('/topic/room_status/' + room_id.value, update_ui);
         }
 
         function connect() {
@@ -168,8 +300,8 @@
             channel_id = event.target.id.substring(4);
 
             var text = document.getElementById('text' + channel_id).value;
-            stompClient.send("/app/message/" + channel_id, {'x-csrf-token':csrf_token},
-                JSON.stringify({'text':text}));
+            stompClient.send("/app/message/" + room_id.value + '/' + channel_id, {'x-csrf-token':csrf_token},
+                JSON.stringify({'text':text, 'username':username.value}));
             event.target.reset();
         }
 
@@ -177,10 +309,87 @@
             stompClient.disconnect();
         }
 
+        subscriptions = new Map();
+
         document.addEventListener("DOMContentLoaded", connect);
 
         window.onbeforeunload = unloadHandler;
     </script>
+
+    <script>
+        function initialize_room(data) {
+
+            players = data;
+
+            console.log(players);
+
+            roles = new Array(players.length).fill("Мирный");
+            mafia_index = Math.floor(Math.random() * roles.length);
+            roles[mafia_index] = "Мафия";
+
+            /*
+            for (var i = roles.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = roles[i];
+                roles[i] = roles[j];
+                roles[j] = temp;
+            }
+            */
+
+            all_mask = (1 << players.length) - 1;
+            mafia_mask = (1 << mafia_index);
+
+            messages = new Array(players.length);
+            for (var i = 0; i < players.length; i++) {
+                messages[i] = "Ваша роль: " + roles[i];
+            }
+
+            fetch('/user/start_room/' + room_id.value, {
+                method: 'post',
+                headers: {
+                    "X-CSRF-TOKEN" : _csrf.value,
+                    "Content-Type" : "application/json; charset=utf-8"
+                },
+                body: JSON.stringify({
+                    "channels" : [
+                    {"name" : "день", "read_mask" : all_mask, "write_mask" : all_mask},
+                    {"name" : "ночь", "read_mask" : mafia_mask, "write_mask" : mafia_mask}
+                    ],
+                    "polls" : [{"name": "дневное голосование", "vote_mask": all_mask, "view_mask": 0}],
+                    "messages" : messages,
+                    "duration" : 30,
+                    "stage" : "день"
+                })
+            }).then( (response) => {
+                if (response.status !== 200) {
+                    console.log("Can't start room. Status Code: " + response.status);
+                    return;
+                }
+            });
+        }
+    </script>
+
+    <script>
+        function submit_start_room(event) {
+            event.preventDefault();
+
+            fetch('/user/processing_start_room/' + room_id.value, {
+                method: 'post',
+                headers: {
+                    "X-CSRF-TOKEN" : _csrf.value,
+                }
+            }).then( (response) => {
+                if (response.status !== 200) {
+                    console.log("Can't start room. Status Code: " + response.status);
+                    return;
+                }
+                response.json().then(function(data) {
+                    initialize_room(data);
+                });
+            });
+        }
+    </script>
+
 </head>
 <body>
 <header th:replace="~{public/header :: |${@securityService.getAccess()}_header|}"></header>
@@ -200,8 +409,9 @@
 
                 <div id = "chat_menu" class="row collapse navbar-collapse justify-content-between">
                     <div class="col-auto">
-                        <button class="btn btn-outline-secondary" type="button" id="quit_button">выйти</button>
-                        <button class="btn btn-outline-secondary" type="button" id="start_button">начать</button>
+                        <a th:href="'/user/exit_room/' + ${room_id}"><button class="btn btn-outline-secondary" type="button" id="quit_button">выйти</button></a>
+                        <button class="btn btn-outline-secondary" type="button" id="start_button" onclick="submit_start_room(event)">начать</button>
+                        <div><span id="time_until_new_stage" style="font-size:1.5rem;"></span></div>
                     </div>
 
                     <div class="col-auto">

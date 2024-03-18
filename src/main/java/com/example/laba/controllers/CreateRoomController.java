@@ -3,6 +3,7 @@ package com.example.laba.controllers;
 import com.example.laba.json_objects.InputRoom;
 import com.example.laba.objects_to_fill_templates.TmplRoom;
 import com.example.laba.services.OverturningTheEarthAndTramplingTheHeavensDAOService;
+import com.example.laba.services.RoomChannelMessageDaoService;
 import com.example.laba.services.SecurityService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,7 +30,7 @@ public class CreateRoomController {
     SecurityService securityService;
 
     @Autowired
-    OverturningTheEarthAndTramplingTheHeavensDAOService DAOService;
+    RoomChannelMessageDaoService RCMDAOService;
 
     @GetMapping("/user/create_room")
     String get_create_room() {
@@ -77,15 +78,14 @@ public class CreateRoomController {
 
         InputRoom room = null;
         try {
-            System.out.println(new String(file.getBytes(),  StandardCharsets.UTF_8));
             room = objectMapper.readValue(file.getInputStream(), InputRoom.class);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-        DAOService.add_room(room, securityService.getUsername());
+        long room_id = RCMDAOService.add_room(room, securityService.getUsername());
 
-        response.setHeader("Location", "/public/rooms");
+        response.setHeader("Location", "/public/chat/" + room_id);
         response.setStatus(302);
     }
 }

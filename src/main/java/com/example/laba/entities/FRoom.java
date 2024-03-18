@@ -16,14 +16,15 @@ public class FRoom {
     private FUser creator;
     private String name;
     private String description;
-    private String status;
     private OffsetDateTime start_time;
     private OffsetDateTime finish_time;
     private Long min_players;
     private Long max_players;
     private String init_code;
     private String handle_code;
-
+    private String status;
+    private OffsetDateTime finish_stage;
+    private String stage;
     @OneToMany(mappedBy="room")
     private List<FChannel> channels = new ArrayList<>();
 
@@ -157,5 +158,21 @@ public class FRoom {
 
     public void setHandle_code(String handle_code) {
         this.handle_code = handle_code;
+    }
+
+    public OffsetDateTime getFinish_stage() {
+        return finish_stage;
+    }
+
+    public void setFinish_stage(OffsetDateTime finish_stage) {
+        this.finish_stage = finish_stage;
+    }
+
+    public String getStage() {
+        return stage;
+    }
+
+    public void setStage(String stage) {
+        this.stage = stage;
     }
 }

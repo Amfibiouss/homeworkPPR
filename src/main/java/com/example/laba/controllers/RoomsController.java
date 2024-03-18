@@ -2,6 +2,7 @@ package com.example.laba.controllers;
 
 import com.example.laba.objects_to_fill_templates.TmplRoom;
 import com.example.laba.services.OverturningTheEarthAndTramplingTheHeavensDAOService;
+import com.example.laba.services.RoomChannelMessageDaoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -12,12 +13,12 @@ import java.util.List;
 @Controller
 public class RoomsController {
     @Autowired
-    OverturningTheEarthAndTramplingTheHeavensDAOService DAOService;
+    RoomChannelMessageDaoService RCMDAOService;
 
     @GetMapping({"/public/rooms", "/"})
     String get_rooms(Model model) {
 
-        List<TmplRoom> rooms = DAOService.get_rooms();
+        List<TmplRoom> rooms = RCMDAOService.get_rooms();
 
         model.addAttribute("rooms", rooms);
 

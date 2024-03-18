@@ -7,7 +7,6 @@ public class TmplRoom {
     public String name;
 
     public String description;
-
     public long getId() {
         return id;
     }
@@ -39,6 +38,8 @@ public class TmplRoom {
     public void setDescription(String description) {
         this.description = description;
     }
+
+
 
     public TmplRoom(long id, String creator, String name, String description) {
         this.id = id;

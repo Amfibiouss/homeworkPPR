@@ -31,7 +31,8 @@ public class FUser {
     private OffsetDateTime date_UwU;
     private String email;
     @ManyToOne(fetch=LAZY)
-    FRoom room;
+    private FRoom room;
+    private long player_index;
 
 
     @OneToMany(mappedBy="user")
@@ -141,6 +142,14 @@ public class FUser {
 
     public void setRoom(FRoom room) {
         this.room = room;
+    }
+
+    public long getPlayer_index() {
+        return player_index;
+    }
+
+    public void setPlayer_index(long player_index) {
+        this.player_index = player_index;
     }
 
     public FUser() {

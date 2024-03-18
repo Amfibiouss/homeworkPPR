@@ -19,6 +19,8 @@ public class FChannel {
     private Set<FMessage> messages = new HashSet<>();
     @ManyToOne(fetch=LAZY)
     FRoom room;
+    private Long read_mask;
+    private Long write_mask;
 
     @Override
     public boolean equals(Object o) {
@@ -62,6 +64,22 @@ public class FChannel {
 
     public void setRoom(FRoom room) {
         this.room = room;
+    }
+
+    public Long getRead_mask() {
+        return read_mask;
+    }
+
+    public void setRead_mask(Long read_mask) {
+        this.read_mask = read_mask;
+    }
+
+    public Long getWrite_mask() {
+        return write_mask;
+    }
+
+    public void setWrite_mask(Long write_mask) {
+        this.write_mask = write_mask;
     }
 
     public FChannel() {}

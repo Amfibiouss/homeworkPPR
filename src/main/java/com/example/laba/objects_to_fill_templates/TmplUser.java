@@ -13,6 +13,7 @@ public class TmplUser {
     public String sex;
     public double degreeUwU;
     public  String email;
+    public long player_index;
 
     public Long getId() {
         return id;
@@ -70,6 +71,14 @@ public class TmplUser {
         this.email = email;
     }
 
+    public long getPlayer_index() {
+        return player_index;
+    }
+
+    public void setPlayer_index(long player_index) {
+        this.player_index = player_index;
+    }
+
     public TmplUser(FUser user, double degree) {
         this.Admin = user.getAdmin();
         this.login = user.getLogin();
@@ -78,6 +87,7 @@ public class TmplUser {
         this.id = user.getId();
         this.degreeUwU = degree;
         this.email = user.getEmail();
+        this.player_index = user.getPlayer_index();
     }
     public TmplUser(){}
 }
