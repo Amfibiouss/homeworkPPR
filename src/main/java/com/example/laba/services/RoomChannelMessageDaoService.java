@@ -1,9 +1,6 @@
 package com.example.laba.services;
 
-import com.example.laba.entities.FChannel;
-import com.example.laba.entities.FMessage;
-import com.example.laba.entities.FRoom;
-import com.example.laba.entities.FUser;
+import com.example.laba.entities.*;
 import com.example.laba.json_objects.*;
 import com.example.laba.objects_to_fill_templates.TmplMessage;
 import com.example.laba.objects_to_fill_templates.TmplRoom;
@@ -346,7 +343,6 @@ public class RoomChannelMessageDaoService {
         outputStateRoom.setStatus(room.getStatus());
 
         List<OutputStateChannel> outputStateChannels = new ArrayList<>();
-
         for (FChannel channel : room.getChannels()) {
             OutputStateChannel outputChannel = new OutputStateChannel();
 
@@ -358,14 +354,37 @@ public class RoomChannelMessageDaoService {
             if (outputChannel.getCan_read() || outputChannel.getCan_write())
                 outputStateChannels.add(outputChannel);
         }
-
         outputStateRoom.setChannels(outputStateChannels);
+
+        List<OutputStatePoll> outputStatePolls = new ArrayList<>();
+        for (FPoll poll : room.getPolls()) {
+
+            if ((poll.getMask_observers() & (1L << user.getPlayer_index())) == 0)
+                continue;
+
+            OutputStatePoll outputPoll = new OutputStatePoll();
+
+            outputPoll.setPoll_id(poll.getId());
+            outputPoll.setName(poll.getName());
+            outputPoll.setCan_vote((poll.getMask_voters() & (1L << user.getPlayer_index())) != 0);
+
+            List<Long> candidates = new ArrayList<>();
+            for (long i = 0; i < 30; i++) {
+                if ((poll.getMask_candidates() & (1L << i)) != 0) {
+                    candidates.add(i);
+                }
+            }
+            outputPoll.setCandidates(candidates);
+
+            outputStatePolls.add(outputPoll);
+        }
+        outputStateRoom.setPolls(outputStatePolls);
 
         return outputStateRoom;
     }
 
     @Transactional
-    public void set_state(long room_id, InputStateRoom inputStateRoom) {
+    public void set_state(long room_id, InputStateRoom inputStateRoom, boolean init) {
         Session session = sessionFactory.getCurrentSession();
         FRoom room = session.get(FRoom.class, room_id);
 
@@ -373,14 +392,97 @@ public class RoomChannelMessageDaoService {
         room.setFinish_stage(OffsetDateTime.now().plusSeconds(inputStateRoom.getDuration()));
 
         for (InputStateChannel inputChannel : inputStateRoom.getChannels()) {
-            FChannel channel = new FChannel();
+
+            FChannel channel = session.createSelectionQuery(
+                            "from FChannel c where c.room=:room and c.name=:name", FChannel.class)
+                    .setParameter("room", room)
+                    .setParameter("name", inputChannel.getName())
+                    .getSingleResultOrNull();
+
+            if (channel == null) {
+                if (init) {
+                    channel = new FChannel();
+                    session.persist(channel);
+                } else {
+                    continue;
+                }
+            }
 
             channel.setRoom(room);
             channel.setName(inputChannel.getName());
             channel.setRead_mask(inputChannel.getRead_mask());
             channel.setWrite_mask(inputChannel.getWrite_mask());
-
-            session.persist(channel);
         }
+
+        session.createMutationQuery("delete FPoll p where p.room = :room").setParameter("room", room).executeUpdate();
+
+        for (InputStatePoll inputPoll : inputStateRoom.getPolls()) {
+
+            FPoll poll = new FPoll();
+
+            poll.setRoom(room);
+            poll.setName(inputPoll.getName());
+            poll.setMask_observers(inputPoll.getMask_observers());
+            poll.setMask_voters(inputPoll.getMask_voters());
+            poll.setMask_candidates(inputPoll.getMask_candidates());
+
+            session.persist(poll);
+        }
+    }
+
+    @Transactional
+    public boolean add_vote(long poll_id, String username, long candidate) {
+        Session session = sessionFactory.getCurrentSession();
+        FPoll poll = session.get(FPoll.class, poll_id);
+        FUser player = session.bySimpleNaturalId(FUser.class).load(username);
+
+
+        if (candidate < 0) {
+            candidate = 29;
+        }
+
+        if (player == null || poll == null || candidate >= 30) {
+            return false;
+        }
+
+        int index = (int) player.getPlayer_index();
+
+        if ((poll.getMask_voters() & (1L << index)) == 0) {
+            return false;
+        }
+
+        long[] poll_table = poll.getPoll_table();
+        long[] reverse_poll_table = poll.getReverse_poll_table();
+
+        if (reverse_poll_table[index] != 0) {
+            return false;
+        }
+
+        poll_table[(int) candidate] |= (1L << index);
+        reverse_poll_table[index] |= (1L << candidate);
+
+        poll.setPoll_table(poll_table);
+        poll.setReverse_poll_table(reverse_poll_table);
+
+        return true;
+    }
+
+    @Transactional
+    public List<OutputPollResult> get_polls_results(long room_id) {
+
+        Session session = sessionFactory.getCurrentSession();
+        FRoom room = session.get(FRoom.class, room_id);
+
+        List<OutputPollResult> results = new ArrayList<>();
+
+        for (FPoll poll : room.getPolls()) {
+            OutputPollResult pollResult = new OutputPollResult();
+
+            pollResult.setName(poll.getName());
+            pollResult.setPoll_table(poll.getPoll_table().clone());
+            results.add(pollResult);
+        }
+
+        return results;
     }
 }

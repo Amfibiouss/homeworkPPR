@@ -8,7 +8,7 @@ public class InputStateRoom {
 
     public List<InputStatePoll> polls;
 
-    public List<InputMessage> messages;
+    public List<String> messages;
 
     public long duration;
     public String stage;
@@ -29,11 +29,11 @@ public class InputStateRoom {
         this.polls = polls;
     }
 
-    public List<InputMessage> getMessages() {
+    public List<String> getMessages() {
         return messages;
     }
 
-    public void setMessages(List<InputMessage> messages) {
+    public void setMessages(List<String> messages) {
         this.messages = messages;
     }
 
@@ -53,3 +53,5 @@ public class InputStateRoom {
         this.stage = stage;
     }
 }
+
+

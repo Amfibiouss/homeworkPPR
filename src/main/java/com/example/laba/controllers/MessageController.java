@@ -100,15 +100,6 @@ public class MessageController {
         model.addAttribute("lobby_id", RCMDAOService.get_channel_id(room_id, "лобби"));
         model.addAttribute("room_id", room_id);
 
-        List<TmplChannel> channels = new ArrayList<>();
-        channels.add(new TmplChannel(RCMDAOService.get_channel_id(room_id, "лобби"), "лобби"));
-        channels.add(new TmplChannel(RCMDAOService.get_channel_id(room_id, "помощь"), "помощь"));
-        model.addAttribute("channels", channels);
-
-        model.addAttribute("channel_ids", Arrays.asList(
-                RCMDAOService.get_channel_id(room_id, "лобби"),
-                RCMDAOService.get_channel_id(room_id, "помощь")));
-
         try {
             RCMDAOService.add_player(securityService.getUsername(), room_id);
         } catch(ServiceException e) {

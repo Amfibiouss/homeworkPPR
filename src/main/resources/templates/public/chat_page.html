@@ -69,8 +69,47 @@
             return player_string;
         }
 
+        function processing_stage() {
+
+            fetch('/user/get_data_for_processing/' + room_id.value, {
+                headers: {
+                    'Accept': 'application/json'
+                    }
+            }).then(
+                function(response) {
+                    if (response.status !== 200) {
+                        console.log("Can't load results of the previous stage. Status Code: " + response.status);
+                        return;
+                    }
+
+                    response.json().then(function(data) {
+                        var new_state = update_state(data);
+
+                        fetch('/user/update_room_state/' + room_id.value, {
+                            method: 'post',
+                            headers: {
+                                "X-CSRF-TOKEN" : _csrf.value,
+                                "Content-Type" : "application/json; charset=utf-8"
+                            },
+                            body: JSON.stringify(new_state)
+                        }).then( (response) => {
+                            if (response.status !== 200) {
+                                console.log("Can't send state of the current stage. Status Code: " + response.status);
+                                return;
+                            }
+                        });
+                    });
+                }
+            );
+        }
+
+
         function update_ui(status) {
 
+            if (status.body == 'processing stage') {
+                processing_stage();
+                return;
+            }
 
             if (status.body == 'processing')
                 return;
@@ -87,21 +126,28 @@
                 }
                 response.json().then(function(data) {
 
-                    var finish = data.finish_stage * 1000;
-
                     if (typeof intervalID !== 'undefined')
                         clearInterval(intervalID);
-                    intervalID = setInterval(function() {
-                        var res = (finish - Date.now()) / 1000;
 
-                        if (res < 0) {
-                            time_until_new_stage.innerHTML = "Осталось 0 секунд";
-                            clearInterval(intervalID);
-                            return;
-                        }
+                    if (status.body == "started") {
+                        var finish = data.finish_stage * 1000;
+                        intervalID = setInterval(function() {
+                            var res = (finish - Date.now()) / 1000;
 
-                        time_until_new_stage.innerHTML = "Осталось " + Math.floor(res) + " секунд";
-                    }, 1000);
+                            if (res < 0) {
+                                time_until_new_stage.innerHTML = "Осталось 0 секунд";
+                                clearInterval(intervalID);
+                                return;
+                            }
+
+                            time_until_new_stage.innerHTML = "Осталось " + Math.floor(res) + " секунд";
+                        }, 1000);
+                    }
+
+                    for (const subscription of subscriptions) {
+                        subscription.unsubscribe();
+                    }
+                    subscriptions = [];
 
                     var string_pills = "";
                     var string_tabs = "";
@@ -122,10 +168,13 @@
                              <div class="tab-pane fade ${((ind == 0)? 'show active' : '')}"
                              id="pills-${channel.channel_id}" role="tabpanel" aria-labelledby="${channel.channel_id}-tab">
 
-                            <div class="row">
+                            <div class="row">` +
+
+                                ((channel.can_read) ? `
                                 <div class = "col-12" id="articles${channel.channel_id}">
                                 </div>
-
+                                ` : '')
+                                + ((channel.can_write) ? `
                                 <div class = "col-12">
                                     <form id="form${channel.channel_id}" onsubmit="sendMessage(event)" class="row py-2">
                                         <input type="hidden"
@@ -141,7 +190,8 @@
                                             </button>
                                         </div>
                                     </form>
-                                </div>
+                                </div>` : '') +
+                                `
                             </div>
                         </div>`
 
@@ -149,13 +199,83 @@
                         ind++;
                     }
 
-                    var elem = document.getElementById('pills-tab');
-                    elem.innerHTML = string_pills;
-
                     elem = document.getElementById('pills-tabContent');
                     elem.innerHTML = string_tabs;
 
+                    if (data.status == 'not started') {
+                        elem.innerHTML += `
+                        <div class="tab-pane fade" id="pills-players" role="tabpanel" aria-labelledby="pills-players-tab">
+                            <div class = "col-12" id="players">
+                            </div>
+                        </div>`;
+                    }
+
+
+                    var elem = document.getElementById('pills-tab');
+                    elem.innerHTML = string_pills;
+
+                    if (data.status == 'not started') {
+                        elem.innerHTML += `
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="pills-players-tab" data-bs-toggle="pill" data-bs-target="#pills-players" type="button" role="tab" aria-controls="pills-players" aria-selected="false">игроки</button>
+                            </li>`;
+                    }
+
+                    string_pills = "";
+                    string_tabs = "";
+
+                    for (const poll of data.polls) {
+                        var html_string = `
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link"
+                                id="${poll.poll_id}-poll-tab" data-bs-toggle="pill"
+                                data-bs-target="#pills-poll-${poll.poll_id}" type="button" role="tab"
+                                aria-controls="pills-poll-${poll.poll_id}" aria-selected="true">${poll.name}</button>
+                        </li>`
+                        string_pills += html_string;
+
+                        html_string = `
+                             <div class="tab-pane fade"
+                             id="pills-poll-${poll.poll_id}" role="tabpanel" aria-labelledby="${poll.poll_id}-poll-tab">
+
+                            <form class="row" onsubmit = "sendVote(event)" id="form-poll-${poll.poll_id}">
+                                <div class = "col-12" id="candidates-poll-${poll.poll_id}">
+                                </div>
+                                <div class="col-auto mt-4">
+                                    <button class = "btn btn-primary">Голосовать</button>
+                                </div>
+                            </div>
+                        </div>`
+
+                        string_tabs += html_string;
+                    }
+
+                    var elem = document.getElementById('pills-tab');
+                    elem.innerHTML += string_pills;
+                    elem = document.getElementById('pills-tabContent');
+                    elem.innerHTML += string_tabs;
+
+                    for (const poll of data.polls) {
+
+                        var elem = document.getElementById("candidates-poll-" + poll.poll_id);
+                        var html_string = "";
+
+                        for (const candidate of poll.candidates) {
+                            html_string += `
+                                <input type="radio" class="btn-check" name="radio-${poll.poll_id}" id="radio-${poll.poll_id}-${candidate}" autocomplete="off">
+                                <label class="btn btn-primary m-2" for="radio-${poll.poll_id}-${candidate}">Игрок ${candidate}</label>`;
+                        }
+                        html_string += `
+                            <input type="radio" class="btn-check" name="radio-${poll.poll_id}" id="radio-${poll.poll_id}-no_vote" autocomplete="off" checked>
+                            <label class="btn btn-primary m-2" for="radio-${poll.poll_id}-no_vote">Не голосовать</label>`;
+
+                        elem.innerHTML = html_string;
+                    }
+
                     for (const channel of data.channels) {
+
+                        if (channel.can_read == 0)
+                            continue;
 
                         fetch('/public/chat/get_messages/' + room_id.value + '/' + channel.channel_id, {
                             headers: {
@@ -178,26 +298,38 @@
                                 elem.innerHTML = string_articles;
                             });
 
-                            if (subscriptions.has(channel.channel_id)) {
-                                var subscription = subscriptions.get(channel.channel_id);
-                                subscription.unsubscribe();
-                            }
-
                             var subscription = stompClient.subscribe('/topic/messages/' + room_id.value + '/' + channel.channel_id,
                                 function(messageOutput) {
                                     var elem = document.getElementById('articles' + channel.channel_id);
                                     elem.innerHTML = elem.innerHTML + getHtmlForArticle(JSON.parse(messageOutput.body));
                                 }
                             );
-                            subscriptions.set(channel.channel_id, subscription);
+                            subscriptions.push(subscription);
+                        });
+                    }
+
+                    if (data.status == 'not started') {
+                        fetch('/public/room/get_players/' + room_id.value, {
+                            headers: {
+                                'Accept': 'application/json'
+                            }
+                        }).then(
+                        function(response) {
+                            if (response.status !== 200) {
+                                console.log("Can't load players. Status Code: " + response.status);
+                                return;
+                            }
+                            response.json().then(function(players) {update_players(players);});
+
+                            var subscription = stompClient.subscribe('/topic/players/' + room_id.value, function(data) {update_players(JSON.parse(data.body));});
+                            subscriptions.push(subscription);
                         });
                     }
                 });
             });
         }
 
-        function receiveCallback(players) {
-            players = JSON.parse(players.body);
+        function update_players(players) {
             var elem = document.getElementById('players');
             string_players = "";
 
@@ -211,80 +343,7 @@
         }
 
         function connectCallback(frame) {
-
-            for (const channel_id of channel_ids) {
-                fetch('/public/chat/get_messages/' + room_id.value + '/' + channel_id, {
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                }).then(
-                function(response) {
-                    if (response.status !== 200) {
-                        console.log("Can't load messages. Status Code: " + response.status);
-                        return;
-                    }
-                    response.json().then(function(data) {
-                        string_articles = "";
-
-                        for (const mes of data) {
-                            string_articles += getHtmlForArticle(mes);
-                        }
-
-                        var elem = document.getElementById('articles' + channel_id);
-                        elem.innerHTML = string_articles;
-                    });
-
-                    var subscription = stompClient.subscribe('/topic/messages/' + room_id.value + '/' + channel_id,
-                        function(messageOutput) {
-                            var elem = document.getElementById('articles' + channel_id);
-                            elem.innerHTML = elem.innerHTML + getHtmlForArticle(JSON.parse(messageOutput.body));
-                        }
-                    );
-
-                    subscriptions.set(channel_id, subscription);
-
-
-                    stompClient.subscribe('/topic/user/' + channel_id + '/' + username.value,
-                        function(messageOutput){
-                            var announcement_string = `
-                                <article class="row py-2">
-                                    <div class="col-sm col-xs-12 text-danger" style="font-size:1.25rem;">
-                                        <div>Вы отправили слишком много текста в слишком короткий промежуток времени</div>
-                                    </div>
-                                </article>`;
-
-                            var elem = document.getElementById('articles' + channel_id);
-                            elem.innerHTML = elem.innerHTML + announcement_string;
-                        }
-                    );
-
-                });
-            }
-
-            fetch('/public/room/get_players/' + room_id.value, {
-                headers: {
-                    'Accept': 'application/json'
-                }
-            }).then(
-            function(response) {
-                if (response.status !== 200) {
-                    console.log("Can't load players. Status Code: " + response.status);
-                    return;
-                }
-                response.json().then(function(data) {
-                    string_players = "";
-
-                    for (const player of data) {
-                        string_players += getHtmlForPlayer(player);
-                    }
-
-                    var elem = document.getElementById('players');
-                    elem.innerHTML = string_players;
-                });
-
-                stompClient.subscribe('/topic/players/' + room_id.value, receiveCallback);
-            });
-
+            update_ui({body : "not started"});
             stompClient.subscribe('/topic/room_status/' + room_id.value, update_ui);
         }
 
@@ -294,6 +353,39 @@
             stompClient.connect({}, connectCallback, errorCallback);
         }
 
+        function sendVote(event) {
+            event.preventDefault();
+            var csrf_token = document.getElementById('_csrf').value;
+            poll_id = event.target.id.substring(10);
+
+            var radios = document.getElementsByName("radio-" + poll_id);
+            var candidate = -1;
+
+            for (const radio of radios) {
+                if (radio.checked) {
+                    candidate = radio.getAttribute("id").split('-').at(-1);
+
+                    if (candidate == 'no_vote') {
+                        candidate = -1;
+                    }
+
+                    break;
+                }
+            }
+
+            fetch('/user/vote/' + poll_id + '?candidate=' + candidate, {
+                method: 'post',
+                headers: {
+                    "X-CSRF-TOKEN" : _csrf.value,
+                },
+            }).then( (response) => {
+                if (response.status !== 200) {
+                    console.log("Can't vote. Status Code: " + response.status);
+                    return;
+                }
+            });
+        }
+
         function sendMessage(event) {
             event.preventDefault();
             var csrf_token = document.getElementById('_csrf').value;
@@ -301,7 +393,7 @@
 
             var text = document.getElementById('text' + channel_id).value;
             stompClient.send("/app/message/" + room_id.value + '/' + channel_id, {'x-csrf-token':csrf_token},
-                JSON.stringify({'text':text, 'username':username.value}));
+                JSON.stringify({'text':text}));
             event.target.reset();
         }
 
@@ -309,7 +401,7 @@
             stompClient.disconnect();
         }
 
-        subscriptions = new Map();
+        subscriptions = new Array();
 
         document.addEventListener("DOMContentLoaded", connect);
 
@@ -317,13 +409,38 @@
     </script>
 
     <script>
+
+        function pop_count(n){
+            let cnt = 0;
+            do {
+                if (n & 1)
+                    ++cnt;
+            } while(n >>= 1);
+
+            return cnt;
+        }
+
+        function get_mask_of_role(role) {
+
+            let mask = 0;
+
+            for (i = 0; i < 30; i++) {
+
+                if (roles[i] == role)
+                    mask = mask | (1 << i);
+            }
+
+            return mask;
+        }
+
+
         function initialize_room(data) {
 
             players = data;
 
             console.log(players);
 
-            roles = new Array(players.length).fill("Мирный");
+            roles = new Array(30).fill("Мирный");
             mafia_index = Math.floor(Math.random() * roles.length);
             roles[mafia_index] = "Мафия";
 
@@ -336,36 +453,79 @@
             }
             */
 
-            all_mask = (1 << players.length) - 1;
-            mafia_mask = (1 << mafia_index);
+            all_mask = (1 << 30) - 1;
+            mafia_mask = get_mask_of_role("мафия");
+            curr_stage = "day";
 
             messages = new Array(players.length);
             for (var i = 0; i < players.length; i++) {
                 messages[i] = "Ваша роль: " + roles[i];
             }
-
-            fetch('/user/start_room/' + room_id.value, {
-                method: 'post',
-                headers: {
-                    "X-CSRF-TOKEN" : _csrf.value,
-                    "Content-Type" : "application/json; charset=utf-8"
-                },
-                body: JSON.stringify({
-                    "channels" : [
-                    {"name" : "день", "read_mask" : all_mask, "write_mask" : all_mask},
-                    {"name" : "ночь", "read_mask" : mafia_mask, "write_mask" : mafia_mask}
-                    ],
-                    "polls" : [{"name": "дневное голосование", "vote_mask": all_mask, "view_mask": 0}],
+            return {"channels" : [{"name" : "лобби", "read_mask" : 0, "write_mask" : 0},
+                                  {"name" : "общий", "read_mask" : all_mask, "write_mask" : all_mask},
+                                  {"name" : "мафия", "read_mask" : mafia_mask, "write_mask" : mafia_mask},
+                                  {"name" : "мертвые", "read_mask" : 0, "write_mask" : 0}],
+                    "polls" : [{"name": "дневное ГС", "mask_voters": all_mask, "mask_observers": all_mask, "mask_candidates" : all_mask}],
                     "messages" : messages,
-                    "duration" : 30,
-                    "stage" : "день"
-                })
-            }).then( (response) => {
-                if (response.status !== 200) {
-                    console.log("Can't start room. Status Code: " + response.status);
-                    return;
+                    "duration" : 15,
+                    "stage" : "день"};
+        }
+
+        function update_state(data) {
+
+            for (const poll of data) {
+
+                if (poll.name == "ночное ГС" || poll.name == "дневное ГС") {
+                    let max_value = -1;
+                    let index = -1;
+
+                    for(i = 0; i < 25; i++) {
+
+                        if (pop_count(poll.poll_table[i]) == max_value) {
+                            index = -1;
+                        }
+
+                        if (pop_count(poll.poll_table[i]) > max_value) {
+                            max_value = pop_count(poll.poll_table[i]);
+                            index = i;
+                        }
+                    }
+
+                    if (index != -1) {
+                        roles[index] = "призрак";
+                    }
                 }
-            });
+            }
+
+            curr_stage = (curr_stage == "day") ? "night" : "day";
+
+            messages = new Array(players.length);
+            for (var i = 0; i < players.length; i++) {
+                messages[i] = "Вы дожили до " + (curr_stage == "day") ? "рассвета" : "заката";
+            }
+
+            all_mask = (1 << 30) - 1;
+            mafia_mask = get_mask_of_role("мафия");
+            ghost_mask = get_mask_of_role("призрак");
+            alive_mask = all_mask ^ ghost_mask;
+
+            if (curr_stage == "day") {
+                return {"channels" : [
+                        {"name" : "общий", "read_mask" : all_mask, "write_mask" : alive_mask},
+                        {"name" : "мафия", "read_mask" : mafia_mask, "write_mask" : mafia_mask}],
+                        "polls" : [{"name": "дневное ГС", "mask_voters": alive_mask, "mask_observers": all_mask, "mask_candidates" : alive_mask}],
+                        "messages" : messages,
+                        "duration" : 15,
+                        "stage" : "день"};
+            } else {
+                return {"channels" : [
+                        {"name" : "общий", "read_mask" : all_mask, "write_mask" : 0},
+                        {"name" : "мафия", "read_mask" : mafia_mask, "write_mask" : mafia_mask}],
+                        "polls" : [{"name": "ночное ГС", "mask_voters": mafia_mask, "mask_observers": mafia_mask, "mask_candidates" : all_mask}],
+                        "messages" : messages,
+                        "duration" : 10,
+                        "stage" : "ночь"};
+            }
         }
     </script>
 
@@ -384,7 +544,21 @@
                     return;
                 }
                 response.json().then(function(data) {
-                    initialize_room(data);
+                    var initial_state = initialize_room(data);
+
+                    fetch('/user/start_room/' + room_id.value, {
+                        method: 'post',
+                        headers: {
+                            "X-CSRF-TOKEN" : _csrf.value,
+                            "Content-Type" : "application/json; charset=utf-8"
+                        },
+                        body: JSON.stringify(initial_state)
+                    }).then( (response) => {
+                        if (response.status !== 200) {
+                            console.log("Can't start room. Status Code: " + response.status);
+                            return;
+                        }
+                    });
                 });
             });
         }
@@ -416,56 +590,12 @@
 
                     <div class="col-auto">
                         <ul class="nav nav-pills" id="pills-tab" role="tablist">
-
-
-                            <li th:each="channel, iter : ${channels}" class="nav-item" role="presentation">
-                                <button th:class="'nav-link' + ((iter.index == 0)? 'active' : '')"
-                                        th:id="${channel.id} + '-tab'" data-bs-toggle="pill"
-                                        th:data-bs-target="'#pills-' + ${channel.id}" type="button" role="tab"
-                                        th:aria-controls="'pills-' + ${channel.id}" aria-selected="true"
-                                        th:text="${channel.name}"></button>
-                            </li>
-
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="pills-players-tab" data-bs-toggle="pill" data-bs-target="#pills-players" type="button" role="tab" aria-controls="pills-players" aria-selected="false">игроки</button>
-                            </li>
                         </ul>
                     </div>
                 </div>
             </nav>
 
             <div class="tab-content" id="pills-tabContent">
-
-                <div th:each="channel, iter : ${channels}"
-                     th:class="'tab-pane fade' + ((${iter.index} == 0)? 'show active' : '')"
-                     th:id="'pills-' + ${channel.id}" role="tabpanel" th:aria-labelledby="${channel.id} + '-tab'">
-
-                    <div class="row">
-                        <div class = "col-12" th:id="'articles' + ${channel.id}">
-                        </div>
-
-                        <div class = "col-12">
-                            <form th:id="'form' + ${channel.id}" onsubmit="sendMessage(event)" class="row py-2">
-                                <input type="hidden"
-                                       name = "channel"
-                                       th:value="${channel.id}"/>
-                                <div class="col-11">
-                                    <textarea class="form-control" rows="3"
-                                              name="text" th:id="'text' + ${channel.id}"></textarea>
-                                </div>
-                                <div class="col-1 px-0">
-                                    <button class="px-0">
-                                        <img src="/public_static/icons/send.svg" width="30" height="30" alt="кнопка отправить">
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                <div class="tab-pane fade" id="pills-players" role="tabpanel" aria-labelledby="pills-players-tab">
-                    <div class = "col-12" id="players">
-                    </div>
-                </div>
             </div>
         </div>
     </div>

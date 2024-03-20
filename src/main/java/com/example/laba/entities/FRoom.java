@@ -29,6 +29,9 @@ public class FRoom {
     private List<FChannel> channels = new ArrayList<>();
 
     @OneToMany(mappedBy="room")
+    private List<FPoll> polls = new ArrayList<>();
+
+    @OneToMany(mappedBy="room")
     private List<FUser> players = new ArrayList<>();
 
     @Override
@@ -174,5 +177,18 @@ public class FRoom {
 
     public void setStage(String stage) {
         this.stage = stage;
+    }
+
+    public List<FPoll> getPolls() {
+        return polls;
+    }
+
+    public void setPolls(List<FPoll> polls) {
+        this.polls = polls;
+    }
+
+    public void addPoll(FPoll poll) {
+        poll.setRoom(this);
+        polls.add(poll);
     }
 }

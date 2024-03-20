@@ -1,25 +1,13 @@
 package com.example.laba.controllers;
 
 import com.example.laba.json_objects.*;
-import com.example.laba.objects_to_fill_templates.TmplUser;
-import com.example.laba.services.CatMaidService;
-import com.example.laba.services.OverturningTheEarthAndTramplingTheHeavensDAOService;
-import com.example.laba.services.RoomChannelMessageDaoService;
-import com.example.laba.services.SecurityService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.example.laba.services.*;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
-import static org.aspectj.bridge.MessageUtil.getMessages;
 
 @Controller
 public class RoomManageController {
@@ -28,16 +16,13 @@ public class RoomManageController {
     RoomChannelMessageDaoService RCMDAOService;
 
     @Autowired
-    OverturningTheEarthAndTramplingTheHeavensDAOService DAOService;
-
-    @Autowired
     SecurityService securityService;
 
     @Autowired
-    CatMaidService catMaidService;
+    private SimpMessagingTemplate template;
 
     @Autowired
-    private SimpMessagingTemplate template;
+    TimerService timerService;
 
     @GetMapping("/user/exit_room/{room_id}")
     void exit_room(@PathVariable long room_id,
@@ -59,22 +44,23 @@ public class RoomManageController {
     @PostMapping("/user/start_room/{room_id}")
     void start_room(@PathVariable long room_id,
                     @RequestBody InputStateRoom inputStateRoom,
-                    HttpServletResponse response,
-                    ObjectMapper objectMapper) {
+                    HttpServletResponse response) {
 
         if (RCMDAOService.set_room_status(securityService.getUsername(), room_id, "started")) {
 
-            RCMDAOService.set_state(room_id, inputStateRoom);
+            RCMDAOService.set_state(room_id, inputStateRoom, true);
+            timerService.notify_host_after_delay(room_id, inputStateRoom.duration);
 
             template.convertAndSend("/topic/room_status/" + room_id, "started");
         }
+
+        response.setStatus(200);
     }
 
     @PostMapping("/user/processing_start_room/{room_id}")
     @ResponseBody
     List<String> processing_start_room(@PathVariable long room_id,
-                                            HttpServletResponse response,
-                                            ObjectMapper objectMapper) {
+                                            HttpServletResponse response) {
 
         if (RCMDAOService.set_room_status(securityService.getUsername(), room_id, "processing")) {
             template.convertAndSend("/topic/room_status/" + room_id,  "processing");
@@ -83,11 +69,43 @@ public class RoomManageController {
         return RCMDAOService.numerate_player(room_id);
     }
 
-    @ResponseBody
     @GetMapping("/user/status_room/{room_id}")
-    OutputStateRoom status_room(@PathVariable long room_id,
-                                ObjectMapper objectMapper) {
+    @ResponseBody
+    OutputStateRoom status_room(@PathVariable long room_id){
 
         return RCMDAOService.get_state_for_player(room_id, securityService.getUsername());
+    }
+
+    @GetMapping("/user/get_data_for_processing/{room_id}")
+    @ResponseBody
+    List<OutputPollResult> get_results_of_stage(@PathVariable long room_id) {
+
+        return RCMDAOService.get_polls_results(room_id);
+    }
+
+    @PostMapping("/user/update_room_state/{room_id}")
+    void set_state_of_stage(@PathVariable long room_id,
+                            @RequestBody InputStateRoom inputStateRoom,
+                            HttpServletResponse response) {
+
+        if (RCMDAOService.set_room_status(securityService.getUsername(), room_id, "started")) {
+
+            RCMDAOService.set_state(room_id, inputStateRoom, false);
+            timerService.notify_host_after_delay(room_id, inputStateRoom.duration);
+
+            template.convertAndSend("/topic/room_status/" + room_id, "started");
+        }
+
+        response.setStatus(200);
+    }
+
+    @PostMapping("/user/vote/{poll_id}")
+    void vote(@PathVariable long poll_id,
+              @RequestParam long candidate,
+              HttpServletResponse response) {
+
+        boolean success_vote = RCMDAOService.add_vote(poll_id, securityService.getUsername(), candidate);
+
+        response.setStatus(200);
     }
 }

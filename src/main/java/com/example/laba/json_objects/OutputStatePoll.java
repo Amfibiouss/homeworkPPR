@@ -1,10 +1,21 @@
 package com.example.laba.json_objects;
 
+import java.util.List;
+
 public class OutputStatePoll {
     public long poll_id;
 
     public String name;
     public boolean can_vote;
+    public List<Long> candidates;
+
+    public List<Long> getCandidates() {
+        return candidates;
+    }
+
+    public void setCandidates(List<Long> candidates) {
+        this.candidates = candidates;
+    }
 
     public String getName() {
         return name;
