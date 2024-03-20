@@ -13,6 +13,10 @@ public class TimerService {
 
     @Autowired
     private SimpMessagingTemplate template;
+
+    @Autowired
+    private RoomChannelMessageDaoService RCMDAOService;
+
     private final ScheduledExecutorService scheduler =
             Executors.newScheduledThreadPool(1);
 
@@ -20,7 +24,8 @@ public class TimerService {
     public void notify_host_after_delay(final long room_id, final long delay) {
         scheduler.schedule(new Runnable(){
             public void run() {
-                template.convertAndSend("/topic/room_status/" + room_id, "processing stage");
+                RCMDAOService.set_room_status(room_id, "processing");
+                template.convertAndSend("/topic/room_status/" + room_id, "processing");
             }
         }, delay, TimeUnit.SECONDS);
     }

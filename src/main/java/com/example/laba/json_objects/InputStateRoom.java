@@ -4,6 +4,8 @@ import java.util.List;
 
 public class InputStateRoom {
 
+    public String status;
+
     public List<InputStateChannel> channels;
 
     public List<InputStatePoll> polls;
@@ -51,6 +53,14 @@ public class InputStateRoom {
 
     public void setStage(String stage) {
         this.stage = stage;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }
 

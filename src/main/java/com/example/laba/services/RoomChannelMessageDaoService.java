@@ -303,13 +303,54 @@ public class RoomChannelMessageDaoService {
     }
 
     @Transactional
-    public boolean set_room_status(String username, long room_id, String status) {
+    public boolean isHost(long room_id, String username) {
         Session session = sessionFactory.getCurrentSession();
-        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
         FRoom room = session.get(FRoom.class, room_id);
 
-        if (!user.equals(room.getCreator())) {
-            return false;
+        return room.getCreator().getLogin().equals(username);
+    }
+
+    @Transactional
+    public boolean set_room_status(long room_id, String status) {
+        Session session = sessionFactory.getCurrentSession();
+        FRoom room = session.get(FRoom.class, room_id);
+
+        //System.out.println(room.getStatus());
+        //System.out.println(status);
+
+        if (status.equals("closed")) {
+            room.setStatus("closed");
+            return true;
+        }
+
+        switch (room.getStatus()) {
+
+            case "not_started":
+                if (!status.equals("initialization")) {
+                    return false;
+                }
+                break;
+
+            case "initialization":
+                if (!status.equals("started")) {
+                    return false;
+                }
+                break;
+
+            case "started":
+                if (!status.equals("processing")) {
+                    return false;
+                }
+                break;
+
+            case "processing":
+                if (!status.equals("started") && !status.equals("finished")) {
+                    return false;
+                }
+                break;
+
+            case "finished", "closed":
+                return false;
         }
 
         room.setStatus(status);
@@ -484,5 +525,13 @@ public class RoomChannelMessageDaoService {
         }
 
         return results;
+    }
+
+    @Transactional
+    public void change_index(String username, long index) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser player = session.bySimpleNaturalId(FUser.class).load(username);
+
+        player.setPlayer_index(index);
     }
 }

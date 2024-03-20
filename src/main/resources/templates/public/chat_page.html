@@ -106,12 +106,12 @@
 
         function update_ui(status) {
 
-            if (status.body == 'processing stage') {
+            if (status.body == 'processing') {
                 processing_stage();
                 return;
             }
 
-            if (status.body == 'processing')
+            if (status.body == 'initialization')
                 return;
 
             fetch('/user/status_room/' + room_id.value, {
@@ -140,8 +140,12 @@
                                 return;
                             }
 
-                            time_until_new_stage.innerHTML = "Осталось " + Math.floor(res) + " секунд";
+                            time_until_new_stage.innerHTML = "До конца сталось " + Math.floor(res) + " секунд";
                         }, 1000);
+
+                        current_stage.innerHTML = "Сейчас " + data.stage;
+                    } else {
+                        time_until_new_stage.innerHTML = "";
                     }
 
                     for (const subscription of subscriptions) {
@@ -430,7 +434,20 @@
                     mask = mask | (1 << i);
             }
 
-            return mask;
+            return all_mask & mask;
+        }
+
+        function get_mask_of_dead(role) {
+
+            let mask = 0;
+
+            for (i = 0; i < 30; i++) {
+
+                if (dead[i] == 1)
+                    mask = mask | (1 << i);
+            }
+
+            return all_mask & mask;
         }
 
 
@@ -440,9 +457,11 @@
 
             console.log(players);
 
-            roles = new Array(30).fill("Мирный");
-            mafia_index = Math.floor(Math.random() * roles.length);
-            roles[mafia_index] = "Мафия";
+            roles = new Array(30).fill("мирный");
+            dead = new Array(30);
+            roles[0] = "мафия";
+            roles[1] = "мафия";
+            roles[2] = "мафия";
 
             /*
             for (var i = roles.length - 1; i > 0; i--) {
@@ -453,7 +472,7 @@
             }
             */
 
-            all_mask = (1 << 30) - 1;
+            all_mask = (1 << 12) - 1;
             mafia_mask = get_mask_of_role("мафия");
             curr_stage = "day";
 
@@ -468,7 +487,8 @@
                     "polls" : [{"name": "дневное ГС", "mask_voters": all_mask, "mask_observers": all_mask, "mask_candidates" : all_mask}],
                     "messages" : messages,
                     "duration" : 15,
-                    "stage" : "день"};
+                    "stage" : "день",
+                    "status" : "started"};
         }
 
         function update_state(data) {
@@ -492,7 +512,7 @@
                     }
 
                     if (index != -1) {
-                        roles[index] = "призрак";
+                        dead[index] = 1;
                     }
                 }
             }
@@ -504,27 +524,35 @@
                 messages[i] = "Вы дожили до " + (curr_stage == "day") ? "рассвета" : "заката";
             }
 
-            all_mask = (1 << 30) - 1;
             mafia_mask = get_mask_of_role("мафия");
-            ghost_mask = get_mask_of_role("призрак");
+            citizens_mask =  get_mask_of_role("мирный");
+            ghost_mask =  get_mask_of_dead();
             alive_mask = all_mask ^ ghost_mask;
 
             if (curr_stage == "day") {
                 return {"channels" : [
-                        {"name" : "общий", "read_mask" : all_mask, "write_mask" : alive_mask},
-                        {"name" : "мафия", "read_mask" : mafia_mask, "write_mask" : mafia_mask}],
-                        "polls" : [{"name": "дневное ГС", "mask_voters": alive_mask, "mask_observers": all_mask, "mask_candidates" : alive_mask}],
+                        {"name" : "общий", "read_mask" : all_mask, "write_mask" : alive_mask & alive_mask},
+                        {"name" : "мафия", "read_mask" : mafia_mask, "write_mask" : mafia_mask & alive_mask}],
+                        "polls" : [{"name": "дневное ГС",
+                                    "mask_voters": alive_mask,
+                                    "mask_observers": all_mask,
+                                    "mask_candidates" : alive_mask}],
                         "messages" : messages,
                         "duration" : 15,
-                        "stage" : "день"};
+                        "stage" : "день",
+                        "status" : (mafia_mask == 0 || citizens_mask == 0)? "finished" : "started"};
             } else {
                 return {"channels" : [
                         {"name" : "общий", "read_mask" : all_mask, "write_mask" : 0},
-                        {"name" : "мафия", "read_mask" : mafia_mask, "write_mask" : mafia_mask}],
-                        "polls" : [{"name": "ночное ГС", "mask_voters": mafia_mask, "mask_observers": mafia_mask, "mask_candidates" : all_mask}],
+                        {"name" : "мафия", "read_mask" : mafia_mask, "write_mask" : mafia_mask & alive_mask}],
+                        "polls" : [{"name": "ночное ГС",
+                                    "mask_voters": mafia_mask & alive_mask,
+                                    "mask_observers": mafia_mask,
+                                    "mask_candidates" : citizens_mask & alive_mask}],
                         "messages" : messages,
                         "duration" : 10,
-                        "stage" : "ночь"};
+                        "stage" : "ночь",
+                        "status" : (mafia_mask == 0 || citizens_mask == 0)? "finished" : "started"};
             }
         }
     </script>
@@ -562,6 +590,24 @@
                 });
             });
         }
+
+        function change_player(event) {
+            event.preventDefault();
+
+            fetch('/user/change_player/' + room_id.value + "?index=" + player_index.value, {
+                method: 'post',
+                headers: {
+                    "X-CSRF-TOKEN" : _csrf.value,
+                }
+            }).then( (response) => {
+                if (response.status !== 200) {
+                    console.log("Can't start room. Status Code: " + response.status);
+                    return;
+                }
+
+                update_ui({body:"started"});
+            });
+        }
     </script>
 
 </head>
@@ -585,7 +631,22 @@
                     <div class="col-auto">
                         <a th:href="'/user/exit_room/' + ${room_id}"><button class="btn btn-outline-secondary" type="button" id="quit_button">выйти</button></a>
                         <button class="btn btn-outline-secondary" type="button" id="start_button" onclick="submit_start_room(event)">начать</button>
-                        <div><span id="time_until_new_stage" style="font-size:1.5rem;"></span></div>
+                        <div class="dropdown" style="display:inline-block;">
+                            <button class="btn btn-secondary dropdown-toggle" data-bs-auto-close="false" type="button" id="switchPlayerButton"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <img src="/public_static/icons/people.svg" width="30" height="30">
+                            </button>
+                            <div class="dropdown-menu p-2" aria-labelledby="switchPlayerButton">
+                                <form onsubmit="change_player(event)">
+                                    <label>
+                                        <input class="form-control" type="number" name="player_index" id = "player_index">
+                                    </label>
+                                    <input class="mt-2" type="submit">
+                                </form>
+                            </div>
+                        </div>
+                        <div><span id="current_stage" style="font-size:1.25rem;"></span></div>
+                        <div><span id="time_until_new_stage" style="font-size:1.25rem;"></span></div>
                     </div>
 
                     <div class="col-auto">

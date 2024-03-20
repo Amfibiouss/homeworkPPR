@@ -8,6 +8,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Objects;
 
 @Controller
 public class RoomManageController {
@@ -46,7 +47,12 @@ public class RoomManageController {
                     @RequestBody InputStateRoom inputStateRoom,
                     HttpServletResponse response) {
 
-        if (RCMDAOService.set_room_status(securityService.getUsername(), room_id, "started")) {
+        if (!RCMDAOService.isHost(room_id, securityService.getUsername())) {
+            response.setStatus(403);
+            return;
+        }
+
+        if (RCMDAOService.set_room_status(room_id, "started")) {
 
             RCMDAOService.set_state(room_id, inputStateRoom, true);
             timerService.notify_host_after_delay(room_id, inputStateRoom.duration);
@@ -62,8 +68,13 @@ public class RoomManageController {
     List<String> processing_start_room(@PathVariable long room_id,
                                             HttpServletResponse response) {
 
-        if (RCMDAOService.set_room_status(securityService.getUsername(), room_id, "processing")) {
-            template.convertAndSend("/topic/room_status/" + room_id,  "processing");
+        if (!RCMDAOService.isHost(room_id, securityService.getUsername())) {
+            response.setStatus(403);
+            return null;
+        }
+
+        if (RCMDAOService.set_room_status(room_id, "initialization")) {
+            template.convertAndSend("/topic/room_status/" + room_id,  "initialization");
         }
 
         return RCMDAOService.numerate_player(room_id);
@@ -78,7 +89,13 @@ public class RoomManageController {
 
     @GetMapping("/user/get_data_for_processing/{room_id}")
     @ResponseBody
-    List<OutputPollResult> get_results_of_stage(@PathVariable long room_id) {
+    List<OutputPollResult> get_results_of_stage(@PathVariable long room_id,
+                                                HttpServletResponse response) {
+
+        if (!RCMDAOService.isHost(room_id, securityService.getUsername())) {
+            response.setStatus(403);
+            return null;
+        }
 
         return RCMDAOService.get_polls_results(room_id);
     }
@@ -88,12 +105,25 @@ public class RoomManageController {
                             @RequestBody InputStateRoom inputStateRoom,
                             HttpServletResponse response) {
 
-        if (RCMDAOService.set_room_status(securityService.getUsername(), room_id, "started")) {
+        if (!RCMDAOService.isHost(room_id, securityService.getUsername())) {
+            response.setStatus(403);
+            return;
+        }
+
+        if (!Objects.equals(inputStateRoom.getStatus(), "started")
+                && !Objects.equals(inputStateRoom.getStatus(), "finished")) {
+            response.setStatus(400);
+            return;
+        }
+
+        if (RCMDAOService.set_room_status(room_id, inputStateRoom.getStatus())) {
 
             RCMDAOService.set_state(room_id, inputStateRoom, false);
-            timerService.notify_host_after_delay(room_id, inputStateRoom.duration);
 
-            template.convertAndSend("/topic/room_status/" + room_id, "started");
+            if (!inputStateRoom.getStatus().equals("finished"))
+                timerService.notify_host_after_delay(room_id, inputStateRoom.duration);
+
+            template.convertAndSend("/topic/room_status/" + room_id, inputStateRoom.getStatus());
         }
 
         response.setStatus(200);
@@ -106,6 +136,21 @@ public class RoomManageController {
 
         boolean success_vote = RCMDAOService.add_vote(poll_id, securityService.getUsername(), candidate);
 
+        response.setStatus(200);
+    }
+
+    @PostMapping("/user/change_player/{room_id}")
+    @ResponseBody
+    void get_results_of_stage(@PathVariable long room_id,
+                              @RequestParam long index,
+                              HttpServletResponse response) {
+
+        if (!RCMDAOService.isHost(room_id, securityService.getUsername()) || index < 0 || index >= 30) {
+            response.setStatus(403);
+            return;
+        }
+
+        RCMDAOService.change_index(securityService.getUsername(), index);
         response.setStatus(200);
     }
 }
