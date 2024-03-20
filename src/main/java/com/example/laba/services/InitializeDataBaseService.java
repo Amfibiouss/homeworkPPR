@@ -7,6 +7,7 @@ import com.example.laba.entities.FUser;
 import com.example.laba.json_objects.OutputMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.PersistenceUnit;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.Channel;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.List;
 
@@ -62,7 +66,7 @@ public class InitializeDataBaseService {
 
             user.setLogin(login[i]);
             user.setPhoto(handleImageService.cropping_scaling(photo));
-            user.setPassword(BCrypt.hashpw(password[i], BCrypt.gensalt()));
+            user.setPassword(DigestUtils.sha256Hex(password[i]));
             user.setAdmin(admin[i]);
             user.setSex(sex[i]);
             user.setDescription(description[i]);

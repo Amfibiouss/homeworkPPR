@@ -6,6 +6,7 @@ import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -110,7 +111,7 @@ public class RegistrationController {
 
         session.setAttribute("random_string", new StringBuffer(random_string));
         session.setAttribute("username", new StringBuffer(username));
-        session.setAttribute("password", new StringBuffer(BCrypt.hashpw(password, BCrypt.gensalt())));
+        session.setAttribute("password", new StringBuffer(DigestUtils.sha256Hex(password)));
         session.setAttribute("email", new StringBuffer(email));
         session.setAttribute("sex", new StringBuffer(sex));
 

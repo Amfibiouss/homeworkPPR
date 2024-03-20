@@ -25,10 +25,7 @@ public class SecurityService {
         if (context.getAuthentication() instanceof AnonymousAuthenticationToken)
             return null;
 
-        UsernamePasswordAuthenticationToken authentication =
-                (UsernamePasswordAuthenticationToken) context.getAuthentication();
-
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        UserDetails userDetails = (UserDetails) context.getAuthentication().getPrincipal();
 
         return DAOService.get_user_by_login(userDetails.getUsername());
     }
@@ -39,9 +36,8 @@ public class SecurityService {
         if (context.getAuthentication() instanceof AnonymousAuthenticationToken)
             return null;
 
-        UsernamePasswordAuthenticationToken authentication =
-                (UsernamePasswordAuthenticationToken) context.getAuthentication();
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        UserDetails userDetails = (UserDetails) context.getAuthentication().getPrincipal();
+
         return userDetails.getUsername();
     }
     public String getAccess() {

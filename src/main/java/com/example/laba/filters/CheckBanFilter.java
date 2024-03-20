@@ -27,15 +27,20 @@ public class CheckBanFilter implements Filter {
 
         HttpServletResponse res = (HttpServletResponse) response;
 
-        try {
-            if (securityService.hasBan(securityService.getUsername())) {
-                res.setHeader("Location", "/logout");
-                res.setStatus(302);
+        if (securityService.getUsername() != null) {
+            try {
+                if (securityService.hasBan(securityService.getUsername())) {
+                    res.setHeader("Location", "/logout");
+                    res.setStatus(302);
+                    return;
+                }
+            } catch (Exception e) {
+
+                System.out.println("!!!");
+
+                res.setStatus(400);
                 return;
             }
-        } catch (Exception e) {
-            res.setStatus(400);
-            return;
         }
 
         chain.doFilter(request, response);

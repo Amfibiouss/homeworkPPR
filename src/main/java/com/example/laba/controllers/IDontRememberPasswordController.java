@@ -6,6 +6,7 @@ import jakarta.mail.internet.MimeMessage;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -46,7 +47,7 @@ public class IDontRememberPasswordController {
     void i_dont_remember_password_page1(HttpServletResponse response,
                                         HttpServletRequest request,
                                         @RequestParam String email_login,
-                                        @RequestParam String password) {
+                                        @RequestParam String new_password) {
         String email, username;
 
         if (email_login.contains("@")) {
@@ -77,7 +78,7 @@ public class IDontRememberPasswordController {
         }
 
         String random_string = BCrypt.hashpw(
-                System.currentTimeMillis() + email + password,
+                System.currentTimeMillis() + email + new_password,
                 BCrypt.gensalt());
 
         try {
@@ -86,7 +87,7 @@ public class IDontRememberPasswordController {
             helper.setTo(email);
 
             helper.setText("<div style=\"text-align:center;\"><div> Здраствуйте, " + username
-                    + "! После подтверждения вашим новым паролем будет: " + password +
+                    + "! После подтверждения вашим новым паролем будет: " + new_password +
                     ". Ваш код для восстановления пароля:</div><div style=\"font-size:1.5rem;\">"
                     + random_string + "</div></div>", true);
             helper.setFrom("ffffforum@yandex.ru");
@@ -103,7 +104,7 @@ public class IDontRememberPasswordController {
 
         HttpSession session = request.getSession();
         session.setAttribute("random_string", new StringBuffer(random_string));
-        session.setAttribute("password",  new StringBuffer(BCrypt.hashpw(password, BCrypt.gensalt())));
+        session.setAttribute("password",  new StringBuffer(DigestUtils.sha256Hex(new_password)));
         session.setAttribute("username",  new StringBuffer(username));
         session.setAttribute("email",  new StringBuffer(email));
 

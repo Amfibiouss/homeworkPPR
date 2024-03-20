@@ -2,6 +2,7 @@ package com.example.laba.authentication;
 
 import com.example.laba.objects_to_fill_templates.TmplPunishment;
 import com.example.laba.services.OverturningTheEarthAndTramplingTheHeavensDAOService;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
@@ -11,6 +12,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -34,7 +38,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         try {
             detailsFromDAO = userDetailsService.loadUserByUsername(username);
 
-            if (!BCrypt.checkpw(password, detailsFromDAO.getPassword()))
+            if (!DigestUtils.sha256Hex(password).equals(detailsFromDAO.getPassword()))
                 throw new BadCredentialsException("invalid username or password");
 
         } catch (UsernameNotFoundException e) {
@@ -59,7 +63,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
         //System.out.println( new UsernamePasswordAuthenticationToken(detailsFromDAO, "").se);
 
-        return new UsernamePasswordAuthenticationToken(detailsFromDAO, "", detailsFromDAO.getAuthorities());
+        return new UsernamePasswordAuthenticationToken(detailsFromDAO, null, detailsFromDAO.getAuthorities());
     }
 
     @Override
