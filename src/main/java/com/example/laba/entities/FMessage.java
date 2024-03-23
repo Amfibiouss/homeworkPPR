@@ -6,6 +6,7 @@ import java.time.OffsetDateTime;
 import java.util.Objects;
 
 import static jakarta.persistence.FetchType.LAZY;
+import static jakarta.persistence.InheritanceType.SINGLE_TABLE;
 
 @Entity
 public class FMessage {

@@ -25,8 +25,7 @@
                     'help' : room_help.value,
                     'min_players' : room_min_players.value,
                     'max_players' : room_max_players.value,
-                    'init_code' : room_init_code.value,
-                    'handle_code' : room_handle_code.value
+                    'code' : room_code.value
                 })
             }).then( (response) => {
                 if (response.status !== 200) {
@@ -58,7 +57,7 @@
                 </label>
                 <label class="col-12 mb-3">
                     <textarea class="form-control" rows="3" name="room_help" id="room_help"
-                              placeholder="сообщение, которое будет показано в чате с помощью."></textarea>
+                              placeholder="сообщение, которое будет показано в самом верху лобби. Введите например правила режима."></textarea>
                 </label>
                 <div class="col-12 mb-3">
 
@@ -90,13 +89,8 @@
                 </div>
 
                 <label class="col-12 mb-3">
-                    <textarea class="form-control" rows="3" name="room_init_code" id="room_init_code"
-                              placeholder="код инициализации комнаты."></textarea>
-                </label>
-
-                <label class="col-12 mb-3">
-                    <textarea class="form-control" rows="3" name="room_handle_code" id="room_handle_code"
-                              placeholder="код который совершается во время смены состояния."></textarea>
+                    <textarea class="form-control" rows="3" name="room_code" id="room_code"
+                              placeholder="Ваш код."></textarea>
                 </label>
 
                 <div class="col-12">

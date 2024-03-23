@@ -7,8 +7,8 @@ public class InputRoom {
     public String help;
     public long max_players;
     public long min_players;
-    public String init_code;
-    public String handle_code;
+
+    public String code;
 
     public String getName() {
         return name;
@@ -50,19 +50,11 @@ public class InputRoom {
         this.min_players = min_players;
     }
 
-    public String getInit_code() {
-        return init_code;
+    public String getCode() {
+        return code;
     }
 
-    public void setInit_code(String init_code) {
-        this.init_code = init_code;
-    }
-
-    public String getHandle_code() {
-        return handle_code;
-    }
-
-    public void setHandle_code(String handle_code) {
-        this.handle_code = handle_code;
+    public void setCode(String code) {
+        this.code = code;
     }
 }

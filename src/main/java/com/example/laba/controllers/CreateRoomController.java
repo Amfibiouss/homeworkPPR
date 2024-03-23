@@ -43,8 +43,6 @@ public class CreateRoomController {
                      @RequestBody InputRoom room,
                      ObjectMapper objectMapper) {
 
-        //System.out.println("Success " + result_json);
-
         HttpSession session = request.getSession();
         try {
             String json_string = objectMapper.writeValueAsString(room);

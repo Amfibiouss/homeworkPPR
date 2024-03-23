@@ -120,7 +120,16 @@ public class MessageController {
             }
         }
 
-        template.convertAndSend("/topic/players/" + room_id,  RCMDAOService.get_players(room_id));
+        if (RCMDAOService.isHost(room_id, securityService.getUsername())) {
+            model.addAttribute("your_code", RCMDAOService.get_code(room_id));
+            model.addAttribute("host", true);
+
+        } else {
+            model.addAttribute("your_code", "");
+            model.addAttribute("host", false);
+        }
+
+        template.convertAndSend("/topic/players/" + room_id, RCMDAOService.get_players(room_id));
 
         return "public/chat_page";
     }

@@ -84,13 +84,7 @@ public class InitializeDataBaseService {
             channel_lobby.setName("лобби");
             session.persist(channel_lobby);
 
-            FChannel channel_help = new FChannel();
-            channel_help.setName("помощь");
-            session.persist(channel_help);
-
             room.addChannel(channel_lobby);
-            room.addChannel(channel_help);
-
 
             session.persist(room);
         }

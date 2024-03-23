@@ -20,11 +20,12 @@ public class FRoom {
     private OffsetDateTime finish_time;
     private Long min_players;
     private Long max_players;
-    private String init_code;
-    private String handle_code;
+    @Column(columnDefinition = "TEXT")
+    private String code;
     private String status;
     private OffsetDateTime finish_stage;
     private String stage;
+
     @OneToMany(mappedBy="room")
     private List<FChannel> channels = new ArrayList<>();
 
@@ -147,20 +148,12 @@ public class FRoom {
         this.max_players = max_players;
     }
 
-    public String getInit_code() {
-        return init_code;
+    public String getCode() {
+        return code;
     }
 
-    public void setInit_code(String init_code) {
-        this.init_code = init_code;
-    }
-
-    public String getHandle_code() {
-        return handle_code;
-    }
-
-    public void setHandle_code(String handle_code) {
-        this.handle_code = handle_code;
+    public void setCode(String code) {
+        this.code = code;
     }
 
     public OffsetDateTime getFinish_stage() {

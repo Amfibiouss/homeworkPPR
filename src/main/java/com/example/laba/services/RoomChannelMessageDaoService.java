@@ -122,8 +122,7 @@ public class RoomChannelMessageDaoService {
         new_room.setDescription(room.description);
         new_room.setMin_players(room.min_players);
         new_room.setMax_players(room.max_players);
-        new_room.setHandle_code(room.handle_code);
-        new_room.setInit_code(room.init_code);
+        new_room.setCode(room.code);
         new_room.setStatus("not started");
 
         Session session = sessionFactory.getCurrentSession();
@@ -144,21 +143,14 @@ public class RoomChannelMessageDaoService {
         channel_lobby.setWrite_mask((1L << 30) - 1);
         session.persist(channel_lobby);
 
-        FChannel channel_help = new FChannel();
-        channel_help.setName("помощь");
-        channel_help.setRead_mask((1L << 30) - 1);
-        channel_help.setWrite_mask((1L << 30) - 1);
-        session.persist(channel_help);
-
         FMessage message = new FMessage();
         message.setDate(OffsetDateTime.now());
         message.setUser(user);
         message.setText(room.help);
-        message.setChannel(channel_help);
+        message.setChannel(channel_lobby);
         session.persist(message);
 
         new_room.addChannel(channel_lobby);
-        new_room.addChannel(channel_help);
 
         session.persist(new_room);
 
@@ -533,5 +525,13 @@ public class RoomChannelMessageDaoService {
         FUser player = session.bySimpleNaturalId(FUser.class).load(username);
 
         player.setPlayer_index(index);
+    }
+
+    @Transactional
+    public Object get_code(long room_id) {
+        Session session = sessionFactory.getCurrentSession();
+        FRoom room = session.get(FRoom.class, room_id);
+
+        return room.getCode();
     }
 }

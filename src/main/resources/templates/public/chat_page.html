@@ -405,159 +405,6 @@
             stompClient.disconnect();
         }
 
-        subscriptions = new Array();
-
-        document.addEventListener("DOMContentLoaded", connect);
-
-        window.onbeforeunload = unloadHandler;
-    </script>
-
-    <script>
-
-        function pop_count(n){
-            let cnt = 0;
-            do {
-                if (n & 1)
-                    ++cnt;
-            } while(n >>= 1);
-
-            return cnt;
-        }
-
-        function get_mask_of_role(role) {
-
-            let mask = 0;
-
-            for (i = 0; i < 30; i++) {
-
-                if (roles[i] == role)
-                    mask = mask | (1 << i);
-            }
-
-            return all_mask & mask;
-        }
-
-        function get_mask_of_dead(role) {
-
-            let mask = 0;
-
-            for (i = 0; i < 30; i++) {
-
-                if (dead[i] == 1)
-                    mask = mask | (1 << i);
-            }
-
-            return all_mask & mask;
-        }
-
-
-        function initialize_room(data) {
-
-            players = data;
-
-            console.log(players);
-
-            roles = new Array(30).fill("мирный");
-            dead = new Array(30);
-            roles[0] = "мафия";
-            roles[1] = "мафия";
-            roles[2] = "мафия";
-
-            /*
-            for (var i = roles.length - 1; i > 0; i--) {
-                var j = Math.floor(Math.random() * (i + 1));
-                var temp = roles[i];
-                roles[i] = roles[j];
-                roles[j] = temp;
-            }
-            */
-
-            all_mask = (1 << 12) - 1;
-            mafia_mask = get_mask_of_role("мафия");
-            curr_stage = "day";
-
-            messages = new Array(players.length);
-            for (var i = 0; i < players.length; i++) {
-                messages[i] = "Ваша роль: " + roles[i];
-            }
-            return {"channels" : [{"name" : "лобби", "read_mask" : 0, "write_mask" : 0},
-                                  {"name" : "общий", "read_mask" : all_mask, "write_mask" : all_mask},
-                                  {"name" : "мафия", "read_mask" : mafia_mask, "write_mask" : mafia_mask},
-                                  {"name" : "мертвые", "read_mask" : 0, "write_mask" : 0}],
-                    "polls" : [{"name": "дневное ГС", "mask_voters": all_mask, "mask_observers": all_mask, "mask_candidates" : all_mask}],
-                    "messages" : messages,
-                    "duration" : 15,
-                    "stage" : "день",
-                    "status" : "started"};
-        }
-
-        function update_state(data) {
-
-            for (const poll of data) {
-
-                if (poll.name == "ночное ГС" || poll.name == "дневное ГС") {
-                    let max_value = -1;
-                    let index = -1;
-
-                    for(i = 0; i < 25; i++) {
-
-                        if (pop_count(poll.poll_table[i]) == max_value) {
-                            index = -1;
-                        }
-
-                        if (pop_count(poll.poll_table[i]) > max_value) {
-                            max_value = pop_count(poll.poll_table[i]);
-                            index = i;
-                        }
-                    }
-
-                    if (index != -1) {
-                        dead[index] = 1;
-                    }
-                }
-            }
-
-            curr_stage = (curr_stage == "day") ? "night" : "day";
-
-            messages = new Array(players.length);
-            for (var i = 0; i < players.length; i++) {
-                messages[i] = "Вы дожили до " + (curr_stage == "day") ? "рассвета" : "заката";
-            }
-
-            mafia_mask = get_mask_of_role("мафия");
-            citizens_mask =  get_mask_of_role("мирный");
-            ghost_mask =  get_mask_of_dead();
-            alive_mask = all_mask ^ ghost_mask;
-
-            if (curr_stage == "day") {
-                return {"channels" : [
-                        {"name" : "общий", "read_mask" : all_mask, "write_mask" : alive_mask & alive_mask},
-                        {"name" : "мафия", "read_mask" : mafia_mask, "write_mask" : mafia_mask & alive_mask}],
-                        "polls" : [{"name": "дневное ГС",
-                                    "mask_voters": alive_mask,
-                                    "mask_observers": all_mask,
-                                    "mask_candidates" : alive_mask}],
-                        "messages" : messages,
-                        "duration" : 15,
-                        "stage" : "день",
-                        "status" : (mafia_mask == 0 || citizens_mask == 0)? "finished" : "started"};
-            } else {
-                return {"channels" : [
-                        {"name" : "общий", "read_mask" : all_mask, "write_mask" : 0},
-                        {"name" : "мафия", "read_mask" : mafia_mask, "write_mask" : mafia_mask & alive_mask}],
-                        "polls" : [{"name": "ночное ГС",
-                                    "mask_voters": mafia_mask & alive_mask,
-                                    "mask_observers": mafia_mask,
-                                    "mask_candidates" : citizens_mask & alive_mask}],
-                        "messages" : messages,
-                        "duration" : 10,
-                        "stage" : "ночь",
-                        "status" : (mafia_mask == 0 || citizens_mask == 0)? "finished" : "started"};
-            }
-        }
-    </script>
-
-    <script>
         function submit_start_room(event) {
             event.preventDefault();
 
@@ -608,8 +455,15 @@
                 update_ui({body:"started"});
             });
         }
+
+        subscriptions = new Array();
+
+        document.addEventListener("DOMContentLoaded", connect);
+
+        window.onbeforeunload = unloadHandler;
     </script>
 
+    <script th:utext = "${your_code}"></script>
 </head>
 <body>
 <header th:replace="~{public/header :: |${@securityService.getAccess()}_header|}"></header>
@@ -630,8 +484,8 @@
                 <div id = "chat_menu" class="row collapse navbar-collapse justify-content-between">
                     <div class="col-auto">
                         <a th:href="'/user/exit_room/' + ${room_id}"><button class="btn btn-outline-secondary" type="button" id="quit_button">выйти</button></a>
-                        <button class="btn btn-outline-secondary" type="button" id="start_button" onclick="submit_start_room(event)">начать</button>
-                        <div class="dropdown" style="display:inline-block;">
+                        <button th:if="${host}==true" class="btn btn-outline-secondary" type="button" id="start_button" onclick="submit_start_room(event)">начать</button>
+                        <div th:if="${host}==true" class="dropdown" style="display:inline-block;">
                             <button class="btn btn-secondary dropdown-toggle" data-bs-auto-close="false" type="button" id="switchPlayerButton"
                                     data-bs-toggle="dropdown" aria-expanded="false">
                                 <img src="/public_static/icons/people.svg" width="30" height="30">
