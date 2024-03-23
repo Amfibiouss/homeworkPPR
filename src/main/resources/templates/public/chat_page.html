@@ -7,6 +7,7 @@
     <script src="/public_static/js/bootstrap.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"> </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"> </script>
+    <script src="/public_static/room_config.js"> </script>
     <meta charset="UTF-8">
     <title>Title</title>
 
@@ -108,11 +109,12 @@
 
             if (status.body == 'processing') {
                 processing_stage();
-                return;
             }
 
-            if (status.body == 'initialization')
+            if (status.body == 'initialization' || status.body == 'processing') {
+                time_until_new_stage.innerHTML = "Идет обработка...";
                 return;
+            }
 
             fetch('/user/status_room/' + room_id.value, {
                 headers: {
@@ -140,12 +142,10 @@
                                 return;
                             }
 
-                            time_until_new_stage.innerHTML = "До конца сталось " + Math.floor(res) + " секунд";
+                            time_until_new_stage.innerHTML = "До конца сталось " + Math.round(res) + " секунд";
                         }, 1000);
 
                         current_stage.innerHTML = "Сейчас " + data.stage;
-                    } else {
-                        time_until_new_stage.innerHTML = "";
                     }
 
                     for (const subscription of subscriptions) {

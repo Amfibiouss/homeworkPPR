@@ -50,6 +50,11 @@ public class FChannel {
         this.messages = messages;
     }
 
+    public void addMessage(FMessage message) {
+        this.messages.add(message);
+        message.setChannel(this);
+    }
+
     public String getName() {
         return name;
     }

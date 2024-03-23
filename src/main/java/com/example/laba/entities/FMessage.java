@@ -20,6 +20,7 @@ public class FMessage {
     @Column(length=10000)
     private String text;
     private OffsetDateTime date;
+    private Long target;
 
     @Override
     public boolean equals(Object o) {
@@ -37,9 +38,8 @@ public class FMessage {
         return channel;
     }
 
-    public void setChannel(FChannel section) {
-        this.channel = section;
-        section.getMessages().add(this);
+    public void setChannel(FChannel channel) {
+        this.channel = channel;
     }
 
     public Long getId() {
@@ -72,6 +72,14 @@ public class FMessage {
 
     public void setDate(OffsetDateTime date) {
         this.date = date;
+    }
+
+    public Long getTarget() {
+        return target;
+    }
+
+    public void setTarget(Long target) {
+        this.target = target;
     }
 
     public FMessage() {

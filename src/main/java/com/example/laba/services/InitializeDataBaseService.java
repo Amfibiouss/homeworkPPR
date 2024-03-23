@@ -73,32 +73,5 @@ public class InitializeDataBaseService {
             session.persist(user);
         }
 
-        for (int i = 1; i <= 4; i++) {
-            FRoom room = new FRoom();
-            room.setName("Этюд в багровых тонах");
-            room.setDescription("Повесть Артура Конан Дойла 'Этюд в багровых тонах'");
-            room.setCreator(session.get(FUser.class, i));
-            room.setStatus("not started");
-
-            FChannel channel_lobby = new FChannel();
-            channel_lobby.setName("лобби");
-            session.persist(channel_lobby);
-
-            room.addChannel(channel_lobby);
-
-            session.persist(room);
-        }
-
-        Resource chat = new ClassPathResource("static/chat.json");
-        ObjectMapper objectMapper = new ObjectMapper();
-        OutputMessage[] messages = objectMapper.readValue(chat.getFile(), OutputMessage[].class);
-
-        for (OutputMessage message : messages) {
-            FMessage mes = new FMessage();
-            mes.setChannel(session.getReference(FChannel.class, 1));
-            mes.setText(message.text);
-            mes.setUser(session.bySimpleNaturalId(FUser.class).load(message.username));
-            session.persist(mes);
-        }
     }
 }

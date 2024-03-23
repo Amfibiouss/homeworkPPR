@@ -74,18 +74,19 @@ public class RoomChannelMessageDaoService {
     }
 
     @Transactional
-    public List<OutputMessage> get_messages(long channel_id, long offset, long limit) {
+    public List<OutputMessage> get_messages(long channel_id, String username) {
         Session session = sessionFactory.getCurrentSession();
         FChannel channel = session.get(FChannel.class, channel_id);
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
 
         if (channel == null)
             throw new ServiceException("the section_id don't exist.");
 
+
         List <FMessage> messages =
-                session.createSelectionQuery("from FMessage m join fetch m.user where m.channel.id=:channel_id order by m.id limit :limit offset :offset", FMessage.class)
+                session.createSelectionQuery("from FMessage m join fetch m.user where m.channel.id=:channel_id and (m.target=-1 or m.target=:target)", FMessage.class)
                         .setParameter("channel_id", channel_id)
-                        .setParameter("offset", offset)
-                        .setParameter("limit", limit)
+                        .setParameter("target", user.getPlayer_index())
                         .getResultList();
 
         List<OutputMessage> result = new ArrayList<>();
@@ -143,6 +144,12 @@ public class RoomChannelMessageDaoService {
         channel_lobby.setWrite_mask((1L << 30) - 1);
         session.persist(channel_lobby);
 
+        FChannel channel_newspaper = new FChannel();
+        channel_newspaper.setName("газета");
+        channel_newspaper.setRead_mask(0L);
+        channel_newspaper.setWrite_mask(0L);
+        session.persist(channel_newspaper);
+
         FMessage message = new FMessage();
         message.setDate(OffsetDateTime.now());
         message.setUser(user);
@@ -151,6 +158,7 @@ public class RoomChannelMessageDaoService {
         session.persist(message);
 
         new_room.addChannel(channel_lobby);
+        new_room.addChannel(channel_newspaper);
 
         session.persist(new_room);
 
@@ -160,7 +168,7 @@ public class RoomChannelMessageDaoService {
     }
 
     @Transactional
-    public void add_message(String username, String text, long channel_id) {
+    public void add_message(String username, String text, long channel_id, long target) {
         FMessage new_message = new FMessage();
         new_message.setText(text);
 
@@ -175,10 +183,10 @@ public class RoomChannelMessageDaoService {
             throw new ServiceException("the channel_id don't exist.");
 
         new_message.setDate(OffsetDateTime.now());
-        new_message.setChannel(channel);
         new_message.setUser(user);
-
+        new_message.setTarget(target);
         session.persist(new_message);
+        channel.addMessage(new_message);
     }
 
     @Transactional
@@ -460,6 +468,30 @@ public class RoomChannelMessageDaoService {
             poll.setMask_candidates(inputPoll.getMask_candidates());
 
             session.persist(poll);
+        }
+
+        long cnt = 0;
+
+        FChannel newspaper = session.createSelectionQuery(
+                "from FChannel c where c.room=:room and c.name='газета'", FChannel.class)
+                .setParameter("room", room)
+                .getSingleResult();
+
+        for (String message_text : inputStateRoom.getMessages()) {
+
+            if (Objects.equals(message_text, "")) {
+                ++cnt;
+                continue;
+            }
+
+            FMessage new_message = new FMessage();
+            new_message.setTarget(cnt++);
+            new_message.setUser(room.getCreator());
+            new_message.setDate(OffsetDateTime.now());
+            new_message.setText(message_text);
+            session.persist(new_message);
+            newspaper.addMessage(new_message);
+
         }
     }
 

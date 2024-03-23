@@ -83,7 +83,7 @@ public class MessageController {
         }
 
         try {
-            RCMDAOService.add_message(username, text, channel_id);
+            RCMDAOService.add_message(username, text, channel_id, -1);
         } catch (ServiceException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the user or the section don't exist");
         }
@@ -145,7 +145,7 @@ public class MessageController {
         }
 
         try {
-            return RCMDAOService.get_messages(channel_id, 0, 1_000_000);
+            return RCMDAOService.get_messages(channel_id, securityService.getUsername());
         } catch(ServiceException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the channel don't exist");
         }

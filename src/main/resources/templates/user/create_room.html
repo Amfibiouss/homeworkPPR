@@ -50,10 +50,10 @@
         <form class="col-auto bg-color1 mt-5 p-3" onsubmit="submit_form(event)">
             <div class="row">
                 <label class="col-12 mb-3">
-                    <input class="form-control" type="text" name="room_name" id="room_name" placeholder="название.">
+                    <input class="form-control" type="text" name="room_name" id="room_name" placeholder="название." required>
                 </label>
                 <label class="col-12 mb-3">
-                    <textarea class="form-control" rows="3" name="room_description" id="room_description" placeholder="описание."></textarea>
+                    <textarea class="form-control" rows="3" name="room_description" id="room_description" placeholder="описание." required></textarea>
                 </label>
                 <label class="col-12 mb-3">
                     <textarea class="form-control" rows="3" name="room_help" id="room_help"
@@ -90,7 +90,7 @@
 
                 <label class="col-12 mb-3">
                     <textarea class="form-control" rows="3" name="room_code" id="room_code"
-                              placeholder="Ваш код."></textarea>
+                              placeholder="Ваш код." required></textarea>
                 </label>
 
                 <div class="col-12">
