@@ -64,11 +64,11 @@ function initialize_room(data) {
         }
     }
     return {"channels" : [
-        {"name" : "газета", "read_real_username_mask":all_mask, "read_mask" : all_mask, "write_mask" : 0, "anon_write_mask" : 0},
-		{"name" : "лобби", "read_real_username_mask":all_mask, "read_mask" : 0, "write_mask" : 0, "anon_write_mask" : all_mask},
-        {"name" : "общий", "read_real_username_mask":1, "read_mask" : all_mask, "write_mask" : all_mask, "anon_write_mask" : all_mask},
-        {"name" : "мафия", "read_real_username_mask":1, "read_mask" : mafia_mask, "write_mask" : mafia_mask, "anon_write_mask" : 0},
-        {"name" : "мертвые", "read_real_username_mask": 0, "read_mask" : 0, "write_mask" : 0, "anon_write_mask" : 0}],
+        {"name" : "газета", "read_real_username_mask":all_mask, "read_mask" : all_mask, "anon_read_mask" : 0, "write_mask" : 0, "anon_write_mask" : 0},
+		{"name" : "лобби", "read_real_username_mask":all_mask, "read_mask" : 0, "anon_read_mask" : 0, "write_mask" : 0, "anon_write_mask" : all_mask},
+        {"name" : "общий", "read_real_username_mask":1, "read_mask" : all_mask, "anon_read_mask" : 0, "write_mask" : all_mask, "anon_write_mask" : all_mask},
+        {"name" : "мафия", "read_real_username_mask":1, "read_mask" : mafia_mask, "anon_read_mask" : all_mask ^ 2, "write_mask" : mafia_mask, "anon_write_mask" : 0},
+        {"name" : "мертвые", "read_real_username_mask": 0, "read_mask" : 0, "anon_read_mask" : 0, "write_mask" : 0, "anon_write_mask" : 0}],
         "polls" : [{"name": "дневное ГС", "mask_voters": all_mask, "mask_observers": all_mask, "mask_candidates" : all_mask}],
         "messages" : messages,
         "duration" : 15,

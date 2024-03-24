@@ -19,8 +19,9 @@ public class FChannel {
     private Set<FMessage> messages = new HashSet<>();
     @ManyToOne(fetch=LAZY)
     FRoom room;
-    private Long read_mask;
     private Long read_real_username_mask;
+    private Long read_mask;
+    private Long anon_read_mask;
     private Long write_mask;
     private Long anon_write_mask;
 
@@ -103,6 +104,14 @@ public class FChannel {
 
     public void setAnon_write_mask(Long anon_write_mask) {
         this.anon_write_mask = anon_write_mask;
+    }
+
+    public Long getAnon_read_mask() {
+        return anon_read_mask;
+    }
+
+    public void setAnon_read_mask(Long anon_read_mask) {
+        this.anon_read_mask = anon_read_mask;
     }
 
     public FChannel() {}

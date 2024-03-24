@@ -105,7 +105,7 @@ public class RoomChannelMessageDaoService {
                 result.add(new OutputMessage(
                         null,
                         message.getText(),
-                        message.getAlias(),
+                        ((channel.getAnon_read_mask() & (1L << user.getPlayer_index())) != 0)? "???" : message.getAlias(),
                         message.getUser().getAdmin()? "#ff0000" : null,0));
             }
         }
@@ -122,15 +122,17 @@ public class RoomChannelMessageDaoService {
         if (message == null)
             throw new ServiceException("the message_id don't exist.");
 
-        if (!message.getChannel().getRoom().equals(user.getRoom())) {
+        FChannel channel = message.getChannel();
+
+        if (!channel.getRoom().equals(user.getRoom())) {
             throw new ServiceException("user are not unauthorized to read the data.");
         }
 
-        if ((message.getChannel().getRead_mask() & (1L << user.getPlayer_index())) == 0) {
+        if ((channel.getRead_mask() & (1L << user.getPlayer_index())) == 0) {
             throw new ServiceException("user are not unauthorized to read the data.");
         }
 
-        if ((message.getChannel().getRead_real_username_mask() & (1L << user.getPlayer_index())) != 0) {
+        if ((channel.getRead_real_username_mask() & (1L << user.getPlayer_index())) != 0) {
             return new OutputMessage(
                     message.getUser().getLogin(),
                     message.getText(),
@@ -141,7 +143,7 @@ public class RoomChannelMessageDaoService {
             return new OutputMessage(
                     null,
                     message.getText(),
-                    message.getAlias(),
+                    ((channel.getAnon_read_mask() & (1L << user.getPlayer_index())) != 0)? "???" : message.getAlias(),
                     message.getUser().getAdmin()? "#ff0000" : null,0);
         }
     }
@@ -189,6 +191,7 @@ public class RoomChannelMessageDaoService {
         channel_lobby.setWrite_mask((1L << 30) - 1);
         channel_lobby.setRead_real_username_mask((1L << 30) - 1);
         channel_lobby.setAnon_write_mask(0L);
+        channel_lobby.setAnon_read_mask(0L);
         session.persist(channel_lobby);
 
         FChannel channel_newspaper = new FChannel();
@@ -197,6 +200,7 @@ public class RoomChannelMessageDaoService {
         channel_newspaper.setWrite_mask(0L);
         channel_newspaper.setRead_real_username_mask((1L << 30) - 1);
         channel_newspaper.setAnon_write_mask(0L);
+        channel_newspaper.setAnon_read_mask(0L);
         session.persist(channel_newspaper);
 
         FMessage message = new FMessage();
@@ -525,7 +529,8 @@ public class RoomChannelMessageDaoService {
                     if (inputChannel.getRead_mask() == null
                     || inputChannel.getWrite_mask() == null
                     || inputChannel.getRead_real_username_mask() == null
-                    || inputChannel.getAnon_write_mask() == null) {
+                    || inputChannel.getAnon_write_mask() == null
+                    || inputChannel.getAnon_read_mask() == null) {
                         throw new ServiceException("incorrect parameter.");
                     }
 
@@ -533,6 +538,7 @@ public class RoomChannelMessageDaoService {
                     channel.setWrite_mask(inputChannel.getWrite_mask());
                     channel.setRead_real_username_mask(inputChannel.getRead_real_username_mask());
                     channel.setAnon_write_mask(inputChannel.getAnon_write_mask());
+                    channel.setAnon_read_mask(inputChannel.getAnon_read_mask());
                 } else {
                     continue;
                 }
@@ -548,6 +554,9 @@ public class RoomChannelMessageDaoService {
                 }
                 if (inputChannel.getAnon_write_mask() != null) {
                     channel.setAnon_write_mask(inputChannel.getAnon_write_mask());
+                }
+                if (inputChannel.getAnon_read_mask() != null) {
+                    channel.setAnon_read_mask(inputChannel.getAnon_read_mask());
                 }
             }
 
