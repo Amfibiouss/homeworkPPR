@@ -55,8 +55,8 @@
                 var article_string = `
                     <article class="row py-2">
                         <span class="col-auto"">
-                            <img src="/public/photo/${mes.alias}" width="60" height="60"
-                                alt="маска пользователя ${mes.alias}">
+                            <img src="${(mes.alias == "???")? "/public_static/who_i_am.jpg" : ("/public/photo/" + mes.alias)}"
+                             width="60" height="60" alt="маска пользователя ${mes.alias}">
                         </span>
                         <div class="col-sm col-xs-12">
                             <div>

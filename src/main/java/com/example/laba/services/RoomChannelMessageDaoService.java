@@ -188,6 +188,7 @@ public class RoomChannelMessageDaoService {
         channel_lobby.setRead_mask((1L << 30) - 1);
         channel_lobby.setWrite_mask((1L << 30) - 1);
         channel_lobby.setRead_real_username_mask((1L << 30) - 1);
+        channel_lobby.setAnon_write_mask(0L);
         session.persist(channel_lobby);
 
         FChannel channel_newspaper = new FChannel();
@@ -195,6 +196,7 @@ public class RoomChannelMessageDaoService {
         channel_newspaper.setRead_mask(0L);
         channel_newspaper.setWrite_mask(0L);
         channel_newspaper.setRead_real_username_mask((1L << 30) - 1);
+        channel_newspaper.setAnon_write_mask(0L);
         session.persist(channel_newspaper);
 
         FMessage message = new FMessage();
@@ -234,7 +236,12 @@ public class RoomChannelMessageDaoService {
         new_message.setTarget(target);
 
         if (!Objects.equals(channel.getRoom().getStatus(), "not started")) {
-            new_message.setAlias(String.valueOf(user.getPlayer_index()));
+
+            if ((channel.getAnon_write_mask() & (1L << user.getPlayer_index())) != 0) {
+                new_message.setAlias("???");
+            } else {
+                new_message.setAlias(String.valueOf(user.getPlayer_index()));
+            }
         }
 
         session.persist(new_message);
@@ -417,7 +424,6 @@ public class RoomChannelMessageDaoService {
         Session session = sessionFactory.getCurrentSession();
         FRoom room = session.get(FRoom.class, room_id);
 
-        long index = 0;
         long players_count = room.getPlayers().size();
 
         ArrayList <Long> permutation = new ArrayList<>();
@@ -428,7 +434,17 @@ public class RoomChannelMessageDaoService {
         permutation.set(0, 0L);
 
         for (FUser player : room.getPlayers()) {
-            player.setPlayer_index(permutation.get((int) index++));
+            if (player.equals(room.getCreator())) {
+                player.setPlayer_index(0);
+            }
+        }
+
+        int index = 0;
+        for (FUser player : room.getPlayers()) {
+            if (player.equals(room.getCreator())) {
+                continue;
+            }
+            player.setPlayer_index(permutation.get(++index));
         }
 
         return players_count;
@@ -508,13 +524,15 @@ public class RoomChannelMessageDaoService {
 
                     if (inputChannel.getRead_mask() == null
                     || inputChannel.getWrite_mask() == null
-                    || inputChannel.getRead_real_username_mask() == null) {
+                    || inputChannel.getRead_real_username_mask() == null
+                    || inputChannel.getAnon_write_mask() == null) {
                         throw new ServiceException("incorrect parameter.");
                     }
 
                     channel.setRead_mask(inputChannel.getRead_mask());
                     channel.setWrite_mask(inputChannel.getWrite_mask());
                     channel.setRead_real_username_mask(inputChannel.getRead_real_username_mask());
+                    channel.setAnon_write_mask(inputChannel.getAnon_write_mask());
                 } else {
                     continue;
                 }
@@ -527,6 +545,9 @@ public class RoomChannelMessageDaoService {
                 }
                 if (inputChannel.getRead_real_username_mask() != null) {
                     channel.setRead_real_username_mask(inputChannel.getRead_real_username_mask());
+                }
+                if (inputChannel.getAnon_write_mask() != null) {
+                    channel.setAnon_write_mask(inputChannel.getAnon_write_mask());
                 }
             }
 

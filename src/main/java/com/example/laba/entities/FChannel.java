@@ -22,6 +22,7 @@ public class FChannel {
     private Long read_mask;
     private Long read_real_username_mask;
     private Long write_mask;
+    private Long anon_write_mask;
 
     @Override
     public boolean equals(Object o) {
@@ -94,6 +95,14 @@ public class FChannel {
 
     public void setRead_real_username_mask(Long read_real_username_mask) {
         this.read_real_username_mask = read_real_username_mask;
+    }
+
+    public Long getAnon_write_mask() {
+        return anon_write_mask;
+    }
+
+    public void setAnon_write_mask(Long anon_write_mask) {
+        this.anon_write_mask = anon_write_mask;
     }
 
     public FChannel() {}
