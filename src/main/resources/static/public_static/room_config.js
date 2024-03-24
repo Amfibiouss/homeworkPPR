@@ -37,9 +37,10 @@ function get_mask_of_dead(role) {
 
 function initialize_room(data) {
 
-    players = data;
+    //console.log(data);
+    player_count = Number(data);
 
-    console.log(players);
+    console.log(player_count);
 
     roles = new Array(30).fill("мирный");
     dead = new Array(30);
@@ -51,8 +52,8 @@ function initialize_room(data) {
     mafia_mask = get_mask_of_role("мафия");
     curr_stage = "day";
 
-    messages = new Array(players.length);
-    for (var i = 0; i < players.length; i++) {
+    messages = new Array(player_count);
+    for (var i = 0; i < player_count; i++) {
         messages[i] = "Ваша роль: " + roles[i] + ". ";
         if (roles[i] == "мафия") {
             messages[i] += "Ваша цель уничтожить всех мирных."
@@ -109,7 +110,7 @@ function update_state(data) {
 
     curr_stage = (curr_stage == "day") ? "night" : "day";
 
-    for (var i = 0; i < players.length; i++) {
+    for (var i = 0; i < player_count; i++) {
         messages[i] += "Вы дожили до " + ((curr_stage == "day") ? "рассвета." : "заката.");
     }
 

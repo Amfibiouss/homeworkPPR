@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.*;
 
+import static java.util.Collections.shuffle;
+
 @Component
 public class RoomChannelMessageDaoService {
     @Autowired
@@ -411,19 +413,25 @@ public class RoomChannelMessageDaoService {
     }
 
     @Transactional
-    public List<String> numerate_player(long room_id) {
+    public long numerate_player(long room_id) {
         Session session = sessionFactory.getCurrentSession();
         FRoom room = session.get(FRoom.class, room_id);
 
         long index = 0;
-        List <String> result = new ArrayList<>();
+        long players_count = room.getPlayers().size();
+
+        ArrayList <Long> permutation = new ArrayList<>();
+        for (long i = 0; i < players_count; i++)
+            permutation.add(i);
+        shuffle(permutation, new Random(System.currentTimeMillis() + 9427347432442L));
+        permutation.set(permutation.indexOf(0L), permutation.getFirst());
+        permutation.set(0, 0L);
 
         for (FUser player : room.getPlayers()) {
-            result.add(player.getLogin());
-            player.setPlayer_index(index++);
+            player.setPlayer_index(permutation.get((int) index++));
         }
 
-        return result;
+        return players_count;
     }
 
     @Transactional

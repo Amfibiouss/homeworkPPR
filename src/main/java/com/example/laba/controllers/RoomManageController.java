@@ -65,12 +65,12 @@ public class RoomManageController {
 
     @PostMapping("/user/processing_start_room/{room_id}")
     @ResponseBody
-    List<String> processing_start_room(@PathVariable long room_id,
+    long processing_start_room(@PathVariable long room_id,
                                             HttpServletResponse response) {
 
         if (!RCMDAOService.isHost(room_id, securityService.getUsername())) {
             response.setStatus(403);
-            return null;
+            return -1;
         }
 
         if (RCMDAOService.set_room_status(room_id, "initialization")) {
