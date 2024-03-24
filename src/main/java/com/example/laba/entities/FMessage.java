@@ -15,6 +15,7 @@ public class FMessage {
     private Long id;
     @ManyToOne(fetch=LAZY)
     private FUser user;
+    private String alias;
     @ManyToOne(fetch=LAZY)
     private FChannel channel;
     @Column(length=10000)
@@ -80,6 +81,14 @@ public class FMessage {
 
     public void setTarget(Long target) {
         this.target = target;
+    }
+
+    public String getAlias() {
+        return alias;
+    }
+
+    public void setAlias(String alias) {
+        this.alias = alias;
     }
 
     public FMessage() {

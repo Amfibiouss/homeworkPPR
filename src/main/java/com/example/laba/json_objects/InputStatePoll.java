@@ -9,6 +9,7 @@ public class InputStatePoll {
 
     public long mask_candidates;
 
+
     public String getName() {
         return name;
     }

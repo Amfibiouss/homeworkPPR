@@ -2,8 +2,18 @@ package com.example.laba.json_objects;
 
 public class InputStateChannel {
     public String name;
-    public long read_mask;
-    public long write_mask;
+    public Long read_mask;
+    public Long write_mask;
+    public Long read_real_username_mask;
+
+    public Long getRead_real_username_mask() {
+        return read_real_username_mask;
+    }
+
+    public void setRead_real_username_mask(Long read_real_username_mask) {
+        this.read_real_username_mask = read_real_username_mask;
+    }
+
 
     public String getName() {
         return name;
@@ -13,19 +23,19 @@ public class InputStateChannel {
         this.name = name;
     }
 
-    public long getRead_mask() {
+    public Long getRead_mask() {
         return read_mask;
     }
 
-    public void setRead_mask(long read_mask) {
+    public void setRead_mask(Long read_mask) {
         this.read_mask = read_mask;
     }
 
-    public long getWrite_mask() {
+    public Long getWrite_mask() {
         return write_mask;
     }
 
-    public void setWrite_mask(long write_mask) {
+    public void setWrite_mask(Long write_mask) {
         this.write_mask = write_mask;
     }
 }

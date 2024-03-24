@@ -62,11 +62,11 @@ function initialize_room(data) {
             + " Каждую день убивайте одного рандо... кхм подозрительного человека на дневном голосовании.";
         }
     }
-    return {"channels" : [{"name" : "газета", "read_mask" : all_mask, "write_mask" : 0},
-		{"name" : "лобби", "read_mask" : 0, "write_mask" : 0},
-        {"name" : "общий", "read_mask" : all_mask, "write_mask" : all_mask},
-        {"name" : "мафия", "read_mask" : mafia_mask, "write_mask" : mafia_mask},
-        {"name" : "мертвые", "read_mask" : 0, "write_mask" : 0}],
+    return {"channels" : [{"name" : "газета", "read_real_username_mask":all_mask, "read_mask" : all_mask, "write_mask" : 0},
+		{"name" : "лобби", "read_real_username_mask":all_mask, "read_mask" : 0, "write_mask" : 0},
+        {"name" : "общий", "read_real_username_mask":2, "read_mask" : all_mask, "write_mask" : all_mask},
+        {"name" : "мафия", "read_real_username_mask":2, "read_mask" : mafia_mask, "write_mask" : mafia_mask},
+        {"name" : "мертвые", "read_real_username_mask": 0, "read_mask" : 0, "write_mask" : 0}],
         "polls" : [{"name": "дневное ГС", "mask_voters": all_mask, "mask_observers": all_mask, "mask_candidates" : all_mask}],
         "messages" : messages,
         "duration" : 15,
@@ -133,7 +133,8 @@ function update_state(data) {
     } else {
         return {"channels" : [
         {"name" : "общий", "read_mask" : all_mask, "write_mask" : 0},
-        {"name" : "мафия", "read_mask" : mafia_mask, "write_mask" : mafia_mask & alive_mask}],
+        {"name" : "мафия", "read_mask" : mafia_mask, "write_mask" : mafia_mask & alive_mask},
+        {"name" : "мертвые", "read_mask" : ghost_mask, "write_mask" : ghost_mask}],
         "polls" : [{"name": "ночное ГС",
             "mask_voters": mafia_mask & alive_mask,
             "mask_observers": mafia_mask,

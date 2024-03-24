@@ -14,6 +14,22 @@ import static java.lang.Math.abs;
 @Component
 public class HandleImageService {
 
+    public byte[] create_image(int R, int G, int B)  {
+        BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = image.createGraphics();
+        g.setColor(new Color(R, G, B));
+        g.fillRect(0, 0, 1, 1);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            ImageIO.write(image, "jpg", out);
+        } catch (IOException e) {
+            // этого никогда не произойдет!
+            throw new RuntimeException(e);
+        }
+        return out.toByteArray();
+    }
+
     public byte[] cropping_scaling(byte[] photo) throws IOException {
 
 

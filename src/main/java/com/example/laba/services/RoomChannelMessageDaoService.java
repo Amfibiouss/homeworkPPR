@@ -80,8 +80,7 @@ public class RoomChannelMessageDaoService {
         FUser user = session.bySimpleNaturalId(FUser.class).load(username);
 
         if (channel == null)
-            throw new ServiceException("the section_id don't exist.");
-
+            throw new ServiceException("the channel_id don't exist.");
 
         List <FMessage> messages =
                 session.createSelectionQuery("from FMessage m join fetch m.user where m.channel.id=:channel_id and (m.target=-1 or m.target=:target)", FMessage.class)
@@ -92,13 +91,57 @@ public class RoomChannelMessageDaoService {
         List<OutputMessage> result = new ArrayList<>();
 
         for (FMessage message : messages) {
-            result.add(new OutputMessage(
-                    message.getUser().getLogin(),
-                    message.getText(),
-                    catMaidService.getUwUDegree(message.getUser().getDate_UwU())));
+
+            if ((channel.getRead_real_username_mask() & (1L << user.getPlayer_index())) != 0) {
+                result.add(new OutputMessage(
+                        message.getUser().getLogin(),
+                        message.getText(),
+                        message.getAlias(),
+                        message.getUser().getAdmin()? "#ff0000" : null,
+                        catMaidService.getUwUDegree(message.getUser().getDate_UwU())));
+            } else {
+                result.add(new OutputMessage(
+                        null,
+                        message.getText(),
+                        message.getAlias(),
+                        message.getUser().getAdmin()? "#ff0000" : null,0));
+            }
         }
 
         return result;
+    }
+
+    @Transactional
+    public OutputMessage get_message(long message_id, String username) {
+        Session session = sessionFactory.getCurrentSession();
+        FMessage message = session.get(FMessage.class, message_id);
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+
+        if (message == null)
+            throw new ServiceException("the message_id don't exist.");
+
+        if (!message.getChannel().getRoom().equals(user.getRoom())) {
+            throw new ServiceException("user are not unauthorized to read the data.");
+        }
+
+        if ((message.getChannel().getRead_mask() & (1L << user.getPlayer_index())) == 0) {
+            throw new ServiceException("user are not unauthorized to read the data.");
+        }
+
+        if ((message.getChannel().getRead_real_username_mask() & (1L << user.getPlayer_index())) != 0) {
+            return new OutputMessage(
+                    message.getUser().getLogin(),
+                    message.getText(),
+                    message.getAlias(),
+                    message.getUser().getAdmin()? "#ff0000" : null,
+                    catMaidService.getUwUDegree(message.getUser().getDate_UwU()));
+        } else {
+            return new OutputMessage(
+                    null,
+                    message.getText(),
+                    message.getAlias(),
+                    message.getUser().getAdmin()? "#ff0000" : null,0);
+        }
     }
 
     @Transactional
@@ -142,12 +185,14 @@ public class RoomChannelMessageDaoService {
         channel_lobby.setName("лобби");
         channel_lobby.setRead_mask((1L << 30) - 1);
         channel_lobby.setWrite_mask((1L << 30) - 1);
+        channel_lobby.setRead_real_username_mask((1L << 30) - 1);
         session.persist(channel_lobby);
 
         FChannel channel_newspaper = new FChannel();
         channel_newspaper.setName("газета");
         channel_newspaper.setRead_mask(0L);
         channel_newspaper.setWrite_mask(0L);
+        channel_newspaper.setRead_real_username_mask((1L << 30) - 1);
         session.persist(channel_newspaper);
 
         FMessage message = new FMessage();
@@ -168,7 +213,7 @@ public class RoomChannelMessageDaoService {
     }
 
     @Transactional
-    public void add_message(String username, String text, long channel_id, long target) {
+    public long add_message(String username, String text, long channel_id, long target) {
         FMessage new_message = new FMessage();
         new_message.setText(text);
 
@@ -185,8 +230,16 @@ public class RoomChannelMessageDaoService {
         new_message.setDate(OffsetDateTime.now());
         new_message.setUser(user);
         new_message.setTarget(target);
+
+        if (!Objects.equals(channel.getRoom().getStatus(), "not started")) {
+            new_message.setAlias(String.valueOf(user.getPlayer_index()));
+        }
+
         session.persist(new_message);
         channel.addMessage(new_message);
+        session.flush();
+        session.refresh(new_message);
+        return new_message.getId();
     }
 
     @Transactional
@@ -444,15 +497,33 @@ public class RoomChannelMessageDaoService {
                 if (init) {
                     channel = new FChannel();
                     session.persist(channel);
+
+                    if (inputChannel.getRead_mask() == null
+                    || inputChannel.getWrite_mask() == null
+                    || inputChannel.getRead_real_username_mask() == null) {
+                        throw new ServiceException("incorrect parameter.");
+                    }
+
+                    channel.setRead_mask(inputChannel.getRead_mask());
+                    channel.setWrite_mask(inputChannel.getWrite_mask());
+                    channel.setRead_real_username_mask(inputChannel.getRead_real_username_mask());
                 } else {
                     continue;
+                }
+            } else {
+                if (inputChannel.getRead_mask() != null) {
+                    channel.setRead_mask(inputChannel.getRead_mask());
+                }
+                if (inputChannel.getWrite_mask() != null) {
+                    channel.setWrite_mask(inputChannel.getWrite_mask());
+                }
+                if (inputChannel.getRead_real_username_mask() != null) {
+                    channel.setRead_real_username_mask(inputChannel.getRead_real_username_mask());
                 }
             }
 
             channel.setRoom(room);
             channel.setName(inputChannel.getName());
-            channel.setRead_mask(inputChannel.getRead_mask());
-            channel.setWrite_mask(inputChannel.getWrite_mask());
         }
 
         session.createMutationQuery("delete FPoll p where p.room = :room").setParameter("room", room).executeUpdate();
@@ -491,7 +562,6 @@ public class RoomChannelMessageDaoService {
             new_message.setText(message_text);
             session.persist(new_message);
             newspaper.addMessage(new_message);
-
         }
     }
 

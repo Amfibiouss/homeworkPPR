@@ -20,6 +20,7 @@ public class FChannel {
     @ManyToOne(fetch=LAZY)
     FRoom room;
     private Long read_mask;
+    private Long read_real_username_mask;
     private Long write_mask;
 
     @Override
@@ -85,6 +86,14 @@ public class FChannel {
 
     public void setWrite_mask(Long write_mask) {
         this.write_mask = write_mask;
+    }
+
+    public Long getRead_real_username_mask() {
+        return read_real_username_mask;
+    }
+
+    public void setRead_real_username_mask(Long read_real_username_mask) {
+        this.read_real_username_mask = read_real_username_mask;
     }
 
     public FChannel() {}

@@ -51,7 +51,7 @@ public class MessageController {
 
     @MessageMapping("/message/{room_id}/{channel_id}")
     @SendTo("/topic/messages/{room_id}/{channel_id}")
-    public OutputMessage send(SimpMessageHeaderAccessor accessor,
+    public String send(SimpMessageHeaderAccessor accessor,
                               InputMessage message,
                               @DestinationVariable long room_id,
                               @DestinationVariable long channel_id) {
@@ -82,13 +82,15 @@ public class MessageController {
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "you send messages too often.");
         }
 
+
+        long message_id;
         try {
-            RCMDAOService.add_message(username, text, channel_id, -1);
+            message_id = RCMDAOService.add_message(username, text, channel_id, -1);
         } catch (ServiceException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the user or the section don't exist");
         }
 
-        return new OutputMessage(username, text, user.getDegreeUwU());
+        return String.valueOf(message_id);
     }
 
     @GetMapping("/public/chat/{room_id}")
@@ -149,6 +151,26 @@ public class MessageController {
         } catch(ServiceException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the channel don't exist");
         }
+    }
+
+    @ResponseBody
+    @GetMapping("/public/chat/get_message/{message_id}")
+    OutputMessage get_message(
+            @PathVariable long message_id) {
+
+        try {
+
+            return RCMDAOService.get_message(message_id, securityService.getUsername());
+
+        } catch (ServiceException e) {
+            if (Objects.equals(e.getMessage(), "the message_id don't exist."))
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the message_id don't exist.");
+
+            if (Objects.equals(e.getMessage(), "user are not unauthorized to read the data."))
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "user are not unauthorized to read the data.");
+        }
+
+        throw new RuntimeException();//IDE меня заставило это написать, очевидно не будет никогда вызвано.
     }
 
     @ResponseBody

@@ -1,5 +1,6 @@
 package com.example.laba.controllers;
 
+import com.example.laba.services.HandleImageService;
 import com.example.laba.services.OverturningTheEarthAndTramplingTheHeavensDAOService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,10 +23,27 @@ public class LoadPhotoController {
     @Autowired
     OverturningTheEarthAndTramplingTheHeavensDAOService DAOService;
 
+    @Autowired
+    HandleImageService handleImageService;
+
     @GetMapping("/public/photo/{username}")
     public ResponseEntity<byte[]> photo(
             HttpServletRequest request,
             @PathVariable String username) throws IOException {
+
+
+        if (Character.isDigit(username.charAt(0))) {
+            int number = Integer.parseInt(username);
+            byte[] photo = handleImageService.create_image(
+                    127*(number % 3),
+                    127*((number/3) % 3),
+                    127*((number/9) % 3));
+
+            return ResponseEntity.ok()
+                    .header("Content-Type", "image/jpeg")
+                    .header("Content-Length", String.valueOf(photo.length))
+                    .body(photo);
+        }
 
         long curr_etag = DAOService.get_eTag(username);
 
@@ -35,16 +53,17 @@ public class LoadPhotoController {
         }
 
         try {
+
             byte[] photo = DAOService.get_photo(username);
 
             if (photo == null) {
-                Resource resource = new ClassPathResource("static/Дефолт.jpg");
+                Resource resource = new ClassPathResource("static/public_static/who_i_am.jpg");
 
-                try(InputStream inputStream = new FileInputStream(resource.getFile())){
-                    photo = new byte[(int)resource.contentLength()];
+                try (InputStream inputStream = new FileInputStream(resource.getFile())) {
+                    photo = new byte[(int) resource.contentLength()];
                     inputStream.read(photo);
-                } catch(IOException e) {
-                    e.printStackTrace();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             }
 
@@ -56,7 +75,7 @@ public class LoadPhotoController {
                     .body(photo);
         } catch (Exception e) {
             System.out.println(e);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the user_id don't exist.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the user don't exist.");
         }
     }
 }

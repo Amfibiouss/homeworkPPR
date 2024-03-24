@@ -32,22 +32,41 @@
         }
 
         function getHtmlForArticle(mes) {
-            var article_string = `
-                <article class="row py-2">
-                    <a class="col-auto" href="/public/profile/${mes.username}" style="position:relative;">
-                        <img src="/public/photo/${mes.username}" width="60" height="60"
-                            alt="аватарка пользователя ${mes.username}">
-                        <img src="/public_static/catmaid.jpg" width="60" height="60"
-                            alt="кошкогорничная" style="position: absolute; z-index: 99; left:calc(var(--bs-gutter-x) * .5); border-radius:50%;
-                            opacity: ${mes.opacity};">
-                    </a>
-                    <div class="col-sm col-xs-12">
-                        <div>
-                            <b><a class="username" href="/public/profile/${mes.username}">${mes.username}</a></b>
+
+            if (mes.username != null) {
+                var article_string = `
+                    <article class="row py-2">
+                        <a class="col-auto" target="_blank" href="/public/profile/${mes.username}" style="position:relative;">
+                            <img src="/public/photo/${mes.username}" width="60" height="60"
+                                alt="аватарка пользователя ${mes.username}">
+                            <img src="/public_static/catmaid.jpg" width="60" height="60"
+                                alt="кошкогорничная" style="position: absolute; z-index: 99; left:calc(var(--bs-gutter-x) * .5); border-radius:50%;
+                                opacity: ${mes.opacity};">
+                        </a>
+                        <div class="col-sm col-xs-12">
+                            <div>
+                                <b><a class="username" target="_blank" href="/public/profile/${mes.username}"
+                                style="${(mes.username_color == null)? "" : ("color:" + mes.username_color + ";")}">
+                                ${mes.username}${(mes.alias == null)? "" : ("(" + mes.alias + ")")}</a></b>
+                            </div>
+                            <div>${mes.text}</div>
                         </div>
-                        <div>${mes.text}</div>
-                    </div>
-                </article>`;
+                    </article>`;
+            } else {
+                var article_string = `
+                    <article class="row py-2">
+                        <span class="col-auto"">
+                            <img src="/public/photo/${mes.alias}" width="60" height="60"
+                                alt="маска пользователя ${mes.alias}">
+                        </span>
+                        <div class="col-sm col-xs-12">
+                            <div>
+                                <b style="${(mes.username_color == null)? "" : ("color:" + mes.username_color + ";")}">${mes.alias}</b>
+                            </div>
+                            <div>${mes.text}</div>
+                        </div>
+                    </article>`;
+            }
 
             return article_string;
         }
@@ -304,8 +323,22 @@
 
                             var subscription = stompClient.subscribe('/topic/messages/' + room_id.value + '/' + channel.channel_id,
                                 function(messageOutput) {
-                                    var elem = document.getElementById('articles' + channel.channel_id);
-                                    elem.innerHTML = elem.innerHTML + getHtmlForArticle(JSON.parse(messageOutput.body));
+                                    let message_id = messageOutput.body;
+                                    fetch('/public/chat/get_message/' + message_id, {
+                                        headers: {
+                                            'Accept': 'application/json'
+                                        }
+                                    }).then(
+                                    function(response) {
+                                        if (response.status !== 200) {
+                                            console.log("Can't load message. Status Code: " + response.status);
+                                            return;
+                                        }
+                                        response.json().then(function(data) {
+                                            var elem = document.getElementById('articles' + channel.channel_id);
+                                            elem.innerHTML = elem.innerHTML + getHtmlForArticle(data);
+                                        });
+                                    });
                                 }
                             );
                             subscriptions.push(subscription);
