@@ -7,7 +7,6 @@
     <script src="/public_static/js/bootstrap.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"> </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"> </script>
-    <script src="/public_static/room_config.js"> </script>
     <meta charset="UTF-8">
     <title>Title</title>
 
@@ -176,10 +175,22 @@
                     var string_tabs = "";
                     var ind = 0;
 
+                    var has_active_tab = false;
                     for (const channel of data.channels) {
+                        if (active_tab === channel.name) {
+                            has_active_tab = true;
+                            break;
+                        }
+                    }
+                    if (!has_active_tab) {
+                        active_tab = -1;
+                    }
+
+                    for (const channel of data.channels) {
+
                         var html_string = `
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link ${((ind == 0)? 'active' : '')}"
+                            <button class="nav-link ${((active_tab === channel.name || (active_tab == -1 && ind == 0))? 'active' : '')}"
                                 id="${channel.channel_id}-tab" data-bs-toggle="pill"
                                 data-bs-target="#pills-${channel.channel_id}" type="button" role="tab"
                                 aria-controls="pills-${channel.channel_id}" aria-selected="true">${channel.name}</button>
@@ -188,7 +199,7 @@
 
 
                         html_string = `
-                             <div class="tab-pane fade ${((ind == 0)? 'show active' : '')}"
+                             <div class="tab-pane fade ${((active_tab === channel.name || (active_tab == -1 && ind == 0))? 'show active' : '')}"
                              id="pills-${channel.channel_id}" role="tabpanel" aria-labelledby="${channel.channel_id}-tab">
 
                             <div class="row">` +
@@ -277,6 +288,13 @@
                     elem.innerHTML += string_pills;
                     elem = document.getElementById('pills-tabContent');
                     elem.innerHTML += string_tabs;
+
+                    var tabElements = document.querySelectorAll('button[role="tab"]');
+                    for (const elem of tabElements) {
+                        elem.addEventListener('click', function (event) {
+                            active_tab = event.target.innerText;
+                        });
+                    }
 
                     for (const poll of data.polls) {
 
@@ -489,8 +507,10 @@
             });
         }
 
-        subscriptions = new Array();
+        active_tab = -1;
 
+        subscriptions = new Array();
+        active_tab = -1;
         document.addEventListener("DOMContentLoaded", connect);
 
         window.onbeforeunload = unloadHandler;
