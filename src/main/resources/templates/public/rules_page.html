@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" th:data-bs-theme="(${@securityService.hasUwU()})? 'pink':'light'">
 <head>
     <title>форум</title>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="keywords" content="форум правила">
     <link rel=stylesheet type="text/css" href="/public_static/css/bootstrap.css">
-    <link rel=stylesheet type="text/css" href="/public_static/white_theme.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="/public_static/js/bootstrap.bundle.js"></script>
     <style>
@@ -33,7 +32,7 @@
     <ol id="rules">
         <li> <u>Запрещены</u> реклама и спам (бан на 3 дня). </li>
         <li> <u>Запрещено</u> упоминание политики или других слов, которые могут восприниматься как провокация (бан на 7 дней).</li>
-        <li> <u>Запрещены</u> любые оскорбления в чью-либо сторону. Исключение - оскорбление администрации ресурса. (бан на 3 дней).</li>
+        <li> <u>Запрещены</u> любые оскорбления в чью-либо сторону. <span style="font-size: 1.5rem;">Исключение - оскорбление администрации ресурса</span>. (бан на 3 дней).</li>
         <li> <u>Запрещена</u> ненормативная лексика (бан на 1 день). </li>
         <li> <u>Запрещен</u> Запрещенный / непотребный контент (бан на месяц).
             К такому контенту относятся:

@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org" >
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" th:data-bs-theme="(${@securityService.hasUwU()})? 'pink':'light'">
 <head>
     <link rel=stylesheet type="text/css" href="/public_static/css/bootstrap.css">
-    <link rel=stylesheet type="text/css" href="/public_static/white_theme.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="/public_static/js/bootstrap.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"> </script>
@@ -146,6 +145,7 @@
                 }
                 response.json().then(function(data) {
 
+                    let html_string;
                     if (typeof intervalID !== 'undefined')
                         clearInterval(intervalID);
 
@@ -188,13 +188,13 @@
 
                     for (const channel of data.channels) {
 
-                        var html_string = `
+                        html_string = `
                         <li class="nav-item" role="presentation">
                             <button class="nav-link ${((active_tab === channel.name || (active_tab == -1 && ind == 0))? 'active' : '')}"
                                 id="${channel.channel_id}-tab" data-bs-toggle="pill"
                                 data-bs-target="#pills-${channel.channel_id}" type="button" role="tab"
                                 aria-controls="pills-${channel.channel_id}" aria-selected="true">${channel.name}</button>
-                        </li>`
+                        </li>`;
                         string_pills += html_string;
 
 
@@ -236,7 +236,7 @@
                     elem = document.getElementById('pills-tabContent');
                     elem.innerHTML = string_tabs;
 
-                    if (data.status == 'not started') {
+                    if (data.status === 'not started') {
                         elem.innerHTML += `
                         <div class="tab-pane fade" id="pills-players" role="tabpanel" aria-labelledby="pills-players-tab">
                             <div class = "col-12" id="players">
@@ -259,13 +259,13 @@
                     string_tabs = "";
 
                     for (const poll of data.polls) {
-                        var html_string = `
+                        html_string = `
                         <li class="nav-item" role="presentation">
                             <button class="nav-link"
                                 id="${poll.poll_id}-poll-tab" data-bs-toggle="pill"
                                 data-bs-target="#pills-poll-${poll.poll_id}" type="button" role="tab"
                                 aria-controls="pills-poll-${poll.poll_id}" aria-selected="true">${poll.name}</button>
-                        </li>`
+                        </li>`;
                         string_pills += html_string;
 
                         html_string = `
@@ -299,7 +299,7 @@
                     for (const poll of data.polls) {
 
                         var elem = document.getElementById("candidates-poll-" + poll.poll_id);
-                        var html_string = "";
+                        html_string = "";
 
                         for (const candidate of poll.candidates) {
                             html_string += `
@@ -527,7 +527,7 @@
 
     <div class="row">
         <div class="col-12">
-            <nav class="navbar navbar-expand-sm bg-light navbar-light" style="z-index:999; position:sticky; top:80px;">
+            <nav class="navbar navbar-expand-sm bg-color2 navbar-light p-2" style="z-index:999; position:sticky; top:80px;">
 
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#chat_menu"
                         aria-controls="chat_menu" aria-expanded="false" aria-label="Toggle chat menu">
@@ -548,7 +548,7 @@
                                     <label>
                                         <input class="form-control" type="number" name="player_index" id = "player_index">
                                     </label>
-                                    <input class="mt-2" type="submit">
+                                    <input class="mt-2 btn btn-primary" type="submit">
                                 </form>
                             </div>
                         </div>

@@ -97,7 +97,7 @@ function update_state(data) {
                 }
             }
 
-            if (index != -1) {
+            if (index !== -1) {
                 dead[index] = 1;
 
                 for (i = 0; i < 30; i++) {

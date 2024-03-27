@@ -72,4 +72,8 @@ public class SecurityService {
         }
         return DAOService.has_UwU(username);
     }
+
+    public boolean hasUwU() {
+        return hasUwU(getUsername());
+    }
 }

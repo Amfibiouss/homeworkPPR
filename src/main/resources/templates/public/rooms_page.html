@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" th:data-bs-theme="(${@securityService.hasUwU()})? 'pink':'light'">
 <head>
     <title>форум</title>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="keywords" content="форум разделы">
     <link rel=stylesheet type="text/css" href="/public_static/css/bootstrap.css">
-    <link rel=stylesheet type="text/css" href="/public_static/white_theme.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="/public_static/js/bootstrap.bundle.js"></script>
     <style>
@@ -31,10 +30,12 @@
             </button>
             <div class="dropdown-menu p-2" aria-labelledby="addRoomButton">
                 <form th:action="@{/user/add_room}" method="post" enctype="multipart/form-data">
-                    <label>
-                        <input class="form-control" type="file" name="file">
-                    </label>
-                    <input class="mt-2" type="submit">
+                    <div>
+                        <label>
+                            <input class="form-control" type="file" name="file">
+                        </label>
+                    </div>
+                    <input class="mt-2 btn btn-primary" type="submit">
                 </form>
             </div>
         </div>
