@@ -94,7 +94,7 @@ public class RoomChannelMessageDaoService {
 
         for (FMessage message : messages) {
 
-            if ((channel.getRead_real_username_mask() & (1L << user.getPlayer_index())) != 0) {
+            if (user.getPlayer_index() == -1 || (channel.getRead_real_username_mask() & (1L << user.getPlayer_index())) != 0) {
                 result.add(new OutputMessage(
                         message.getUser().getLogin(),
                         message.getText(),
@@ -128,11 +128,11 @@ public class RoomChannelMessageDaoService {
             throw new ServiceException("user are not unauthorized to read the data.");
         }
 
-        if ((channel.getRead_mask() & (1L << user.getPlayer_index())) == 0) {
+        if (user.getPlayer_index() != -1 && (channel.getRead_mask() & (1L << user.getPlayer_index())) == 0) {
             throw new ServiceException("user are not unauthorized to read the data.");
         }
 
-        if ((channel.getRead_real_username_mask() & (1L << user.getPlayer_index())) != 0) {
+        if (user.getPlayer_index() == -1 || (channel.getRead_real_username_mask() & (1L << user.getPlayer_index())) != 0) {
             return new OutputMessage(
                     message.getUser().getLogin(),
                     message.getText(),
@@ -182,6 +182,7 @@ public class RoomChannelMessageDaoService {
         if (user.getRoom() != null)
             throw new ServiceException("the creator has joined to another room");
 
+        user.setPlayer_index(-1);
         new_room.setCreator(user);
         new_room.addPlayer(user);
 
@@ -189,7 +190,7 @@ public class RoomChannelMessageDaoService {
         channel_lobby.setName("лобби");
         channel_lobby.setRead_mask((1L << 30) - 1);
         channel_lobby.setWrite_mask((1L << 30) - 1);
-        channel_lobby.setRead_real_username_mask((1L << 30) - 1);
+        channel_lobby.setRead_real_username_mask(0L);
         channel_lobby.setAnon_write_mask(0L);
         channel_lobby.setAnon_read_mask(0L);
         session.persist(channel_lobby);
@@ -198,7 +199,7 @@ public class RoomChannelMessageDaoService {
         channel_newspaper.setName("газета");
         channel_newspaper.setRead_mask(0L);
         channel_newspaper.setWrite_mask(0L);
-        channel_newspaper.setRead_real_username_mask((1L << 30) - 1);
+        channel_newspaper.setRead_real_username_mask(0L);
         channel_newspaper.setAnon_write_mask(0L);
         channel_newspaper.setAnon_read_mask(0L);
         session.persist(channel_newspaper);
@@ -246,6 +247,8 @@ public class RoomChannelMessageDaoService {
             } else {
                 new_message.setAlias(String.valueOf(user.getPlayer_index()));
             }
+        } else {
+            new_message.setAlias(user.getLogin());
         }
 
         session.persist(new_message);
@@ -314,6 +317,7 @@ public class RoomChannelMessageDaoService {
             throw new ServiceException("there are no places");
         }
 
+        player.setPlayer_index(-1);
         room.addPlayer(player);
     }
 
@@ -470,8 +474,14 @@ public class RoomChannelMessageDaoService {
 
             outputChannel.setChannel_id(channel.getId());
             outputChannel.setName(channel.getName());
-            outputChannel.setCan_read((channel.getRead_mask() & (1L << user.getPlayer_index())) != 0);
-            outputChannel.setCan_write((channel.getWrite_mask() & (1L << user.getPlayer_index())) != 0);
+
+            if (user.getPlayer_index() == -1) {
+                outputChannel.setCan_read(channel.getRead_mask()  != 0);
+                outputChannel.setCan_write(channel.getWrite_mask() != 0);
+            } else {
+                outputChannel.setCan_read((channel.getRead_mask() & (1L << user.getPlayer_index())) != 0);
+                outputChannel.setCan_write((channel.getWrite_mask() & (1L << user.getPlayer_index())) != 0);
+            }
 
             if (outputChannel.getCan_read() || outputChannel.getCan_write())
                 outputStateChannels.add(outputChannel);
@@ -598,6 +608,7 @@ public class RoomChannelMessageDaoService {
             new_message.setUser(room.getCreator());
             new_message.setDate(OffsetDateTime.now());
             new_message.setText(message_text);
+            new_message.setAlias(String.valueOf(room.getCreator().getLogin()));
             session.persist(new_message);
             newspaper.addMessage(new_message);
         }

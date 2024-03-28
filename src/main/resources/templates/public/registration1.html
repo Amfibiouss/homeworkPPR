@@ -12,7 +12,7 @@
         document.addEventListener("DOMContentLoaded", function() {
 
             show_password.onclick = function() {
-                if (password.getAttribute("type") == "password") {
+                if (password.getAttribute("type") === "password") {
                     password.setAttribute("type", "text");
                     eye.setAttribute("src", "/public_static/icons/eye.svg");
                 } else {

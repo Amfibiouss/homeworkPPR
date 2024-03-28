@@ -11890,20 +11890,33 @@ textarea.form-control-lg {
   --bs-body-bg: #f7d6e6;
   --bs-body-bg-rgb: 247, 214, 230;
   --bs-tertiary-bg: #de5c9d;
+  --bs-border-color: purple;
+  --bs-link-color: #561435;
+  --bs-link-color-rgb: 86, 20, 53;
 }
 [data-bs-theme=pink] .dropdown-menu {
   --bs-dropdown-bg: #e271a9;
   --bs-dropdown-link-active-bg: #801f4f;
 }
+[data-bs-theme=pink] .nav-pills {
+  --bs-nav-pills-link-active-bg: #59359a;
+}
+[data-bs-theme=pink] .btn-outline-secondary {
+  --bs-btn-color: #801f4f;
+  --bs-btn-border-color: #801f4f;
+}
+[data-bs-theme=pink] .btn-outline-primary {
+  --bs-btn-color: #801f4f;
+  --bs-btn-border-color: #801f4f;
+}
+[data-bs-theme=pink] .btn-primary {
+  --bs-btn-bg: #59359a;
+  --bs-btn-border-color: #59359a;
+  --bs-btn-hover-bg: #7e55c7;
+}
 [data-bs-theme=pink] .btn-secondary {
   --bs-btn-bg: #dd5c9d;
-  --bs-btn-border-color: rgba(25, 135, 84, 0.25);
-  --bs-btn-hover-bg: #d94790;
-  --bs-btn-hover-border-color: rgba(255, 255, 255, 0.25);
-  --bs-btn-active-bg: #d43284;
-  --bs-btn-active-border-color: rgba(25, 135, 84, 0.5);
-  --bs-btn-focus-border-color: rgba(25, 135, 84, 0.5);
-  --bs-btn-focus-box-shadow: 0 0 0 .25rem rgba(255, 255, 255, .2);
+  --bs-btn-border-color: #dd5c9d;
 }
 
 .bg-color1 {
@@ -11915,6 +11928,14 @@ textarea.form-control-lg {
 }
 
 .bg-color3 {
+  background-color: var(--bs-color3);
+}
+
+.depends-of-parity:nth-child(even) {
+  background-color: var(--bs-color2);
+}
+
+.depends-of-parity:nth-child(odd) {
   background-color: var(--bs-color3);
 }
 

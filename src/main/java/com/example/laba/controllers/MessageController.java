@@ -74,8 +74,6 @@ public class MessageController {
             text = catMaidService.addCatMaidAccent(text);
         }
 
-        TmplUser user = DAOService.get_user_by_login(username);
-
         if (RCMDAOService.too_much_messages(username)) {
             template.convertAndSend("/topic/user/" +  channel_id + "/" + username,
                     new OutputMessage("Admin", "Не отправляй так часто сообщения.",0));
@@ -168,6 +166,8 @@ public class MessageController {
 
             if (Objects.equals(e.getMessage(), "user are not unauthorized to read the data."))
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "user are not unauthorized to read the data.");
+        } catch (Exception e) {
+            System.out.println(e);
         }
 
         throw new RuntimeException();//IDE меня заставило это написать, очевидно не будет никогда вызвано.

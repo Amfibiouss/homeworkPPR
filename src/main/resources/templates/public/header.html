@@ -31,7 +31,7 @@
                     <a class="nav-link dropdown-toggle" href="#" role="button" id="guestMenu"
                        data-bs-toggle="dropdown" aria-expanded="false" style="padding-left:45%;">
                         <img src="/public_static/who_i_am.jpg" width="40px" height="40px"
-                             alt="ваша аватарка" style="margin-left=45%; border-radius:50%;">
+                             alt="ваша аватарка" style="border-radius:50%;">
                     </a>
                     <div class="dropdown-menu" aria-labelledby="guestMenu">
                         <a class="dropdown-item" th:href="@{/public/login}">войти</a>
@@ -74,7 +74,7 @@
                     <a class="nav-link dropdown-toggle" href="#" role="button" id="userMenu"
                        data-bs-toggle="dropdown" aria-expanded="false" style="padding-left:45%; position:relative;">
                         <img th:src="'/public/photo/' + ${@securityService.getUsername()}" width="50px" height="50px"
-                             alt="ваша аватарка" style="margin-left=45%; border-radius:50%;">
+                             alt="ваша аватарка" style="border-radius:50%;">
 
                         <img src = "/public_static/catmaid.jpg" alt="кошкогорничная" width="40px" height="40px"
                              th:style="'position: absolute; z-index: 99; left:45%; border-radius:50%;
@@ -120,7 +120,7 @@
                     <a class="nav-link dropdown-toggle" href="#" role="button" id="adminMenu"
                        data-bs-toggle="dropdown" aria-expanded="false" style="padding-left:45%;position:relative;">
                         <img th:src="'/public/photo/' + ${@securityService.getUsername()}" width="40px" height="40px"
-                             alt="ваша аватарка" style="margin-left=45%; border-radius:50%;">
+                             alt="ваша аватарка" style="border-radius:50%;">
                         <img src = "/public_static/catmaid.jpg" alt="кошкогорничная" width="50px" height="50px"
                              th:style="'position: absolute; z-index: 99; left:45%; border-radius:50%;
                                         opacity: ' + ${@securityService.getUser().getDegreeUwU()} + ';'">

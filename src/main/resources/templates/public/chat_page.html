@@ -6,8 +6,7 @@
     <script src="/public_static/js/bootstrap.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"> </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"> </script>
-    <!-- -->
-    <script src="/public_static/room_config.js"> </script>
+    <!--<script src="/public_static/room_config.js"> </script> -->
     <meta charset="UTF-8">
     <title>Title</title>
 
@@ -124,13 +123,17 @@
 
         function update_ui(status) {
 
-            if (status.body == 'processing') {
+            if (status.body === 'processing') {
                 processing_stage();
             }
 
-            if (status.body == 'initialization' || status.body == 'processing') {
+            if (status.body === 'initialization' || status.body === 'processing') {
                 time_until_new_stage.innerHTML = "Идет обработка...";
                 return;
+            }
+
+            if (status.body === 'finished' || status.body === 'closed') {
+                time_until_new_stage.innerHTML = "Игра окончена.";
             }
 
             fetch('/user/status_room/' + room_id.value, {
@@ -149,7 +152,7 @@
                     if (typeof intervalID !== 'undefined')
                         clearInterval(intervalID);
 
-                    if (status.body == "started") {
+                    if (status.body === "started") {
                         var finish = data.finish_stage * 1000;
                         intervalID = setInterval(function() {
                             var res = (finish - Date.now()) / 1000;
@@ -171,26 +174,34 @@
                     }
                     subscriptions = [];
 
-                    var string_pills = "";
-                    var string_tabs = "";
-                    var ind = 0;
-
-                    var has_active_tab = false;
+                    let has_active_tab = false;
+                    let has_newspaper = false;
                     for (const channel of data.channels) {
                         if (active_tab === channel.name) {
                             has_active_tab = true;
                             break;
                         }
+
+                        if (channel.name === "газета") {
+                            has_newspaper = true;
+                        }
                     }
                     if (!has_active_tab) {
-                        active_tab = -1;
+                        if (has_newspaper) {
+                            active_tab = "газета";
+                        } else {
+                            active_tab = -1;
+                        }
                     }
 
+                    let string_pills = "";
+                    let string_tabs = "";
+                    let ind = 0;
                     for (const channel of data.channels) {
 
                         html_string = `
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link ${((active_tab === channel.name || (active_tab == -1 && ind == 0))? 'active' : '')}"
+                            <button class="nav-link ${((active_tab === channel.name || (active_tab === -1 && ind === 0))? 'active' : '')}"
                                 id="${channel.channel_id}-tab" data-bs-toggle="pill"
                                 data-bs-target="#pills-${channel.channel_id}" type="button" role="tab"
                                 aria-controls="pills-${channel.channel_id}" aria-selected="true">${channel.name}</button>
@@ -516,7 +527,8 @@
         window.onbeforeunload = unloadHandler;
     </script>
 
-    <!--<script th:utext = "${your_code}"></script>-->
+    <!---->
+    <script th:utext = "${your_code}"></script>
 </head>
 <body>
 <header th:replace="~{public/header :: |${@securityService.getAccess()}_header|}"></header>
