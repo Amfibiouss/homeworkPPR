@@ -26,6 +26,19 @@ public class RoomChannelMessageDaoService {
     @PersistenceUnit
     SessionFactory sessionFactory;
 
+    public String get_output_message(String username,
+                                     String alias,
+                                     String text,
+                                     double opacity,
+                                     String username_color) {
+
+        return String.format("{\"username\": %s, \"text\": \"%s\", \"alias\":\"%s\"," +
+                        " \"opacity\":\"%s\", \"username_color\": %s}",
+                (username == null)? null : "\"" + username + "\"", text, alias, opacity,
+                (username_color == null)? null : "\"" + username_color + "\"");
+
+    }
+
     @Transactional
     public List<TmplMessage> get_messages_of_user(String username, long offset, long limit) {
         Session session = sessionFactory.getCurrentSession();
@@ -76,7 +89,7 @@ public class RoomChannelMessageDaoService {
     }
 
     @Transactional
-    public List<OutputMessage> get_messages(long channel_id, String username) {
+    public String get_messages(long channel_id, String username) {
         Session session = sessionFactory.getCurrentSession();
         FChannel channel = session.get(FChannel.class, channel_id);
         FUser user = session.bySimpleNaturalId(FUser.class).load(username);
@@ -84,37 +97,76 @@ public class RoomChannelMessageDaoService {
         if (channel == null)
             throw new ServiceException("the channel_id don't exist.");
 
+        List <FStageFChannel> stage_channels = session.createSelectionQuery(
+                "from FStageFChannel s join fetch s.id.stage where s.id.channel=:channel order by s.id.stage.date", FStageFChannel.class)
+                .setParameter("channel", channel)
+                .getResultList();
+
+
+        boolean XRayRead = false;
+        boolean AnonRead = false;
+        if (user.getPlayer_index() == -1 || (channel.getRead_real_username_mask() & (1L << user.getPlayer_index())) != 0) {
+            XRayRead = true;
+        } else {
+            if ((channel.getAnon_read_mask() & (1L << user.getPlayer_index())) != 0) {
+                AnonRead = true;
+            }
+        }
+
+        String result = "[";
+        FStage last_stage =  session.createSelectionQuery(
+                        "from FStage s where s.room=:room order by s.date desc limit 1", FStage.class)
+                .setParameter("room", channel.getRoom())
+                .getSingleResult();
+        for (FStageFChannel stage_channel : stage_channels) {
+            FStage stage = stage_channel.getId().getStage();
+
+            if (stage != last_stage) {
+                result += "{\"stage_name\": \"" + stage.getName() + "\", \"messages\":";
+                if (XRayRead)
+                    result += stage_channel.getJsonXRayStrings();
+                else {
+                    if (AnonRead)
+                        result += stage_channel.getJsonAnonStrings();
+                    else
+                        result += stage_channel.getJsonStrings();
+                }
+                result += "}, ";
+            }
+        }
+
+
         List <FMessage> messages =
-                session.createSelectionQuery("from FMessage m join fetch m.user where m.channel.id=:channel_id and (m.target=-1 or m.target=:target)", FMessage.class)
-                        .setParameter("channel_id", channel_id)
+                session.createSelectionQuery("from FMessage m where " +
+                                "m.channel=:channel and m.stage=:stage" +
+                                " and (m.target=-1 or m.target=:target)", FMessage.class)
+                        .setParameter("channel", channel)
+                        .setParameter("stage", last_stage)
                         .setParameter("target", user.getPlayer_index())
                         .getResultList();
 
-        List<OutputMessage> result = new ArrayList<>();
-
+        result += "{\"stage_name\":\"" + last_stage.getName() + "\", \"messages\":[";
         for (FMessage message : messages) {
 
-            if (user.getPlayer_index() == -1 || (channel.getRead_real_username_mask() & (1L << user.getPlayer_index())) != 0) {
-                result.add(new OutputMessage(
-                        message.getUser().getLogin(),
-                        message.getText(),
-                        message.getAlias(),
-                        message.getUser().getAdmin()? "#ff0000" : null,
-                        catMaidService.getUwUDegree(message.getUser().getDate_UwU())));
+            if (XRayRead) {
+                result += message.getJsonXRayString();
             } else {
-                result.add(new OutputMessage(
-                        null,
-                        message.getText(),
-                        ((channel.getAnon_read_mask() & (1L << user.getPlayer_index())) != 0)? "???" : message.getAlias(),
-                        message.getUser().getAdmin()? "#ff0000" : null,0));
+                if (AnonRead) {
+                    result += message.getJsonAnonString();
+                } else {
+                    result += message.getJsonString();
+                }
+
+                result += ",";
             }
         }
+        result += "]}]";
 
         return result;
     }
 
     @Transactional
-    public OutputMessage get_message(long message_id, String username) {
+    public String get_message(long message_id, String username) {
         Session session = sessionFactory.getCurrentSession();
         FMessage message = session.get(FMessage.class, message_id);
         FUser user = session.bySimpleNaturalId(FUser.class).load(username);
@@ -132,20 +184,14 @@ public class RoomChannelMessageDaoService {
             throw new ServiceException("user are not unauthorized to read the data.");
         }
 
-        if (user.getPlayer_index() == -1 || (channel.getRead_real_username_mask() & (1L << user.getPlayer_index())) != 0) {
-            return new OutputMessage(
-                    message.getUser().getLogin(),
-                    message.getText(),
-                    message.getAlias(),
-                    message.getUser().getAdmin()? "#ff0000" : null,
-                    catMaidService.getUwUDegree(message.getUser().getDate_UwU()));
-        } else {
-            return new OutputMessage(
-                    null,
-                    message.getText(),
-                    ((channel.getAnon_read_mask() & (1L << user.getPlayer_index())) != 0)? "???" : message.getAlias(),
-                    message.getUser().getAdmin()? "#ff0000" : null,0);
-        }
+        if (user.getPlayer_index() == -1
+                || (channel.getRead_real_username_mask() & (1L << user.getPlayer_index())) != 0)
+            return message.getJsonXRayString();
+
+        if ((channel.getAnon_read_mask() & (1L << user.getPlayer_index())) != 0)
+            return message.getJsonAnonString();
+
+        return message.getJsonString();
     }
 
     @Transactional
@@ -208,13 +254,18 @@ public class RoomChannelMessageDaoService {
         message.setDate(OffsetDateTime.now());
         message.setUser(user);
         message.setText(room.help);
-        message.setChannel(channel_lobby);
         session.persist(message);
+        channel_lobby.addMessage(message);
 
+        session.persist(new_room);
         new_room.addChannel(channel_lobby);
         new_room.addChannel(channel_newspaper);
 
-        session.persist(new_room);
+        FStage stage = new FStage();
+        stage.setName("начало");
+        stage.setDate(OffsetDateTime.now());
+        session.persist(stage);
+        new_room.addStage(stage);
 
         session.flush();
         session.refresh(new_room);
@@ -251,8 +302,25 @@ public class RoomChannelMessageDaoService {
             new_message.setAlias(user.getLogin());
         }
 
+        new_message.setJsonXRayString(get_output_message(username, new_message.getAlias(), new_message.getText(),
+                        catMaidService.getUwUDegree(user.getDate_UwU()), user.getAdmin()? "#ff0000" : null));
+
+        new_message.setJsonAnonString(get_output_message(null, "???", new_message.getText(),
+                0f, null));
+
+        new_message.setJsonString(get_output_message(null, new_message.getAlias(),
+                new_message.getText(), 0f, null));
+
+
+
         session.persist(new_message);
         channel.addMessage(new_message);
+
+        new_message.setStage(session.createSelectionQuery(
+                        "from FStage s where s.room=:room order by s.date desc limit 1", FStage.class)
+                .setParameter("room", channel.getRoom())
+                .getSingleResult());
+
         session.flush();
         session.refresh(new_message);
         return new_message.getId();
@@ -464,7 +532,10 @@ public class RoomChannelMessageDaoService {
         FUser user = session.bySimpleNaturalId(FUser.class).load(username);
         FRoom room = session.get(FRoom.class, room_id);
         OutputStateRoom outputStateRoom = new OutputStateRoom();
-        outputStateRoom.setStage(room.getStage());
+        outputStateRoom.setStage(session.createSelectionQuery(
+                        "from FStage s where s.room=:room order by s.date desc limit 1", FStage.class)
+                .setParameter("room", room)
+                .getSingleResult().getName());
         outputStateRoom.setFinish_stage(room.getFinish_stage());
         outputStateRoom.setStatus(room.getStatus());
 
@@ -520,8 +591,56 @@ public class RoomChannelMessageDaoService {
         Session session = sessionFactory.getCurrentSession();
         FRoom room = session.get(FRoom.class, room_id);
 
-        room.setStage(inputStateRoom.getStage());
         room.setFinish_stage(OffsetDateTime.now().plusSeconds(inputStateRoom.getDuration()));
+
+        FStage last_stage = session.createSelectionQuery(
+                        "from FStage s where s.room=:room order by s.date desc limit 1", FStage.class)
+                .setParameter("room", room)
+                .getSingleResultOrNull();
+
+        if (last_stage != null) {
+            for (FChannel channel : room.getChannels()) {
+                List<FMessage> messages = session.createSelectionQuery(
+                                "from FMessage m where m.stage=:stage and m.channel=:channel order by m.date", FMessage.class)
+                        .setParameter("stage", last_stage)
+                        .setParameter("channel", channel)
+                        .getResultList();
+
+                FStageFChannel stage_channel = new FStageFChannel();
+
+                stage_channel.setJsonStrings("[");
+                stage_channel.setJsonAnonStrings("[");
+                stage_channel.setJsonXRayStrings("[");
+                boolean isFirst = true;
+                for (FMessage message : messages) {
+
+                    if (isFirst) {
+                        stage_channel.setJsonStrings(stage_channel.getJsonStrings() + message.getJsonString());
+                        stage_channel.setJsonAnonStrings(stage_channel.getJsonAnonStrings() + message.getJsonAnonString());
+                        stage_channel.setJsonXRayStrings(stage_channel.getJsonXRayStrings() + message.getJsonXRayString());
+                    } else {
+                        stage_channel.setJsonStrings(stage_channel.getJsonStrings() + "," + message.getJsonString());
+                        stage_channel.setJsonAnonStrings(stage_channel.getJsonAnonStrings() + "," + message.getJsonAnonString());
+                        stage_channel.setJsonXRayStrings(stage_channel.getJsonXRayStrings() + "," + message.getJsonXRayString());
+                    }
+                    isFirst = false;
+                }
+                stage_channel.setJsonStrings(stage_channel.getJsonStrings() + "]");
+                stage_channel.setJsonAnonStrings(stage_channel.getJsonAnonStrings() + "]");
+                stage_channel.setJsonXRayStrings(stage_channel.getJsonXRayStrings() + "]");
+
+                stage_channel.setCount((long) messages.size());
+                stage_channel.setId(new FStageFChannelId(last_stage, channel));
+                session.persist(stage_channel);
+            }
+        }
+
+
+        FStage new_stage = new FStage();
+        new_stage.setName(inputStateRoom.getStage());
+        new_stage.setDate(OffsetDateTime.now());
+        session.persist(new_stage);
+        room.addStage(new_stage);
 
         for (InputStateChannel inputChannel : inputStateRoom.getChannels()) {
 
@@ -609,6 +728,20 @@ public class RoomChannelMessageDaoService {
             new_message.setDate(OffsetDateTime.now());
             new_message.setText(message_text);
             new_message.setAlias(String.valueOf(room.getCreator().getLogin()));
+
+            new_message.setJsonString(get_output_message(
+                    null, new_message.getAlias(),
+                    new_message.getText(), 0f, null));
+            new_message.setJsonAnonString(get_output_message(
+                    null, "???",
+                    new_message.getText(), 0f, null));
+            new_message.setJsonXRayString(get_output_message(
+                    new_message.getUser().getLogin(),
+                    new_message.getAlias(),
+                    new_message.getText(),
+                    catMaidService.getUwUDegree(new_message.getUser().getDate_UwU()),
+                    new_message.getUser().getAdmin()? "#ff0000" : null));
+
             session.persist(new_message);
             newspaper.addMessage(new_message);
         }

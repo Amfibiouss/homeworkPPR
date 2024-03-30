@@ -24,13 +24,14 @@ public class FRoom {
     private String code;
     private String status;
     private OffsetDateTime finish_stage;
-    private String stage;
-
     @OneToMany(mappedBy="room")
     private List<FChannel> channels = new ArrayList<>();
 
     @OneToMany(mappedBy="room")
     private List<FPoll> polls = new ArrayList<>();
+
+    @OneToMany(mappedBy="room")
+    private Set<FStage> stages = new HashSet<>();
 
     @OneToMany(mappedBy="room")
     private List<FUser> players = new ArrayList<>();
@@ -40,6 +41,19 @@ public class FRoom {
         if (this == o) return true;
         if (!(o instanceof FRoom fRoom)) return false;
         return Objects.equals(id, fRoom.getId());
+    }
+
+    public Set<FStage> getStages() {
+        return stages;
+    }
+
+    public void setStages(Set<FStage> stages) {
+        this.stages = stages;
+    }
+
+    public void addStage(FStage stage) {
+        stage.setRoom(this);
+        stages.add(stage);
     }
 
     @Override
@@ -162,14 +176,6 @@ public class FRoom {
 
     public void setFinish_stage(OffsetDateTime finish_stage) {
         this.finish_stage = finish_stage;
-    }
-
-    public String getStage() {
-        return stage;
-    }
-
-    public void setStage(String stage) {
-        this.stage = stage;
     }
 
     public List<FPoll> getPolls() {

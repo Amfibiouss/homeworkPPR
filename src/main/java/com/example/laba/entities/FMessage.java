@@ -16,12 +16,20 @@ public class FMessage {
     @ManyToOne(fetch=LAZY)
     private FUser user;
     private String alias;
+    private Long target;
     @ManyToOne(fetch=LAZY)
     private FChannel channel;
-    @Column(length=10000)
-    private String text;
+    @ManyToOne(fetch=LAZY)
+    private FStage stage;
     private OffsetDateTime date;
-    private Long target;
+    @Column(columnDefinition="TEXT")
+    private String text;
+    @Column(columnDefinition="TEXT")
+    String jsonString;
+    @Column(columnDefinition="TEXT")
+    String jsonAnonString;
+    @Column(columnDefinition="TEXT")
+    String jsonXRayString;
 
     @Override
     public boolean equals(Object o) {
@@ -29,10 +37,41 @@ public class FMessage {
         if (!(o instanceof FMessage message)) return false;
         return Objects.equals(id, message.getId());
     }
-
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public String getJsonString() {
+        return jsonString;
+    }
+
+    public FStage getStage() {
+        return stage;
+    }
+
+    public void setStage(FStage stage) {
+        this.stage = stage;
+    }
+
+    public void setJsonString(String jsonString) {
+        this.jsonString = jsonString;
+    }
+
+    public String getJsonAnonString() {
+        return jsonAnonString;
+    }
+
+    public void setJsonAnonString(String jsonAnonString) {
+        this.jsonAnonString = jsonAnonString;
+    }
+
+    public String getJsonXRayString() {
+        return jsonXRayString;
+    }
+
+    public void setJsonXRayString(String jsonXRayString) {
+        this.jsonXRayString = jsonXRayString;
     }
 
     public FChannel getChannel() {

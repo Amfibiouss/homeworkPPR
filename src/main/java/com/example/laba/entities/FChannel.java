@@ -3,9 +3,7 @@ package com.example.laba.entities;
 import jakarta.persistence.*;
 import org.hibernate.annotations.NaturalId;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static jakarta.persistence.FetchType.LAZY;
 

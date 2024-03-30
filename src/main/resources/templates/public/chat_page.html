@@ -342,8 +342,11 @@
                             response.json().then(function(data) {
                                 string_articles = "";
 
-                                for (const mes of data) {
-                                    string_articles += getHtmlForArticle(mes);
+                                for (const stage of data) {
+                                    string_articles += "<span>" + stage.stage_name + "</span>";
+                                    for (const mes of stage.messages) {
+                                        string_articles += getHtmlForArticle(mes);
+                                    }
                                 }
 
                                 var elem = document.getElementById('articles' + channel.channel_id);

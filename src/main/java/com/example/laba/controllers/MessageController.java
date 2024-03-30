@@ -136,7 +136,7 @@ public class MessageController {
 
     @ResponseBody
     @GetMapping("/public/chat/get_messages/{room_id}/{channel_id}")
-    List<OutputMessage> get_messages(
+    String get_messages(
             @PathVariable long room_id,
             @PathVariable long channel_id) {
 
@@ -153,7 +153,7 @@ public class MessageController {
 
     @ResponseBody
     @GetMapping("/public/chat/get_message/{message_id}")
-    OutputMessage get_message(
+    String get_message(
             @PathVariable long message_id) {
 
         try {
