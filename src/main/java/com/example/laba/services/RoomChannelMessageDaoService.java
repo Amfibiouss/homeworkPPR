@@ -5,11 +5,14 @@ import com.example.laba.json_objects.*;
 import com.example.laba.objects_to_fill_templates.TmplMessage;
 import com.example.laba.objects_to_fill_templates.TmplRoom;
 import com.example.laba.objects_to_fill_templates.TmplUser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.PersistenceUnit;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.service.spi.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jmx.support.ObjectNameManager;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +25,9 @@ import static java.util.Collections.shuffle;
 public class RoomChannelMessageDaoService {
     @Autowired
     CatMaidService catMaidService;
+
+    @Autowired
+    ObjectMapper objectMapper;
 
     @PersistenceUnit
     SessionFactory sessionFactory;
@@ -37,6 +43,26 @@ public class RoomChannelMessageDaoService {
                 (username == null)? null : "\"" + username + "\"", text, alias, opacity,
                 (username_color == null)? null : "\"" + username_color + "\"");
 
+    }
+
+    public String get_output_stage_channel(String name,
+                                     long count,
+                                     String messages) {
+
+        return String.format("{\"stage_name\": \"%s\", \"count\":%d, \"messages\": %s}", name, count, messages);
+    }
+
+    public String get_array(List<String> list) {
+        boolean isFirst = true;
+        StringBuilder result = new StringBuilder("[");
+        for (String s : list) {
+            if (!isFirst)
+                result.append(",");
+            isFirst = false;
+            result.append(s);
+        }
+        result.append("]");
+        return result.toString();
     }
 
     @Transactional
@@ -113,26 +139,30 @@ public class RoomChannelMessageDaoService {
             }
         }
 
-        String result = "[";
-        FStage last_stage =  session.createSelectionQuery(
-                        "from FStage s where s.room=:room order by s.date desc limit 1", FStage.class)
-                .setParameter("room", channel.getRoom())
-                .getSingleResult();
-        for (FStageFChannel stage_channel : stage_channels) {
-            FStage stage = stage_channel.getId().getStage();
+        List<String> stages = new ArrayList<>();
 
-            if (stage != last_stage) {
-                result += "{\"stage_name\": \"" + stage.getName() + "\", \"messages\":";
-                if (XRayRead)
-                    result += stage_channel.getJsonXRayStrings();
-                else {
-                    if (AnonRead)
-                        result += stage_channel.getJsonAnonStrings();
-                    else
-                        result += stage_channel.getJsonStrings();
+        FStage last_stage = null;
+
+        if (!Objects.equals(channel.getName(), "газета")) {
+
+            last_stage = session.createSelectionQuery(
+                            "from FStage s where s.room=:room order by s.date desc limit 1", FStage.class)
+                    .setParameter("room", channel.getRoom())
+                    .getSingleResult();
+
+            for (FStageFChannel stage_channel : stage_channels) {
+                FStage stage = stage_channel.getId().getStage();
+
+                if (stage != last_stage) {
+                    String jsonString = (XRayRead) ? stage_channel.getJsonXRayStrings() :
+                            ((AnonRead) ? stage_channel.getJsonAnonStrings() : stage_channel.getJsonStrings());
+                    stages.add(get_output_stage_channel(stage.getName(), stage_channel.getCount(), jsonString));
                 }
-                result += "}, ";
             }
+        } else {
+            last_stage = session.createSelectionQuery(
+                    "from FStage s where s.name='начало'", FStage.class)
+                    .getSingleResult();
         }
 
 
@@ -145,24 +175,15 @@ public class RoomChannelMessageDaoService {
                         .setParameter("target", user.getPlayer_index())
                         .getResultList();
 
-        result += "{\"stage_name\":\"" + last_stage.getName() + "\", \"messages\":[";
+        List <String> result_messages = new ArrayList<>();
+
         for (FMessage message : messages) {
-
-            if (XRayRead) {
-                result += message.getJsonXRayString();
-            } else {
-                if (AnonRead) {
-                    result += message.getJsonAnonString();
-                } else {
-                    result += message.getJsonString();
-                }
-
-                result += ",";
-            }
+            result_messages.add((XRayRead)? message.getJsonXRayString() :
+                    ((AnonRead)? message.getJsonAnonString() : message.getJsonString()));
         }
-        result += "]}]";
+        stages.add(get_output_stage_channel(last_stage.getName(), messages.size(), get_array(result_messages)));
 
-        return result;
+        return get_array(stages);
     }
 
     @Transactional
@@ -453,9 +474,6 @@ public class RoomChannelMessageDaoService {
         Session session = sessionFactory.getCurrentSession();
         FRoom room = session.get(FRoom.class, room_id);
 
-        //System.out.println(room.getStatus());
-        //System.out.println(status);
-
         if (status.equals("closed")) {
             room.setStatus("closed");
             return true;
@@ -571,13 +589,12 @@ public class RoomChannelMessageDaoService {
             outputPoll.setName(poll.getName());
             outputPoll.setCan_vote((poll.getMask_voters() & (1L << user.getPlayer_index())) != 0);
 
-            List<Long> candidates = new ArrayList<>();
-            for (long i = 0; i < 30; i++) {
-                if ((poll.getMask_candidates() & (1L << i)) != 0) {
-                    candidates.add(i);
-                }
+
+            try {
+                outputPoll.setCandidates(objectMapper.readValue(poll.getCandidates(), Map.class));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
             }
-            outputPoll.setCandidates(candidates);
 
             outputStatePolls.add(outputPoll);
         }
@@ -598,41 +615,43 @@ public class RoomChannelMessageDaoService {
                 .setParameter("room", room)
                 .getSingleResultOrNull();
 
-        if (last_stage != null) {
-            for (FChannel channel : room.getChannels()) {
-                List<FMessage> messages = session.createSelectionQuery(
-                                "from FMessage m where m.stage=:stage and m.channel=:channel order by m.date", FMessage.class)
-                        .setParameter("stage", last_stage)
-                        .setParameter("channel", channel)
-                        .getResultList();
+        for (FChannel channel : room.getChannels()) {
 
-                FStageFChannel stage_channel = new FStageFChannel();
+            List<FMessage> messages = session.createSelectionQuery(
+                    "from FMessage m where m.stage=:stage and m.channel=:channel order by m.date", FMessage.class)
+                    .setParameter("stage", last_stage)
+                    .setParameter("channel", channel)
+                    .getResultList();
 
-                stage_channel.setJsonStrings("[");
-                stage_channel.setJsonAnonStrings("[");
-                stage_channel.setJsonXRayStrings("[");
-                boolean isFirst = true;
-                for (FMessage message : messages) {
+            if (messages.isEmpty())
+                continue;
 
-                    if (isFirst) {
-                        stage_channel.setJsonStrings(stage_channel.getJsonStrings() + message.getJsonString());
-                        stage_channel.setJsonAnonStrings(stage_channel.getJsonAnonStrings() + message.getJsonAnonString());
-                        stage_channel.setJsonXRayStrings(stage_channel.getJsonXRayStrings() + message.getJsonXRayString());
-                    } else {
-                        stage_channel.setJsonStrings(stage_channel.getJsonStrings() + "," + message.getJsonString());
-                        stage_channel.setJsonAnonStrings(stage_channel.getJsonAnonStrings() + "," + message.getJsonAnonString());
-                        stage_channel.setJsonXRayStrings(stage_channel.getJsonXRayStrings() + "," + message.getJsonXRayString());
-                    }
-                    isFirst = false;
+            FStageFChannel stage_channel = new FStageFChannel();
+
+            stage_channel.setJsonStrings("[");
+            stage_channel.setJsonAnonStrings("[");
+            stage_channel.setJsonXRayStrings("[");
+            boolean isFirst = true;
+            for (FMessage message : messages) {
+
+                if (isFirst) {
+                    stage_channel.setJsonStrings(stage_channel.getJsonStrings() + message.getJsonString());
+                    stage_channel.setJsonAnonStrings(stage_channel.getJsonAnonStrings() + message.getJsonAnonString());
+                    stage_channel.setJsonXRayStrings(stage_channel.getJsonXRayStrings() + message.getJsonXRayString());
+                } else {
+                    stage_channel.setJsonStrings(stage_channel.getJsonStrings() + "," + message.getJsonString());
+                    stage_channel.setJsonAnonStrings(stage_channel.getJsonAnonStrings() + "," + message.getJsonAnonString());
+                    stage_channel.setJsonXRayStrings(stage_channel.getJsonXRayStrings() + "," + message.getJsonXRayString());
                 }
-                stage_channel.setJsonStrings(stage_channel.getJsonStrings() + "]");
-                stage_channel.setJsonAnonStrings(stage_channel.getJsonAnonStrings() + "]");
-                stage_channel.setJsonXRayStrings(stage_channel.getJsonXRayStrings() + "]");
-
-                stage_channel.setCount((long) messages.size());
-                stage_channel.setId(new FStageFChannelId(last_stage, channel));
-                session.persist(stage_channel);
+                isFirst = false;
             }
+            stage_channel.setJsonStrings(stage_channel.getJsonStrings() + "]");
+            stage_channel.setJsonAnonStrings(stage_channel.getJsonAnonStrings() + "]");
+            stage_channel.setJsonXRayStrings(stage_channel.getJsonXRayStrings() + "]");
+
+            stage_channel.setCount((long) messages.size());
+            stage_channel.setId(new FStageFChannelId(last_stage, channel));
+            session.persist(stage_channel);
         }
 
 
@@ -699,13 +718,18 @@ public class RoomChannelMessageDaoService {
 
             FPoll poll = new FPoll();
 
-            poll.setRoom(room);
             poll.setName(inputPoll.getName());
+            try {
+                poll.setCandidates(objectMapper.writeValueAsString(inputPoll.getCandidates()));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
             poll.setMask_observers(inputPoll.getMask_observers());
             poll.setMask_voters(inputPoll.getMask_voters());
             poll.setMask_candidates(inputPoll.getMask_candidates());
-
             session.persist(poll);
+
+            room.addPoll(poll);
         }
 
         long cnt = 0;
@@ -742,6 +766,9 @@ public class RoomChannelMessageDaoService {
                     catMaidService.getUwUDegree(new_message.getUser().getDate_UwU()),
                     new_message.getUser().getAdmin()? "#ff0000" : null));
 
+            new_message.setStage(session.createSelectionQuery(
+                            "from FStage s where s.name='начало'", FStage.class)
+                    .getSingleResult());
             session.persist(new_message);
             newspaper.addMessage(new_message);
         }
@@ -753,12 +780,8 @@ public class RoomChannelMessageDaoService {
         FPoll poll = session.get(FPoll.class, poll_id);
         FUser player = session.bySimpleNaturalId(FUser.class).load(username);
 
-
-        if (candidate < 0) {
-            candidate = 29;
-        }
-
-        if (player == null || poll == null || candidate >= 30) {
+        if (player == null || poll == null || candidate < 0 || candidate >= 30
+                || (poll.getMask_candidates() & (1L << candidate)) == 0) {
             return false;
         }
 

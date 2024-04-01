@@ -17,13 +17,15 @@ import java.util.concurrent.TimeUnit;
 @EnableWebMvc
 public class WebConfig implements WebMvcConfigurer {
 
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/public_static/**")
-                .addResourceLocations("classpath:/static/public_static/")
-                .setCacheControl(CacheControl.maxAge(1, TimeUnit.HOURS))
-                .setUseLastModified(true);
+                .addResourceLocations("classpath:/static/public_static/");
+                //.setCacheControl(CacheControl.maxAge(1, TimeUnit.HOURS))
+                //.setUseLastModified(true);
             //    .resourceChain(true)
             //    .addResolver(new VersionResourceResolver().addContentVersionStrategy("/**"));
     }
+
 }

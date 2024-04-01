@@ -43,6 +43,19 @@ function shuffleArray(array) {
     }
 }
 
+function get_candidates_from_mask(mask) {
+
+    let candidates = {};
+
+    for (let i = 0; i < 30; i++) {
+        if (mask & (1 << i)) {
+            candidates['Игрок ' + i] = i;
+        }
+    }
+
+    return candidates;
+}
+
 function initialize_room(data) {
 
     //console.log(data);
@@ -60,7 +73,7 @@ function initialize_room(data) {
 
     let messages = new Array(30).fill("");
     for (let i = 0; i < 12; i++) {
-        messages[0] += "Роль игрока " + i + " " + roles[i] + ". \n";
+        messages[0] += "Роль игрока " + i + " " + roles[i] + ".";
     }
 
     dead = new Array(30).fill(0);
@@ -92,7 +105,8 @@ function initialize_room(data) {
             "name": "дневное ГС",
             "mask_voters": all_mask,
             "mask_observers": all_mask,
-            "mask_candidates" : all_mask}],
+            "mask_candidates" : all_mask,
+            "candidates": get_candidates_from_mask(all_mask)}],
         "messages" : messages,
         "duration" : 15,
         "stage" : "день " + day_count,
@@ -161,7 +175,8 @@ function update_state(data) {
                 {"name": "дневное ГС",
                 "mask_voters": alive_mask,
                 "mask_observers": all_mask,
-                "mask_candidates" : alive_mask}],
+                "mask_candidates": alive_mask,
+                    "candidates": get_candidates_from_mask(alive_mask)}],
             "messages" : messages,
             "duration" : 15,
             "stage" : "день " + day_count,
@@ -176,7 +191,8 @@ function update_state(data) {
                 {"name": "ночное ГС",
                 "mask_voters": mafia_mask & alive_mask,
                 "mask_observers": mafia_mask,
-                "mask_candidates" : citizens_mask & alive_mask}],
+                "mask_candidates": citizens_mask & alive_mask,
+                    "candidates": get_candidates_from_mask(citizens_mask & alive_mask)}],
             "messages" : messages,
             "duration" : 10,
             "stage" : "ночь " + day_count++,

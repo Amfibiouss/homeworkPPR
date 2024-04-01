@@ -24,6 +24,7 @@ public class FPoll {
     private Long mask_voters;
     private Long mask_observers;
     private Long mask_candidates;
+    private String candidates;
 
     @Override
     public boolean equals(Object o) {
@@ -35,6 +36,14 @@ public class FPoll {
     @Override
     public int hashCode() {
         return Objects.hash(getId());
+    }
+
+    public String getCandidates() {
+        return candidates;
+    }
+
+    public void setCandidates(String candidates) {
+        this.candidates = candidates;
     }
 
     public Long getId() {

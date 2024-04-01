@@ -7,7 +7,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"> </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"> </script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <!--<script src="/public_static/room_config.js"> </script> -->
+    <!-- -->
+    <script src="/public_static/room_config.js"> </script>
     <meta charset="UTF-8">
     <title>Title</title>
 
@@ -129,17 +130,6 @@
             elem.innerHTML = string_players;
         }
 
-        function connect() {
-            var socket = new SockJS('/public/stomp/chat');
-            stompClient = Stomp.over(socket);
-            stompClient.connect({},
-                function (frame) {
-                    update_ui({body : "not started"});
-                    stompClient.subscribe('/topic/room_status/' + room_id.value, update_ui);
-                },
-                function (error) {});
-        }
-
         function sendVote(event) {
             event.preventDefault();
             var csrf_token = document.getElementById('_csrf').value;
@@ -151,11 +141,6 @@
             for (const radio of radios) {
                 if (radio.checked) {
                     candidate = radio.getAttribute("id").split('-').at(-1);
-
-                    if (candidate == 'no_vote') {
-                        candidate = -1;
-                    }
-
                     break;
                 }
             }
@@ -242,14 +227,10 @@
         active_tab = -1;
 
         subscriptions = new Array();
-        active_tab = -1;
-        //document.addEventListener("DOMContentLoaded", connect);
-
         window.onbeforeunload = unloadHandler;
     </script>
 
-    <!---->
-    <script th:utext = "${your_code}"></script>
+    <!--<script th:utext = "${your_code}"></script> -->
 </head>
 <body>
 <header th:replace="~{public/header :: |${@securityService.getAccess()}_header|}"></header>
@@ -295,367 +276,363 @@
                 </div>
             </nav>
 
-            <div class="tab-content" id="pills-tabContent">
-            </div>
+            <tab-content :channels="channels"  :polls = "polls" :active_tab="active_tab" :status="status"></tab-content>
         </div>
     </div>
-
     <script>
 
-        const app = Vue.createApp({
+    const app = Vue.createApp({
 
-            data() {
-                return {channels: [], polls: [], status: null, active_tab:null};
-            },
-            methods: {
+        data() {
+            return {channels: [], polls: [], status: null, active_tab: null};
+        },
+        methods: {
 
-                update_ui: function(status) {
-                    var self = this;
+            update_ui: function (status) {
+                var self = this;
 
-                    if (status.body === 'processing') {
-                        processing_stage();
+                if (status.body === 'processing') {
+                    processing_stage();
+                }
+
+                if (status.body === 'initialization' || status.body === 'processing') {
+                    time_until_new_stage.innerHTML = "Идет обработка...";
+                    return;
+                }
+
+                if (status.body === 'finished' || status.body === 'closed') {
+                    time_until_new_stage.innerHTML = "Игра окончена.";
+                }
+
+                fetch('/user/status_room/' + room_id.value, {
+                    headers: {
+                        'Accept': 'application/json'
                     }
-
-                    if (status.body === 'initialization' || status.body === 'processing') {
-                        time_until_new_stage.innerHTML = "Идет обработка...";
-                        return;
-                    }
-
-                    if (status.body === 'finished' || status.body === 'closed') {
-                        time_until_new_stage.innerHTML = "Игра окончена.";
-                    }
-
-                    fetch('/user/status_room/' + room_id.value, {
-                        headers: {
-                            'Accept': 'application/json'
+                }).then(
+                    function (response) {
+                        if (response.status !== 200) {
+                            console.log("Can't load messages. Status Code: " + response.status);
+                            return;
                         }
-                    }).then(
-                        function(response) {
-                            if (response.status !== 200) {
-                                console.log("Can't load messages. Status Code: " + response.status);
-                                return;
+                        response.json().then(function (data) {
+
+                            let html_string;
+                            if (typeof intervalID !== 'undefined')
+                                clearInterval(intervalID);
+
+                            if (status.body === "started") {
+                                var finish = data.finish_stage * 1000;
+                                intervalID = setInterval(function () {
+                                    var res = (finish - Date.now()) / 1000;
+
+                                    if (res < 0) {
+                                        time_until_new_stage.innerHTML = "Осталось 0 секунд";
+                                        clearInterval(intervalID);
+                                        return;
+                                    }
+
+                                    time_until_new_stage.innerHTML = "До конца сталось " + Math.round(res) + " секунд";
+                                }, 1000);
+
+                                current_stage.innerHTML = "Сейчас " + data.stage;
                             }
-                            response.json().then(function(data) {
 
-                                let html_string;
-                                if (typeof intervalID !== 'undefined')
-                                    clearInterval(intervalID);
+                            for (const subscription of subscriptions) {
+                                subscription.unsubscribe();
+                            }
+                            subscriptions = [];
 
-                                if (status.body === "started") {
-                                    var finish = data.finish_stage * 1000;
-                                    intervalID = setInterval(function() {
-                                        var res = (finish - Date.now()) / 1000;
+                            let active_tab = null;
+                            let tabElement = document.querySelector('button[role="tab"].active');
+                            if (tabElement != null) {
+                                active_tab = tabElement.innerHTML;
+                            }
 
-                                        if (res < 0) {
-                                            time_until_new_stage.innerHTML = "Осталось 0 секунд";
-                                            clearInterval(intervalID);
-                                            return;
-                                        }
-
-                                        time_until_new_stage.innerHTML = "До конца сталось " + Math.round(res) + " секунд";
-                                    }, 1000);
-
-                                    current_stage.innerHTML = "Сейчас " + data.stage;
+                            let has_active_tab = false;
+                            for (const channel of data.channels) {
+                                if (active_tab === channel.name) {
+                                    has_active_tab = true;
+                                    break;
                                 }
-
-                                for (const subscription of subscriptions) {
-                                    subscription.unsubscribe();
-                                }
-                                subscriptions = [];
-
-                                let active_tab = null;
-                                let tabElement = document.querySelector('button[role="tab"].active');
-                                if (tabElement != null) {
-                                    active_tab = tabElement.innerHTML;
-                                }
-
-                                let has_active_tab = false;
-                                for (const channel of data.channels) {
-                                    if (active_tab === channel.name) {
-                                        has_active_tab = true;
-                                        break;
-                                    }
-                                }
-                                if (!has_active_tab) {
-                                    if (data.status === "not started") {
-                                        self.active_tab = "лобби";
-                                    } else {
-                                        self.active_tab = "газета";
-                                    }
+                            }
+                            if (!has_active_tab) {
+                                if (data.status === "not started") {
+                                    self.active_tab = "лобби";
                                 } else {
-                                    self.active_tab = active_tab;
+                                    self.active_tab = "газета";
                                 }
-                                console.log(self.active_tab);
-                                console.log(active_tab);
+                            } else {
+                                self.active_tab = active_tab;
+                            }
 
-                                self.channels = data.channels;
-                                self.polls = data.polls;
-                                self.status = data.status;
+                            self.channels = data.channels;
+                            self.polls = data.polls;
+                            self.status = data.status;
 
-                                let string_tabs = "";
-                                let ind = 0;
-                                for (const channel of data.channels) {
+                            /*
+                            for (const poll of data.polls) {
 
-                                    let html_string = `
-                                     <div class="tab-pane fade ${((active_tab === channel.name || (active_tab == -1 && ind == 0))? 'show active' : '')}"
-                                     id="pills-${channel.channel_id}" role="tabpanel" aria-labelledby="${channel.channel_id}-tab">
+                                var elem = document.getElementById("candidates-poll-" + poll.poll_id);
+                                html_string = "";
 
-                                    <div class="row">` +
-
-                                        ((channel.can_read) ? `
-                                        <div class = "col-12" id="articles${channel.channel_id}">
-                                        </div>
-                                        ` : '')
-                                        + ((channel.can_write) ? `
-                                        <div class = "col-12">
-                                            <form id="form${channel.channel_id}" onsubmit="sendMessage(event)" class="row py-2">
-                                                <input type="hidden"
-                                                       name = "channel"
-                                                       value="${channel.channel_id}"/>
-                                                <div class="col-11">
-                                                    <textarea class="form-control" rows="3"
-                                                              name="text" id="text${channel.channel_id}"></textarea>
-                                                </div>
-                                                <div class="col-1 px-0">
-                                                    <button class="px-0">
-                                                        <img src="/public_static/icons/send.svg" width="30" height="30" alt="кнопка отправить">
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>` : '') +
-                                        `
-                                    </div>
-                                </div>`
-
-                                    string_tabs += html_string;
-                                    ind++;
-                                }
-
-                                elem = document.getElementById('pills-tabContent');
-                                elem.innerHTML = string_tabs;
-
-                                if (data.status === 'not started') {
-                                    elem.innerHTML += `
-                                <div class="tab-pane fade" id="pills-players" role="tabpanel" aria-labelledby="pills-players-tab">
-                                    <div class = "col-12" id="players">
-                                    </div>
-                                </div>`;
-                                }
-
-
-                                /*
-                                var elem = document.getElementById('pills-tab');
-                                elem.innerHTML = string_pills;
-
-                                if (data.status == 'not started') {
-                                    elem.innerHTML += `
-                                        <li class="nav-item" role="presentation">
-                                            <button class="nav-link" id="pills-players-tab" data-bs-toggle="pill" data-bs-target="#pills-players" type="button" role="tab" aria-controls="pills-players" aria-selected="false">игроки</button>
-                                        </li>`;
-                                }
-                                 */
-
-                                string_tabs = "";
-
-                                for (const poll of data.polls) {
-                                    html_string = `
-                                     <div class="tab-pane fade"
-                                     id="pills-poll-${poll.poll_id}" role="tabpanel" aria-labelledby="${poll.poll_id}-poll-tab">
-
-                                    <form class="row" onsubmit = "sendVote(event)" id="form-poll-${poll.poll_id}">
-                                        <div class = "col-12" id="candidates-poll-${poll.poll_id}">
-                                        </div>
-                                        <div class="col-auto mt-4">
-                                            <button class = "btn btn-primary">Голосовать</button>
-                                        </div>
-                                    </div>
-                                </div>`
-
-                                    string_tabs += html_string;
-                                }
-
-                                //var elem = document.getElementById('pills-tab');
-                                //elem.innerHTML += string_pills;
-                                elem = document.getElementById('pills-tabContent');
-                                elem.innerHTML += string_tabs;
-
-                                /*
-                                var tabElements = document.querySelectorAll('button[role="tab"]');
-                                for (const elem of tabElements) {
-                                    elem.addEventListener('click', function (event) {
-                                        active_tab = event.target.innerText;
-                                    });
-                                }
-                                 */
-
-                                for (const poll of data.polls) {
-
-                                    var elem = document.getElementById("candidates-poll-" + poll.poll_id);
-                                    html_string = "";
-
-                                    for (const candidate of poll.candidates) {
-                                        html_string += `
+                                for (const candidate of poll.candidates) {
+                                    html_string += `
                                         <input type="radio" class="btn-check" name="radio-${poll.poll_id}" id="radio-${poll.poll_id}-${candidate}" autocomplete="off">
                                         <label class="btn btn-primary m-2" for="radio-${poll.poll_id}-${candidate}">Игрок ${candidate}</label>`;
-                                    }
-                                    html_string += `
+                                }
+                                html_string += `
                                     <input type="radio" class="btn-check" name="radio-${poll.poll_id}" id="radio-${poll.poll_id}-no_vote" autocomplete="off" checked>
                                     <label class="btn btn-primary m-2" for="radio-${poll.poll_id}-no_vote">Не голосовать</label>`;
 
-                                    elem.innerHTML = html_string;
-                                }
+                                elem.innerHTML = html_string;
+                            }
+                            */
+                            for (const channel of data.channels) {
 
-                                for (const channel of data.channels) {
+                                if (channel.can_read == 0)
+                                    continue;
 
-                                    if (channel.can_read == 0)
-                                        continue;
-
-                                    fetch('/public/chat/get_messages/' + room_id.value + '/' + channel.channel_id, {
-                                        headers: {
-                                            'Accept': 'application/json'
+                                fetch('/public/chat/get_messages/' + room_id.value + '/' + channel.channel_id, {
+                                    headers: {
+                                        'Accept': 'application/json'
+                                    }
+                                }).then(
+                                    function (response) {
+                                        if (response.status !== 200) {
+                                            console.log("Can't load messages. Status Code: " + response.status);
+                                            return;
                                         }
-                                    }).then(
-                                        function(response) {
-                                            if (response.status !== 200) {
-                                                console.log("Can't load messages. Status Code: " + response.status);
-                                                return;
-                                            }
-                                            response.json().then(function(data) {
-                                                string_articles = "";
+                                        response.json().then(function (data) {
+                                            string_articles = "";
 
-                                                for (const stage of data) {
-                                                    string_articles += "<span>" + stage.stage_name + "</span>";
-                                                    for (const mes of stage.messages) {
-                                                        string_articles += getHtmlForArticle(mes);
+                                            for (const stage of data) {
+                                                string_articles += "<span>" + stage.stage_name + "</span>";
+                                                for (const mes of stage.messages) {
+                                                    string_articles += getHtmlForArticle(mes);
+                                                }
+                                            }
+
+                                            var elem = document.getElementById('articles' + channel.channel_id);
+                                            elem.innerHTML = string_articles;
+                                        });
+
+                                        var subscription = stompClient.subscribe('/topic/messages/' + room_id.value + '/' + channel.channel_id,
+                                            function (messageOutput) {
+                                                let message_id = messageOutput.body;
+                                                fetch('/public/chat/get_message/' + message_id, {
+                                                    headers: {
+                                                        'Accept': 'application/json'
                                                     }
-                                                }
-
-                                                var elem = document.getElementById('articles' + channel.channel_id);
-                                                elem.innerHTML = string_articles;
-                                            });
-
-                                            var subscription = stompClient.subscribe('/topic/messages/' + room_id.value + '/' + channel.channel_id,
-                                                function(messageOutput) {
-                                                    let message_id = messageOutput.body;
-                                                    fetch('/public/chat/get_message/' + message_id, {
-                                                        headers: {
-                                                            'Accept': 'application/json'
+                                                }).then(
+                                                    function (response) {
+                                                        if (response.status !== 200) {
+                                                            console.log("Can't load message. Status Code: " + response.status);
+                                                            return;
                                                         }
-                                                    }).then(
-                                                        function(response) {
-                                                            if (response.status !== 200) {
-                                                                console.log("Can't load message. Status Code: " + response.status);
-                                                                return;
-                                                            }
-                                                            response.json().then(function(data) {
-                                                                var elem = document.getElementById('articles' + channel.channel_id);
-                                                                elem.innerHTML = elem.innerHTML + getHtmlForArticle(data);
-                                                            });
+                                                        response.json().then(function (data) {
+                                                            var elem = document.getElementById('articles' + channel.channel_id);
+                                                            elem.innerHTML = elem.innerHTML + getHtmlForArticle(data);
                                                         });
-                                                }
-                                            );
-                                            subscriptions.push(subscription);
-                                        });
-                                }
-
-                                if (data.status == 'not started') {
-                                    fetch('/public/room/get_players/' + room_id.value, {
-                                        headers: {
-                                            'Accept': 'application/json'
-                                        }
-                                    }).then(
-                                        function(response) {
-                                            if (response.status !== 200) {
-                                                console.log("Can't load players. Status Code: " + response.status);
-                                                return;
+                                                    });
                                             }
-                                            response.json().then(function(players) {update_players(players);});
+                                        );
+                                        subscriptions.push(subscription);
+                                    });
+                            }
 
-                                            var subscription = stompClient.subscribe('/topic/players/' + room_id.value, function(data) {update_players(JSON.parse(data.body));});
-                                            subscriptions.push(subscription);
+                            if (data.status === 'not started') {
+                                fetch('/public/room/get_players/' + room_id.value, {
+                                    headers: {
+                                        'Accept': 'application/json'
+                                    }
+                                }).then(
+                                    function (response) {
+                                        if (response.status !== 200) {
+                                            console.log("Can't load players. Status Code: " + response.status);
+                                            return;
+                                        }
+                                        response.json().then(function (players) {
+                                            update_players(players);
                                         });
-                                }
-                            });
+
+                                        var subscription = stompClient.subscribe('/topic/players/' + room_id.value, function (data) {
+                                            update_players(JSON.parse(data.body));
+                                        });
+                                        subscriptions.push(subscription);
+                                    });
+                            }
                         });
-                },
-                connect: function () {
-                    var socket = new SockJS('/public/stomp/chat');
-                    stompClient = Stomp.over(socket);
-                    var self = this;
-                    stompClient.connect({},
-                        function (frame) {
-                            self.update_ui({body : "not started"});
-                            stompClient.subscribe('/topic/room_status/' + room_id.value, self.update_ui);
-                        },
-                        function (error) {});
-                }
+                    });
             },
-            mounted() {
-                this.connect();
+            connect: function () {
+                var socket = new SockJS('/public/stomp/chat');
+                stompClient = Stomp.over(socket);
+                var self = this;
+                stompClient.connect({},
+                    function (frame) {
+                        self.update_ui({body: "not started"});
+                        stompClient.subscribe('/topic/room_status/' + room_id.value, self.update_ui);
+                    },
+                    function (error) {
+                    });
             }
-        });
+        },
+        mounted() {
+            this.connect();
+        }
+    });
 
-        app.component("nav-pill-channel", {
-            props: ["channel_id", "channel_name", "ind", "active_tab"],
+    app.component("nav-pill-channel", {
+        props: ["channel_id", "channel_name", "active_tab"],
 
-            template: `
-                <li class="nav-item" role="presentation">
-                    <button :class ="'nav-link ' + ((channel_name === active_tab) ? 'active' : '')"
-                            :id="channel_id + '-tab'" data-bs-toggle="pill"
-                            :data-bs-target="'#pills-' + channel_id" type="button" role="tab"
-                            :aria-controls="'pills-' + channel_id" aria-selected="true">{{channel_name}}</button>
-                </li>
-            `
-        });
+        template: `
+          <li class="nav-item" role="presentation">
+            <button :class="'nav-link ' + ((channel_name === active_tab) ? 'active' : '')"
+                    :id="channel_id + '-tab'" data-bs-toggle="pill"
+                    :data-bs-target="'#pills-' + channel_id" type="button" role="tab"
+                    :aria-controls="'pills-' + channel_id" aria-selected="true">{{ channel_name }}
+            </button>
+          </li>
+        `
+    });
 
-        app.component("nav-pill-poll", {
-            props: ["poll_id", "poll_name"],
+    app.component("nav-pill-poll", {
+        props: ["poll_id", "poll_name"],
 
-            template: `
-              <li class="nav-item" role="presentation">
-                <button class="nav-link"
-                        :id="poll_id + '-poll-tab'" data-bs-toggle="pill"
-                        :data-bs-target="'#pills-poll-' + poll_id" type="button" role="tab"
-                        :aria-controls="'pills-poll-' + poll_id" aria-selected="true">{{poll_name}}</button>
-              </li>
-            `
-        });
+        template: `
+          <li class="nav-item" role="presentation">
+            <button class="nav-link"
+                    :id="poll_id + '-poll-tab'" data-bs-toggle="pill"
+                    :data-bs-target="'#pills-poll-' + poll_id" type="button" role="tab"
+                    :aria-controls="'pills-poll-' + poll_id" aria-selected="true">{{ poll_name }}
+            </button>
+          </li>
+        `
+    });
 
-        app.component("nav-pill-players", {
-            template: `
+    app.component("nav-pill-players", {
+        template: `
               <li class="nav-item" role="presentation">
                 <button class="nav-link" id="pills-players-tab" data-bs-toggle="pill" data-bs-target="#pills-players"
                         type="button" role="tab" aria-controls="pills-players" aria-selected="false">игроки
                 </button>
               </li>
             `
-        });
+    });
 
-        app.component("nav-pills", {
-            props: ["channels", "polls", "status", "active_tab"],
-            template: `
-              <ul class="nav nav-pills" id="pills-tab" role="tablist">
-                <nav-pill-channel v-for = "(channel, index) in channels"
-                                  :channel_id="channel.channel_id"
-                                  :channel_name="channel.name"
-                                  :ind="index" :active_tab="active_tab">
-                </nav-pill-channel>
-                <nav-pill-poll v-for = "poll in polls"
-                                  :poll_id="poll.poll_id"
-                                  :poll_name="poll.name">
-                </nav-pill-poll>
-                <nav-pill-players v-if="status==='not started'"></nav-pill-players>
-              </ul>
-            `
-        });
+    app.component("nav-pills", {
+        props: ["channels", "polls", "status", "active_tab"],
+        template: `
+          <ul class="nav nav-pills" id="pills-tab" role="tablist">
+            <nav-pill-channel v-for="channel in channels"
+                              :channel_id="channel.channel_id"
+                              :channel_name="channel.name"
+                              :active_tab="active_tab">
+            </nav-pill-channel>
+            <nav-pill-poll v-for="poll in polls"
+                           :poll_id="poll.poll_id"
+                           :poll_name="poll.name">
+            </nav-pill-poll>
+            <nav-pill-players v-if="status==='not started'"></nav-pill-players>
+          </ul>
+        `
+    });
 
-        app.mount('#app');
+    app.component("tab-panel-channel", {
+        props: ["channel_id", "active_tab", "channel_name", "can_read", "can_write"],
+
+        template: `
+          <div :class="'tab-pane fade ' + ((active_tab === channel_name) ? 'show active' : '')"
+               :id="'pills-' + channel_id" role="tabpanel" :aria-labelledby="channel_id + '-tab'">
+            <div class="row">
+              <div v-if="can_read" class = "col-12" :id="'articles' + channel_id">
+              </div>
+              <div v-if="can_write" class = "col-12">
+                <form :id="'form' + channel_id" onsubmit="sendMessage(event)" class="row py-2">
+                  <input type="hidden" name = "channel" :value="channel_id"/>
+                  <div class="col-11">
+                    <textarea class="form-control" rows="3"
+                              name="text" :id="'text' + channel_id"></textarea>
+                  </div>
+                  <div class="col-1 px-0">
+                    <button class="px-0">
+                      <img src="/public_static/icons/send.svg" width="30" height="30" alt="кнопка отправить">
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        `
+    });
+
+    app.component("vote-button", {
+        props: ["poll_id", "candidate_name", "candidate_index"],
+
+        template: `
+          <input type="radio" class="btn-check"
+                 :name="'radio-' + poll_id"
+                 :id="'radio-' + poll_id + '-' + candidate_index" autocomplete="off">
+          <label class="btn btn-primary m-2"
+                 :for="'radio-' + poll_id + '-' + candidate_index">{{candidate_name}}</label>
+        `
+    });
+
+    app.component("tab-panel-poll", {
+        props: ["poll_id", "candidates"],
+
+        template: `
+          <div class="tab-pane fade"
+               :id="'pills-poll-' + poll_id" role="tabpanel" :aria-labelledby="poll_id + '-poll-tab'">
+
+            <form class="row" onsubmit="sendVote(event)" :id="'form-poll-' + poll_id">
+              <div class="col-12" :id="'candidates-poll-' + poll_id">
+                <vote-button v-for = "(candidate_index, candidate_name) in candidates"
+                             :poll_id="poll_id"
+                             :candidate_index="candidate_index"
+                             :candidate_name="candidate_name"></vote-button>
+              </div>
+              <div class="col-auto mt-4">
+                <button class="btn btn-primary">Голосовать</button>
+              </div>
+            </form>
+          </div>
+        `
+    });
+
+    app.component("tab-panel-players", {
+        template: `
+            <div class="tab-pane fade" id="pills-players" role="tabpanel" aria-labelledby="pills-players-tab">
+                <div class = "col-12" id="players">
+                </div>
+            </div>
+        `
+    });
+
+    app.component("tab-content", {
+        props: ["channels", "polls", "active_tab", "status"],
+
+        template: `
+          <div class="tab-content" id="pills-tabContent">
+            <tab-panel-channel v-for = "channel in channels"
+                       :channel_id = "channel.channel_id"
+                       :active_tab = "active_tab"
+                       :channel_name = "channel.name"
+                       :can_read = "channel.can_read"
+                       :can_write="channel.can_write">
+            </tab-panel-channel>
+            <tab-panel-poll v-for = "poll in polls"
+                            :poll_id = poll.poll_id
+                            :candidates = poll.candidates>
+            </tab-panel-poll>
+            <tab-panel-players v-if="status==='not started'"></tab-panel-players>
+          </div>
+        `
+    });
+
+    app.mount('#app');
     </script>
 </main>
 <footer th:replace="~{public/footer :: footer}"></footer>
 </body>
 </html>
-<script setup>
-</script>
-<script setup>
-</script>

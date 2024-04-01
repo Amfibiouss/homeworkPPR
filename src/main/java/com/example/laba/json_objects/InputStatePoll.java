@@ -1,5 +1,10 @@
 package com.example.laba.json_objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.util.List;
+import java.util.Map;
+
 public class InputStatePoll {
     public String name;
 
@@ -9,6 +14,15 @@ public class InputStatePoll {
 
     public long mask_candidates;
 
+    public Map<String, Long> candidates;
+
+    public Map<String, Long> getCandidates() {
+        return candidates;
+    }
+
+    public void setCandidates(Map<String, Long> candidates) {
+        this.candidates = candidates;
+    }
 
     public String getName() {
         return name;
