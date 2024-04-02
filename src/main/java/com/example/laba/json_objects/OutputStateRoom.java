@@ -1,7 +1,5 @@
 package com.example.laba.json_objects;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -15,6 +13,15 @@ public class OutputStateRoom {
 
     public OffsetDateTime finish_stage;
     public String stage;
+    public OutputMessage newspaperMessage;
+
+    public OutputMessage getNewspaperMessage() {
+        return newspaperMessage;
+    }
+
+    public void setNewspaperMessage(OutputMessage newspaperMessage) {
+        this.newspaperMessage = newspaperMessage;
+    }
 
     public String getStatus() {
         return status;

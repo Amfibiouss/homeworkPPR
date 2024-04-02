@@ -12,7 +12,6 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.service.spi.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jmx.support.ObjectNameManager;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +19,7 @@ import java.time.OffsetDateTime;
 import java.util.*;
 
 import static java.util.Collections.shuffle;
+import static org.springframework.transaction.annotation.Propagation.MANDATORY;
 
 @Component
 public class RoomChannelMessageDaoService {
@@ -36,12 +36,13 @@ public class RoomChannelMessageDaoService {
                                      String alias,
                                      String text,
                                      double opacity,
-                                     String username_color) {
+                                     String username_color,
+                                     long id) {
 
         return String.format("{\"username\": %s, \"text\": \"%s\", \"alias\":\"%s\"," +
-                        " \"opacity\":\"%s\", \"username_color\": %s}",
+                        " \"opacity\":\"%s\", \"username_color\": %s, \"id\": %d}",
                 (username == null)? null : "\"" + username + "\"", text, alias, opacity,
-                (username_color == null)? null : "\"" + username_color + "\"");
+                (username_color == null)? null : "\"" + username_color + "\"", id);
 
     }
 
@@ -97,10 +98,9 @@ public class RoomChannelMessageDaoService {
         return result;
     }
 
-    @Transactional
-    public long get_channel_id(long room_id, String name) {
+    @Transactional(propagation = MANDATORY)
+    public FChannel get_channel(FRoom room, String name) {
         Session session = sessionFactory.getCurrentSession();
-        FRoom room = session.getReference(FRoom.class, room_id);
 
         FChannel channel = session.createSelectionQuery(
                         "from FChannel c where c.room=:room and c.name=:name", FChannel.class)
@@ -111,7 +111,7 @@ public class RoomChannelMessageDaoService {
         if (channel == null)
             throw new ServiceException("the channel name don't exist.");
 
-        return channel.getId();
+        return channel;
     }
 
     @Transactional
@@ -161,8 +161,8 @@ public class RoomChannelMessageDaoService {
             }
         } else {
             last_stage = session.createSelectionQuery(
-                    "from FStage s where s.name='начало'", FStage.class)
-                    .getSingleResult();
+                    "from FStage s where s.name='начало' and s.room=:room", FStage.class)
+                    .setParameter("room", channel.getRoom()).getSingleResult();
         }
 
 
@@ -323,17 +323,6 @@ public class RoomChannelMessageDaoService {
             new_message.setAlias(user.getLogin());
         }
 
-        new_message.setJsonXRayString(get_output_message(username, new_message.getAlias(), new_message.getText(),
-                        catMaidService.getUwUDegree(user.getDate_UwU()), user.getAdmin()? "#ff0000" : null));
-
-        new_message.setJsonAnonString(get_output_message(null, "???", new_message.getText(),
-                0f, null));
-
-        new_message.setJsonString(get_output_message(null, new_message.getAlias(),
-                new_message.getText(), 0f, null));
-
-
-
         session.persist(new_message);
         channel.addMessage(new_message);
 
@@ -344,6 +333,16 @@ public class RoomChannelMessageDaoService {
 
         session.flush();
         session.refresh(new_message);
+
+        new_message.setJsonXRayString(get_output_message(username, new_message.getAlias(), new_message.getText(),
+                catMaidService.getUwUDegree(user.getDate_UwU()), user.getAdmin()? "#ff0000" : null, new_message.getId()));
+
+        new_message.setJsonAnonString(get_output_message(null, "???", new_message.getText(),
+                0f, null, new_message.getId()));
+
+        new_message.setJsonString(get_output_message(null, new_message.getAlias(),
+                new_message.getText(), 0f, null, new_message.getId()));
+
         return new_message.getId();
     }
 
@@ -353,26 +352,17 @@ public class RoomChannelMessageDaoService {
         FUser user = session.bySimpleNaturalId(FUser.class).load(username);
 
         List<FMessage> messages = session.createSelectionQuery(
-                        "from FMessage m where m.user = :user and m.date > :date order by m.date desc",
+                        "from FMessage m where m.user = :user and m.date > :date and m.channel.name != 'газета' order by m.date desc",
                         FMessage.class)
                 .setParameter("user", user)
                 .setParameter("date", OffsetDateTime.now().minusSeconds(5))
                 .getResultList();
 
-        if (messages.isEmpty())
-            return false;
-
         if (messages.size() >= 5) {
             return true;
         }
 
-        long sum = 0;
-
-        for (FMessage message: messages) {
-            sum += message.getText().length();
-        }
-
-        return messages.size() > 1 && sum * 1.0 / 5 > 50;
+        return false;
     }
 
     @Transactional
@@ -600,6 +590,19 @@ public class RoomChannelMessageDaoService {
         }
         outputStateRoom.setPolls(outputStatePolls);
 
+        FMessage message = session.createSelectionQuery(
+                "from FMessage m where m.channel=:channel and m.target=:pindex order by m.date desc limit 1", FMessage.class)
+                .setParameter("channel", get_channel(room, "газета"))
+                .setParameter("pindex", user.getPlayer_index()).getSingleResultOrNull();
+
+        if (message != null) {
+            try {
+                outputStateRoom.setNewspaperMessage(objectMapper.readValue(message.getJsonString(), OutputMessage.class));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         return outputStateRoom;
     }
 
@@ -753,24 +756,26 @@ public class RoomChannelMessageDaoService {
             new_message.setText(message_text);
             new_message.setAlias(String.valueOf(room.getCreator().getLogin()));
 
+            new_message.setStage(session.createSelectionQuery(
+                            "from FStage s where s.name='начало' and s.room=:room", FStage.class).
+                                setParameter("room", room) .getSingleResult());
+            session.persist(new_message);
+            newspaper.addMessage(new_message);
+            session.flush();
+            session.refresh(new_message);
+
             new_message.setJsonString(get_output_message(
                     null, new_message.getAlias(),
-                    new_message.getText(), 0f, null));
+                    new_message.getText(), 0f, null, new_message.getId()));
             new_message.setJsonAnonString(get_output_message(
                     null, "???",
-                    new_message.getText(), 0f, null));
+                    new_message.getText(), 0f, null, new_message.getId()));
             new_message.setJsonXRayString(get_output_message(
                     new_message.getUser().getLogin(),
                     new_message.getAlias(),
                     new_message.getText(),
                     catMaidService.getUwUDegree(new_message.getUser().getDate_UwU()),
-                    new_message.getUser().getAdmin()? "#ff0000" : null));
-
-            new_message.setStage(session.createSelectionQuery(
-                            "from FStage s where s.name='начало'", FStage.class)
-                    .getSingleResult());
-            session.persist(new_message);
-            newspaper.addMessage(new_message);
+                    new_message.getUser().getAdmin()? "#ff0000" : null, new_message.getId()));
         }
     }
 

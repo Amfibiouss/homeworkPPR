@@ -1,11 +1,7 @@
 package com.example.laba.services;
 
 import com.example.laba.entities.*;
-import com.example.laba.json_objects.InputRoom;
-import com.example.laba.json_objects.OutputMessage;
-import com.example.laba.objects_to_fill_templates.TmplMessage;
 import com.example.laba.objects_to_fill_templates.TmplPunishment;
-import com.example.laba.objects_to_fill_templates.TmplRoom;
 import com.example.laba.objects_to_fill_templates.TmplUser;
 import jakarta.persistence.PersistenceUnit;
 import org.hibernate.Session;

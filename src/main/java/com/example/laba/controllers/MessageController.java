@@ -97,7 +97,7 @@ public class MessageController {
             HttpServletResponse response,
             Model model) {
 
-        model.addAttribute("lobby_id", RCMDAOService.get_channel_id(room_id, "лобби"));
+        //model.addAttribute("lobby_id", RCMDAOService.get_channel_id(room_id, "лобби"));
         model.addAttribute("room_id", room_id);
 
         try {

@@ -25,64 +25,6 @@
     </style>
 
     <script>
-        function getHtmlForArticle(mes) {
-
-            if (mes.username != null) {
-                var article_string = `
-                    <article class="row py-2">
-                        <a class="col-auto" target="_blank" href="/public/profile/${mes.username}" style="position:relative;">
-                            <img src="/public/photo/${mes.username}" width="60" height="60"
-                                alt="аватарка пользователя ${mes.username}">
-                            <img src="/public_static/catmaid.jpg" width="60" height="60"
-                                alt="кошкогорничная" style="position: absolute; z-index: 99; left:calc(var(--bs-gutter-x) * .5); border-radius:50%;
-                                opacity: ${mes.opacity};">
-                        </a>
-                        <div class="col-sm col-xs-12">
-                            <div>
-                                <b><a class="username" target="_blank" href="/public/profile/${mes.username}"
-                                style="${(mes.username_color == null)? "" : ("color:" + mes.username_color + ";")}">
-                                ${mes.username}${(mes.alias == null)? "" : ("(" + mes.alias + ")")}</a></b>
-                            </div>
-                            <div>${mes.text}</div>
-                        </div>
-                    </article>`;
-            } else {
-                var article_string = `
-                    <article class="row py-2">
-                        <span class="col-auto"">
-                            <img src="${(mes.alias == "???")? "/public_static/who_i_am.jpg" : ("/public/photo/" + mes.alias)}"
-                             width="60" height="60" alt="маска пользователя ${mes.alias}">
-                        </span>
-                        <div class="col-sm col-xs-12">
-                            <div>
-                                <b style="${(mes.username_color == null)? "" : ("color:" + mes.username_color + ";")}">${mes.alias}</b>
-                            </div>
-                            <div>${mes.text}</div>
-                        </div>
-                    </article>`;
-            }
-
-            return article_string;
-        }
-
-        function getHtmlForPlayer(player) {
-            var player_string = `
-            <li class="row py-2">
-                <a class="col-auto" href="/public/profile/${player.login}" style="position:relative;">
-                    <img src="/public/photo/${player.login}" width="60" height="60"
-                        alt="аватарка пользователя ${player.login}" style="border-radius:50%;">
-                    <img src="/public_static/catmaid.jpg" width="60" height="60"
-                        alt="кошкогорничная" style="position: absolute; z-index: 99; left:calc(var(--bs-gutter-x) * .5); border-radius:50%;
-                        opacity: ${player.degreeUwU};">
-                </a>
-                <div class="col-sm col-xs-12">
-                    <b><a class="username" href="/public/profile/${player.login}">${player.login}</a></b>
-                </div>
-            </li>`;
-
-            return player_string;
-        }
-
         function processing_stage() {
 
             fetch('/user/get_data_for_processing/' + room_id.value, {
@@ -115,19 +57,6 @@
                     });
                 }
             );
-        }
-
-        function update_players(players) {
-            var elem = document.getElementById('players');
-            string_players = "";
-
-            for (const player of players) {
-                console.log(player);
-                string_players += getHtmlForPlayer(player);
-            }
-
-            var elem = document.getElementById('players');
-            elem.innerHTML = string_players;
         }
 
         function sendVote(event) {
@@ -224,9 +153,6 @@
             });
         }
 
-        active_tab = -1;
-
-        subscriptions = new Array();
         window.onbeforeunload = unloadHandler;
     </script>
 
@@ -276,7 +202,8 @@
                 </div>
             </nav>
 
-            <tab-content :channels="channels"  :polls = "polls" :active_tab="active_tab" :status="status"></tab-content>
+            <tab-content :channels="channels"  :polls = "polls" :active_tab = "active_tab"
+                         :status = "status" :players = "players"></tab-content>
         </div>
     </div>
     <script>
@@ -284,12 +211,20 @@
     const app = Vue.createApp({
 
         data() {
-            return {channels: [], polls: [], status: null, active_tab: null};
+            return {channels: [], polls: [], players: [], status: null, active_tab: null};
         },
         methods: {
 
+            add_message: function (stage, message) {
+                if (!window.messageIds.has(message.id)) {
+                    window.messageIds.add(message.id);
+                    stage.messages.push(message);
+                    stage.count++;
+                }
+            },
+
             update_ui: function (status) {
-                var self = this;
+                let self = this;
 
                 if (status.body === 'processing') {
                     processing_stage();
@@ -316,18 +251,22 @@
                         }
                         response.json().then(function (data) {
 
-                            let html_string;
-                            if (typeof intervalID !== 'undefined')
-                                clearInterval(intervalID);
+                            if (window.intervalID != null) {
+                                clearInterval(window.intervalID);
+                                window.intervalID = null;
+                            }
 
-                            if (status.body === "started") {
-                                var finish = data.finish_stage * 1000;
-                                intervalID = setInterval(function () {
-                                    var res = (finish - Date.now()) / 1000;
+                            if (data.status === "started") {
+
+                                let time_until_new_stage = document.getElementById("time_until_new_stage");
+
+                                let finish = data.finish_stage * 1000;
+                                window.intervalID = setInterval(function () {
+                                    let res = (finish - Date.now()) / 1000;
 
                                     if (res < 0) {
                                         time_until_new_stage.innerHTML = "Осталось 0 секунд";
-                                        clearInterval(intervalID);
+                                        clearInterval(window.intervalID);
                                         return;
                                     }
 
@@ -336,11 +275,6 @@
 
                                 current_stage.innerHTML = "Сейчас " + data.stage;
                             }
-
-                            for (const subscription of subscriptions) {
-                                subscription.unsubscribe();
-                            }
-                            subscriptions = [];
 
                             let active_tab = null;
                             let tabElement = document.querySelector('button[role="tab"].active');
@@ -365,32 +299,97 @@
                                 self.active_tab = active_tab;
                             }
 
-                            self.channels = data.channels;
                             self.polls = data.polls;
                             self.status = data.status;
 
-                            /*
-                            for (const poll of data.polls) {
-
-                                var elem = document.getElementById("candidates-poll-" + poll.poll_id);
-                                html_string = "";
-
-                                for (const candidate of poll.candidates) {
-                                    html_string += `
-                                        <input type="radio" class="btn-check" name="radio-${poll.poll_id}" id="radio-${poll.poll_id}-${candidate}" autocomplete="off">
-                                        <label class="btn btn-primary m-2" for="radio-${poll.poll_id}-${candidate}">Игрок ${candidate}</label>`;
-                                }
-                                html_string += `
-                                    <input type="radio" class="btn-check" name="radio-${poll.poll_id}" id="radio-${poll.poll_id}-no_vote" autocomplete="off" checked>
-                                    <label class="btn btn-primary m-2" for="radio-${poll.poll_id}-no_vote">Не голосовать</label>`;
-
-                                elem.innerHTML = html_string;
+                            if (data.status !== "not started" && window.player_subscription != null) {
+                                window.player_subscription.unsubscribe();
+                                window.player_subscription = null;
                             }
-                            */
-                            for (const channel of data.channels) {
 
-                                if (channel.can_read == 0)
+                            let new_subscriptions = new Map();
+                            for (const channel of data.channels) {
+                                if (window.subscriptions.has(channel.channel_id)) {
+                                    new_subscriptions.set(channel.channel_id,
+                                        window.subscriptions.get(channel.channel_id))
+
+                                    window.subscriptions.delete(channel.channel_id);
+                                }
+                            }
+
+                            for (const subscription of window.subscriptions) {
+                                let index = self.channels.findIndex(x => (x.channel_id === subscription[0]));
+                                if (index !== -1)
+                                    self.channels.splice(index, 1);
+
+                                subscription[1].unsubscribe();
+                            }
+
+                            window.subscriptions = new_subscriptions;
+
+                            for (let channel of data.channels) {
+
+                                if (window.subscriptions.has(channel.channel_id)) {
+                                    let index = self.channels.findIndex(x => (x.channel_id === channel.channel_id));
+
+                                    if (index !== -1) {
+                                        self.channels[index].can_write = channel.can_write;
+                                        self.channels[index].can_read = channel.can_read;
+                                    }
+
                                     continue;
+                                }
+
+                                self.channels.push(channel);
+                            }
+
+                            for (const index of self.channels.keys()) {
+
+                                let channel = self.channels[index];
+
+                                if (window.subscriptions.has(channel.channel_id)) {
+                                    if (channel.name === "газета") {
+                                        self.add_message(channel.stages[0], data.newspaperMessage);
+                                    }
+
+                                    if (channel.stages.length !== 0 &&
+                                        channel.stages[channel.stages.length - 1].count === 0) {
+                                        channel.stages.splice(channel.stages.length - 1, 1);
+                                    }
+
+                                    if (channel.name !== "газета")
+                                        channel.stages.push({stage_name: data.stage, count : 0, messages: []});
+
+                                    continue;
+                                }
+
+                                channel["stages"] = [];
+
+                                if (channel.can_read === 0)
+                                    continue;
+
+                                let subscription = stompClient.subscribe('/topic/messages/' + room_id.value + '/' + channel.channel_id,
+                                    function (messageOutput) {
+                                        let message_id = messageOutput.body;
+                                        fetch('/public/chat/get_message/' + message_id, {
+                                            headers: {
+                                                'Accept': 'application/json'
+                                            }
+                                        }).then(
+                                            function (response) {
+                                                if (response.status !== 200) {
+                                                    console.log("Can't load message. Status Code: " + response.status);
+                                                    return;
+                                                }
+                                                response.json().then(function (data) {
+                                                    self.add_message(channel.stages[channel.stages.length - 1], data);
+                                                });
+                                            }
+                                        );
+                                    }
+                                );
+
+                                window.subscriptions.set(channel.channel_id, subscription);
 
                                 fetch('/public/chat/get_messages/' + room_id.value + '/' + channel.channel_id, {
                                     headers: {
@@ -403,71 +402,57 @@
                                             return;
                                         }
                                         response.json().then(function (data) {
-                                            string_articles = "";
+                                            channel.stages = [];
 
                                             for (const stage of data) {
-                                                string_articles += "<span>" + stage.stage_name + "</span>";
-                                                for (const mes of stage.messages) {
-                                                    string_articles += getHtmlForArticle(mes);
+
+                                                let new_stage = {
+                                                    stage_name: stage.stage_name,
+                                                    count: stage.count,
+                                                    messages: []
+                                                };
+
+                                                for (const message of stage.messages) {
+                                                    self.add_message(new_stage, message)
                                                 }
-                                            }
 
-                                            var elem = document.getElementById('articles' + channel.channel_id);
-                                            elem.innerHTML = string_articles;
+                                                channel.stages.push(new_stage);
+                                            }
                                         });
-
-                                        var subscription = stompClient.subscribe('/topic/messages/' + room_id.value + '/' + channel.channel_id,
-                                            function (messageOutput) {
-                                                let message_id = messageOutput.body;
-                                                fetch('/public/chat/get_message/' + message_id, {
-                                                    headers: {
-                                                        'Accept': 'application/json'
-                                                    }
-                                                }).then(
-                                                    function (response) {
-                                                        if (response.status !== 200) {
-                                                            console.log("Can't load message. Status Code: " + response.status);
-                                                            return;
-                                                        }
-                                                        response.json().then(function (data) {
-                                                            var elem = document.getElementById('articles' + channel.channel_id);
-                                                            elem.innerHTML = elem.innerHTML + getHtmlForArticle(data);
-                                                        });
-                                                    });
-                                            }
-                                        );
-                                        subscriptions.push(subscription);
-                                    });
+                                    }
+                                );
                             }
 
-                            if (data.status === 'not started') {
+                            if (data.status === 'not started' && window.player_subscription == null) {
+
+                                window.player_subscription = stompClient.subscribe('/topic/players/' + room_id.value,
+                                    function (data) { self.players = JSON.parse(data.body);
+                                });
+
                                 fetch('/public/room/get_players/' + room_id.value, {
                                     headers: {
                                         'Accept': 'application/json'
                                     }
                                 }).then(
                                     function (response) {
+
                                         if (response.status !== 200) {
                                             console.log("Can't load players. Status Code: " + response.status);
                                             return;
                                         }
                                         response.json().then(function (players) {
-                                            update_players(players);
+                                            self.players = players;
                                         });
-
-                                        var subscription = stompClient.subscribe('/topic/players/' + room_id.value, function (data) {
-                                            update_players(JSON.parse(data.body));
-                                        });
-                                        subscriptions.push(subscription);
-                                    });
+                                    }
+                                );
                             }
                         });
                     });
             },
             connect: function () {
-                var socket = new SockJS('/public/stomp/chat');
+                let socket = new SockJS('/public/stomp/chat');
                 stompClient = Stomp.over(socket);
-                var self = this;
+                let self = this;
                 stompClient.connect({},
                     function (frame) {
                         self.update_ui({body: "not started"});
@@ -478,6 +463,11 @@
             }
         },
         mounted() {
+            window.subscriptions = new Map();
+            window.player_subscription = null;
+            window.channels = new Set();
+            window.intervalID = null;
+            window.messageIds = new Set();
             this.connect();
         }
     });
@@ -538,14 +528,67 @@
         `
     });
 
+    app.component("channel-comment", {
+        props: ["message"],
+        template: `
+          <article v-if = "message.username != null" class="row py-2">
+            <a class="col-auto" target="_blank" :href="'/public/profile/' + message.username" style="position:relative;">
+              <img :src="'/public/photo/' + message.username" width="60" height="60"
+                   :alt="'аватарка пользователя' + message.username">
+              <img src="/public_static/catmaid.jpg" width="60" height="60" alt="кошкогорничная"
+                   :style="'position: absolute; z-index: 99; left:calc(var(--bs-gutter-x) * .5); border-radius:50%; opacity:' + message.opacity + ';'">
+            </a>
+            <div class="col-sm col-xs-12">
+              <div>
+                <b><a class="username" target="_blank" :href="'/public/profile/' + message.username"
+                      :style="(message.username_color == null) ? '' : ('color:' + message.username_color + ';')">
+                  {{message.username + ((message.alias == null) ? "" : ("(" + message.alias + ")"))}}</a></b>
+              </div>
+              <div>{{message.text}}</div>
+            </div>
+          </article>
+          <article v-if = "message.username == null" class="row py-2">
+            <span class="col-auto">
+              <img :src="(message.alias === '???')? '/public_static/who_i_am.jpg' : ('/public/photo/' + message.alias)"
+                   width="60" height="60" :alt="'маска пользователя' + message.alias">
+            </span>
+            <div class="col-sm col-xs-12">
+              <div>
+                <b :style="(message.username_color == null)? '' : ('color:' + message.username_color + ';')">{{message.alias}}</b>
+              </div>
+              <div>{{message.text}}</div>
+            </div>
+          </article>
+        `
+    });
+
+    app.component("stage-channel", {
+        props: ["channel_id", "stage", "ind"],
+        template: `
+            <button class="btn btn-secondary" type="button" data-bs-toggle="collapse"
+                    :data-bs-target="'#collapse' + channel_id + '-' + ind"
+                    aria-expanded="true" :aria-controls="'collapse' + channel_id + '-' + ind"
+                    style="width: 100%;">
+              {{ stage.stage_name}}
+            </button>
+            <div class="collapse show" :id="'collapse' + channel_id + '-' + ind">
+              <div class = "col-12" :id="'articles' + channel_id">
+                <channel-comment v-for="message in stage.messages" :message = "message" :key="message.id"></channel-comment>
+              </div>
+            </div>
+        `
+    });
+
     app.component("tab-panel-channel", {
-        props: ["channel_id", "active_tab", "channel_name", "can_read", "can_write"],
+        props: ["channel_id", "active_tab", "channel_name", "can_read", "can_write", "stages"],
 
         template: `
           <div :class="'tab-pane fade ' + ((active_tab === channel_name) ? 'show active' : '')"
                :id="'pills-' + channel_id" role="tabpanel" :aria-labelledby="channel_id + '-tab'">
             <div class="row">
               <div v-if="can_read" class = "col-12" :id="'articles' + channel_id">
+                <stage-channel v-for = "(stage, ind) in stages" :stage="stage" :ind="ind" :channel_id="channel_id" :key="channel_id + '-' + ind">
+                </stage-channel>
               </div>
               <div v-if="can_write" class = "col-12">
                 <form :id="'form' + channel_id" onsubmit="sendMessage(event)" class="row py-2">
@@ -600,17 +643,39 @@
         `
     });
 
+    app.component("player-info", {
+        props: ["player"],
+
+        template: `
+            <li class="row py-2">
+                <a class="col-auto" :href="'/public/profile/' + player.login" style="position:relative;">
+                    <img :src="'/public/photo/' + player.login" width="60" height="60"
+                        :alt="'аватарка пользователя ' + player.login" style="border-radius:50%;">
+                    <img src="/public_static/catmaid.jpg" width="60" height="60"
+                        alt="кошкогорничная" :style="'position: absolute; z-index: 99; ' +
+                         'left:calc(var(--bs-gutter-x) * .5); border-radius:50%; opacity: ' + player.degreeUwU + ';'">
+                </a>
+                <div class="col-sm col-xs-12">
+                    <b><a class="username" :href="'/public/profile/' + player.login">{{player.login}}</a></b>
+                </div>
+            </li>
+        `
+    });
+
     app.component("tab-panel-players", {
+        props: ["players"],
+
         template: `
             <div class="tab-pane fade" id="pills-players" role="tabpanel" aria-labelledby="pills-players-tab">
                 <div class = "col-12" id="players">
+                    <player-info v-for="player in players" :player="player"></player-info>
                 </div>
             </div>
         `
     });
 
     app.component("tab-content", {
-        props: ["channels", "polls", "active_tab", "status"],
+        props: ["channels", "polls", "players", "active_tab", "status"],
 
         template: `
           <div class="tab-content" id="pills-tabContent">
@@ -619,13 +684,13 @@
                        :active_tab = "active_tab"
                        :channel_name = "channel.name"
                        :can_read = "channel.can_read"
-                       :can_write="channel.can_write">
+                       :can_write="channel.can_write" :stages="channel.stages" :key="channel.channel_id">
             </tab-panel-channel>
             <tab-panel-poll v-for = "poll in polls"
                             :poll_id = poll.poll_id
                             :candidates = poll.candidates>
             </tab-panel-poll>
-            <tab-panel-players v-if="status==='not started'"></tab-panel-players>
+            <tab-panel-players v-if="status==='not started'" :players="players"></tab-panel-players>
           </div>
         `
     });
@@ -636,3 +701,11 @@
 <footer th:replace="~{public/footer :: footer}"></footer>
 </body>
 </html>
+<script setup>
+</script>
+<script setup>
+</script>
+<script setup>
+</script>
+<script setup>
+</script>
