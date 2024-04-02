@@ -32,7 +32,9 @@ public class FUser {
     private String email;
     @ManyToOne(fetch=LAZY)
     private FRoom room;
+    private Long desired_room_id;
     private long player_index;
+    private String sessionId;
 
 
     @OneToMany(mappedBy="user")
@@ -48,6 +50,22 @@ public class FUser {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    public Long getDesired_room_id() {
+        return desired_room_id;
+    }
+
+    public void setDesired_room_id(Long desired_room_id) {
+        this.desired_room_id = desired_room_id;
     }
 
     public Boolean  getAdmin() {

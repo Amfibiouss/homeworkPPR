@@ -100,36 +100,13 @@ public class MessageController {
         //model.addAttribute("lobby_id", RCMDAOService.get_channel_id(room_id, "лобби"));
         model.addAttribute("room_id", room_id);
 
-        try {
-            RCMDAOService.add_player(securityService.getUsername(), room_id);
-        } catch(ServiceException e) {
-            if (Objects.equals(e.getMessage(), "the player have joined to another room yet")) {
-                response.setHeader("Location", "/public/rooms?error="
-                        + URLEncoder.encode("Вы еще не вышли из другой комнаты.", StandardCharsets.UTF_8));
-                response.setStatus(302);
-            }
-            if (Objects.equals(e.getMessage(),"the game has already started")) {
-                response.setHeader("Location", "/public/rooms?error="
-                        + URLEncoder.encode("Игра уже началась.", StandardCharsets.UTF_8));
-                response.setStatus(302);
-            }
-            if (Objects.equals(e.getMessage(),"there are no places")) {
-                response.setHeader("Location", "/public/rooms?error="
-                        + URLEncoder.encode("Все места в комнате заняты.", StandardCharsets.UTF_8));
-                response.setStatus(302);
-            }
-        }
+        RCMDAOService.almost_add_player(securityService.getUsername(), room_id);
 
         if (RCMDAOService.isHost(room_id, securityService.getUsername())) {
-            model.addAttribute("your_code", RCMDAOService.get_code(room_id));
             model.addAttribute("host", true);
-
         } else {
-            model.addAttribute("your_code", "");
             model.addAttribute("host", false);
         }
-
-        template.convertAndSend("/topic/players/" + room_id, RCMDAOService.get_players(room_id));
 
         return "public/chat_page";
     }

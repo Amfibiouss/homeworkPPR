@@ -34,7 +34,7 @@ public class RoomManageController {
             response.setStatus(302);
         }
 
-        RCMDAOService.remove_player(securityService.getUsername(), true);
+        RCMDAOService.remove_player(securityService.getUsername());
 
         template.convertAndSend("/topic/players/" + room_id,  RCMDAOService.get_players(room_id));
 

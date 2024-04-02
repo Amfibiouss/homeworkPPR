@@ -13,6 +13,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.service.spi.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
@@ -20,6 +21,7 @@ import java.util.*;
 
 import static java.util.Collections.shuffle;
 import static org.springframework.transaction.annotation.Propagation.MANDATORY;
+import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
 
 @Component
 public class RoomChannelMessageDaoService {
@@ -249,9 +251,9 @@ public class RoomChannelMessageDaoService {
         if (user.getRoom() != null)
             throw new ServiceException("the creator has joined to another room");
 
-        user.setPlayer_index(-1);
+        //user.setPlayer_index(-1);
         new_room.setCreator(user);
-        new_room.addPlayer(user);
+        //new_room.addPlayer(user);
 
         FChannel channel_lobby = new FChannel();
         channel_lobby.setName("лобби");
@@ -365,8 +367,15 @@ public class RoomChannelMessageDaoService {
         return false;
     }
 
-    @Transactional
-    public void add_player(String username, long room_id) {
+    @Transactional(isolation = Isolation.READ_COMMITTED, propagation = REQUIRES_NEW)
+    public void almost_add_player(String username, long room_id) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser player = session.bySimpleNaturalId(FUser.class).load(username);
+        player.setDesired_room_id(room_id);
+    }
+
+    @Transactional(isolation = Isolation.REPEATABLE_READ, propagation = REQUIRES_NEW)
+    public void add_player(String username, String sessionId) {
         Session session = sessionFactory.getCurrentSession();
         FUser player = session.bySimpleNaturalId(FUser.class).load(username);
 
@@ -374,7 +383,11 @@ public class RoomChannelMessageDaoService {
             throw new ServiceException("the player does not exist");
         }
 
-        FRoom room = session.get(FRoom.class, room_id);
+        FRoom room = session.get(FRoom.class, player.getDesired_room_id());
+
+        if (room == null) {
+            throw new ServiceException("the room does not exist");
+        }
 
         if (player.getRoom() != null) {
             if (!player.getRoom().equals(room)) {
@@ -396,21 +409,25 @@ public class RoomChannelMessageDaoService {
             throw new ServiceException("there are no places");
         }
 
+        player.setSessionId(sessionId);
+        player.setDesired_room_id(null);
         player.setPlayer_index(-1);
         room.addPlayer(player);
     }
 
     @Transactional
-    public long remove_player(String username, boolean force) {
+    public long remove_offline_player(String username, String sessionId) {
         Session session = sessionFactory.getCurrentSession();
         FUser player = session.bySimpleNaturalId(FUser.class).load(username);
-        FRoom room = player.getRoom();
 
-        if (room == null)
+        if (!Objects.equals(sessionId, player.getSessionId()))
             return -1;
 
-        if (force || Objects.equals(room.getStatus(), "not started")) {
+        FRoom room = player.getRoom();
+
+        if (Objects.equals(room.getStatus(), "not started")) {
             room.removePlayer(player);
+            player.setSessionId(null);
 
             if (room.getCreator().equals(player)) {
                 room.setStatus("close");
@@ -420,6 +437,23 @@ public class RoomChannelMessageDaoService {
         }
 
         return -1;
+    }
+
+    @Transactional
+    public void remove_player(String username) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser player = session.bySimpleNaturalId(FUser.class).load(username);
+        FRoom room = player.getRoom();
+
+        if (room == null)
+            return;
+
+        room.removePlayer(player);
+        player.setSessionId(null);
+
+        if (room.getCreator().equals(player)) {
+            room.setStatus("close");
+        }
     }
 
     @Transactional
@@ -839,11 +873,10 @@ public class RoomChannelMessageDaoService {
         player.setPlayer_index(index);
     }
 
-    @Transactional
-    public Object get_code(long room_id) {
+    @Transactional(isolation = Isolation.READ_COMMITTED, propagation = REQUIRES_NEW)
+    public Long get_room_id(String username) {
         Session session = sessionFactory.getCurrentSession();
-        FRoom room = session.get(FRoom.class, room_id);
-
-        return room.getCode();
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+        return user.getRoom().getId();
     }
 }

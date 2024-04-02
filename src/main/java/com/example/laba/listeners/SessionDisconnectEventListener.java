@@ -22,9 +22,9 @@ public class SessionDisconnectEventListener implements ApplicationListener<Sessi
         if (event.getUser() != null) {
             System.out.println("disconnect " +  event.getUser().getName());
 
-            long room_id = RCMDAOService.remove_player(event.getUser().getName(), false);
+            long room_id = RCMDAOService.remove_offline_player(event.getUser().getName(), event.getSessionId());
 
-            if (room_id > 0) {
+            if (room_id != -1) {
                 template.convertAndSend("/topic/players/" + room_id,  RCMDAOService.get_players(room_id));
             }
         }

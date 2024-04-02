@@ -352,7 +352,7 @@
                                         self.add_message(channel.stages[0], data.newspaperMessage);
                                     }
 
-                                    if (channel.stages.length !== 0 &&
+                                    if (channel.stages.length !== 0 && channel.name !== "газета" &&
                                         channel.stages[channel.stages.length - 1].count === 0) {
                                         channel.stages.splice(channel.stages.length - 1, 1);
                                     }
