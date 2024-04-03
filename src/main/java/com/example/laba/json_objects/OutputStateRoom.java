@@ -2,6 +2,7 @@ package com.example.laba.json_objects;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 
 public class OutputStateRoom {
 

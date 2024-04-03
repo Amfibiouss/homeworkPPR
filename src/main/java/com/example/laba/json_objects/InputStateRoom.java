@@ -1,6 +1,7 @@
 package com.example.laba.json_objects;
 
 import java.util.List;
+import java.util.Map;
 
 public class InputStateRoom {
 
@@ -14,6 +15,16 @@ public class InputStateRoom {
 
     public long duration;
     public String stage;
+
+    public Map<String, String> names;
+
+    public Map<String, String> getNames() {
+        return names;
+    }
+
+    public void setNames(Map<String, String> names) {
+        this.names = names;
+    }
 
     public List<InputStateChannel> getChannels() {
         return channels;

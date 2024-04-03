@@ -2,6 +2,7 @@ package com.example.laba.json_objects;
 
 public class OutputStateChannel {
     public long channel_id;
+
     public String name;
     boolean can_write;
     boolean can_read;

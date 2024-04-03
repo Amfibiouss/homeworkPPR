@@ -49,7 +49,7 @@ function get_candidates_from_mask(mask) {
 
     for (let i = 0; i < 30; i++) {
         if (mask & (1 << i)) {
-            candidates['Игрок ' + i] = i;
+            candidates[window.names[i]] = i;
         }
     }
 
@@ -57,13 +57,47 @@ function get_candidates_from_mask(mask) {
 }
 
 function initialize_room(data) {
-
     //console.log(data);
     player_count = Number(data);
-
     console.log(player_count);
-
     player_count = 12
+
+    let firstName = [["соленый", "соленая"], ["жареный", "жареная"], ["варёный", "вареный"],
+        ["фиолетовый", "фиолетовая"], ["восхитительный", "восхитительная"], ["ароматный", "ароматная"],
+        ["нереальный", "нереальная"], ["черно-белый", "черно-белая"], ["пахучий", "пахучая"], ["злой", "злая"],
+        ["трусливый", "трусливая"], ["гениальный", "гениальная"], ["сладкий", "сладкая"],
+        ["гнилой", "гнилая"], ["смешной", "смешная"], ["мертвый", "мертвая"], ["жирный", "жирная"],
+        ["бессмертный", "бессмертная"], ["сумасшедший", "сумасшедшая"], ["крутой", "крутая"], ["отважный", "отважная"],
+        ["странный", "странная"], ["лукавый", "лукавая"], ["пучеглазый", "пучеглазая"], ["сочный", "сочная"],
+        ["страшный", "страшная"], ["жуткий", "жуткая"], ["падший", "падшая"], ["тёмный", "темная"],
+        ["подозрительный", "подозрительная"], ["волшебный", "волшебная"], ["железный", "железная"],
+        ["кровожадный", "кровожадная"], ["фанатичный", "фанатичная"]];
+    let maleSecondName = ["суп", "торт", "пирожочек", "салат", "банан", "ИИ", "клоун", "начальник", "бобер",
+        "псих", "гений", "чел", "некто", "фрукт", "овощ", "хитрец", "трус", "кукловод", "друг", "незнакомец",
+        "[ДАННЫЕ УДАЛЕНЫ]", "пони", "бомж", "король", "мудрец", "доктор", "учёный", "единорог", "маг", "качок"];
+    let femaleSecondName = ["котлета", "колбаса", "булочка", "фея", "волшебница", "начальница",
+        "папайя", "королева", "медсестра", "горничная", "подруга", "незнакомка", "бомжиха", "[ДАННЫЕ УДАЛЕНЫ]",
+        "лошадка", "принцесса", "злодейка", "корова", "трусиха", "мышь", "птица", "рыба", "энтропия", "тыква"];
+
+    window.names = {};
+    for (let i = 0; i < player_count; i++) {
+        let name;
+
+        do {
+            if (Math.floor(Math.random() * 100) % 3 <= 1) {
+                let ind1 = Math.floor(Math.random() * firstName.length);
+                let ind2 = Math.floor(Math.random() * maleSecondName.length);
+                name = firstName[ind1][0] + ' ' + maleSecondName[ind2];
+            } else {
+                let ind1 = Math.floor(Math.random() * firstName.length);
+                let ind2 = Math.floor(Math.random() * femaleSecondName.length);
+                name = firstName[ind1][1] + ' ' + femaleSecondName[ind2];
+            }
+
+        } while (Object.values(window.names).indexOf(name) !== -1);
+
+        window.names[i] = name;
+    }
 
     roles = new Array(30);
     roles.fill("мирный", 0, player_count);
@@ -73,7 +107,7 @@ function initialize_room(data) {
 
     let messages = new Array(30).fill("");
     for (let i = 0; i < 12; i++) {
-        messages[0] += "Роль игрока " + i + " " + roles[i] + ".";
+        messages[0] += "Роль игрока " + names[i] + " (" + i + ") " + roles[i] + ". \\n";
     }
 
     dead = new Array(30).fill(0);
@@ -110,7 +144,8 @@ function initialize_room(data) {
         "messages" : messages,
         "duration" : 15,
         "stage" : "день " + day_count,
-        "status" : "started"};
+        "status" : "started",
+        "names": names};
 }
 
 function update_state(data) {

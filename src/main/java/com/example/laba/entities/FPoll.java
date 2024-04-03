@@ -24,6 +24,7 @@ public class FPoll {
     private Long mask_voters;
     private Long mask_observers;
     private Long mask_candidates;
+    @Column(columnDefinition="TEXT")
     private String candidates;
 
     @Override

@@ -17,6 +17,7 @@
             border-radius: 50%;
         }
         article {
+            white-space: pre-line;
             overflow-wrap: break-word;
         }
         .username {
@@ -445,6 +446,7 @@
 
             change_player: function (event) {
                 event.preventDefault();
+                let self = this;
 
                 fetch('/user/change_player/' + room_id.value + "?index=" + player_index.value, {
                     method: 'post',
@@ -457,14 +459,31 @@
                         return;
                     }
 
-                    this.update_ui({body:"started"});
+                    self.channels = [];
+                    self.poll = [];
+                    self.active_tab = -1;
+                    self.status = null;
+                    self.players = [];
+
+                    for (const subscription of window.subscriptions.values()) {
+                        subscription.unsubscribe();
+                    }
+                    if (window.player_subscription != null)
+                        window.player_subscription.unsubscribe();
+
+                    window.player_subscription = null;
+                    window.subscriptions = new Map();
+                    window.messageIds = new Set();
+                    clearInterval(window.intervalID);
+                    window.intervalID = null;
+
+                    self.update_ui({body:"started"});
                 });
             }
         },
         mounted() {
             window.subscriptions = new Map();
             window.player_subscription = null;
-            window.channels = new Set();
             window.intervalID = null;
             window.messageIds = new Set();
             this.connect();
@@ -548,7 +567,8 @@
           </article>
           <article v-if = "message.username == null" class="row py-2">
             <span class="col-auto">
-              <img :src="(message.alias === '???')? '/public_static/who_i_am.jpg' : ('/public/photo/' + message.alias)"
+              <img :src="(message.alias === '???')? '/public_static/who_i_am.jpg' :
+              ('/public/photo/' + (message.alias.charCodeAt(0) + 37 * message.alias.length) % 27)"
                    width="60" height="60" :alt="'маска пользователя' + message.alias">
             </span>
             <div class="col-sm col-xs-12">

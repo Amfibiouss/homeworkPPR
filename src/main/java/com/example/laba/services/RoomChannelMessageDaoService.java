@@ -314,25 +314,28 @@ public class RoomChannelMessageDaoService {
         new_message.setText(text);
 
         Session session = sessionFactory.getCurrentSession();
-        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
-        FChannel channel = session.get(FChannel.class, channel_id);
 
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
         if (user == null)
             throw new ServiceException("the user_id don't exist.");
 
+        FChannel channel = session.get(FChannel.class, channel_id);
         if (channel == null)
             throw new ServiceException("the channel_id don't exist.");
+
+        FCharacter character = user.getCharacter();
+        if (character == null)
+            throw new ServiceException("the user is not in room.");
 
         new_message.setDate(OffsetDateTime.now());
         new_message.setUser(user);
         new_message.setTarget(target);
 
-        if (!Objects.equals(channel.getRoom().getStatus(), "not started")) {
-
-            if ((channel.getAnon_write_mask() & (1L << user.getCharacter().getPindex())) != 0) {
+        if (character.getName() != null) {
+            if ((channel.getAnon_write_mask() & (1L << character.getPindex())) != 0) {
                 new_message.setAlias("???");
             } else {
-                new_message.setAlias(String.valueOf(user.getCharacter().getPindex()));
+                new_message.setAlias(character.getName());
             }
         } else {
             new_message.setAlias(user.getLogin());
@@ -587,7 +590,16 @@ public class RoomChannelMessageDaoService {
             player.setCharacter(character);
         }
 
-        return players_count;
+        while (cnt < 20) {
+            FCharacter character = new FCharacter();
+            character.setName(String.valueOf(++cnt));
+            character.setPindex(cnt);
+            room.addCharacter(character);
+            session.persist(character);
+        }
+
+        return 20;
+        //return players_count;
     }
 
     @Transactional
@@ -791,6 +803,17 @@ public class RoomChannelMessageDaoService {
             session.persist(poll);
 
             room.addPoll(poll);
+        }
+
+        Map <String, String> names = inputStateRoom.getNames();
+        if (names != null) {
+            for (FCharacter character : room.getCharacters()) {
+                String pindex = String.valueOf(character.getPindex());
+
+                if (names.containsKey(pindex)) {
+                    character.setName(names.get(pindex));
+                }
+            }
         }
 
         long cnt = 0;
