@@ -34,13 +34,18 @@ public class FRoom {
     private Set<FStage> stages = new HashSet<>();
 
     @OneToMany(mappedBy="room")
-    private List<FUser> players = new ArrayList<>();
+    private Set<FCharacter> characters = new HashSet<>();
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof FRoom fRoom)) return false;
         return Objects.equals(id, fRoom.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 
     public Set<FStage> getStages() {
@@ -54,11 +59,6 @@ public class FRoom {
     public void addStage(FStage stage) {
         stage.setRoom(this);
         stages.add(stage);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
     }
 
     public Long getId() {
@@ -104,22 +104,6 @@ public class FRoom {
     public void addChannel(FChannel channel) {
         channel.setRoom(this);
         channels.add(channel);
-    }
-    public List<FUser> getPlayers() {
-        return players;
-    }
-
-    public void setPlayers(List<FUser> players) {
-        this.players = players;
-    }
-
-    public void addPlayer(FUser player) {
-        this.players.add(player);
-        player.setRoom(this);
-    }
-    public void removePlayer(FUser player) {
-        this.players.remove(player);
-        player.setRoom(null);
     }
 
     public String getStatus() {
@@ -189,5 +173,18 @@ public class FRoom {
     public void addPoll(FPoll poll) {
         poll.setRoom(this);
         polls.add(poll);
+    }
+
+    public Set<FCharacter> getCharacters() {
+        return characters;
+    }
+
+    public void setCharacters(Set<FCharacter> characters) {
+        this.characters = characters;
+    }
+
+    public void addCharacter(FCharacter character) {
+        character.setRoom(this);
+        characters.add(character);
     }
 }

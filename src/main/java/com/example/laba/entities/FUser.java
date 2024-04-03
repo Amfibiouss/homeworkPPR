@@ -31,11 +31,9 @@ public class FUser {
     private OffsetDateTime date_UwU;
     private String email;
     @ManyToOne(fetch=LAZY)
-    private FRoom room;
+    FCharacter character;
     private Long desired_room_id;
-    private long player_index;
     private String sessionId;
-
 
     @OneToMany(mappedBy="user")
     private Set<FPunishment> punishments = new HashSet<>();
@@ -154,20 +152,12 @@ public class FUser {
         this.photo_eTag = photo_eTag;
     }
 
-    public FRoom getRoom() {
-        return room;
+    public FCharacter getCharacter() {
+        return character;
     }
 
-    public void setRoom(FRoom room) {
-        this.room = room;
-    }
-
-    public long getPlayer_index() {
-        return player_index;
-    }
-
-    public void setPlayer_index(long player_index) {
-        this.player_index = player_index;
+    public void setCharacter(FCharacter character) {
+        this.character = character;
     }
 
     public FUser() {

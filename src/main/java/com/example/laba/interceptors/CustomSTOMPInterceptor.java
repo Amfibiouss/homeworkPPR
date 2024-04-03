@@ -25,8 +25,10 @@ public class CustomSTOMPInterceptor implements ChannelInterceptor {
         if (accessor.getUser() == null)
             return null;
 
-        if (StompCommand.CONNECTED.equals(accessor.getCommand())) {
+        if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+            System.out.println("!!!");
             RCMDAOService.add_player(accessor.getUser().getName(), accessor.getSessionId());
+            System.out.println("???");
         }
 
         return message;

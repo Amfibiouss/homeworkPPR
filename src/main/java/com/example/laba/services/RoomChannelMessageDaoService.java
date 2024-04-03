@@ -20,8 +20,7 @@ import java.time.OffsetDateTime;
 import java.util.*;
 
 import static java.util.Collections.shuffle;
-import static org.springframework.transaction.annotation.Propagation.MANDATORY;
-import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
+import static org.springframework.transaction.annotation.Propagation.*;
 
 @Component
 public class RoomChannelMessageDaoService {
@@ -121,6 +120,7 @@ public class RoomChannelMessageDaoService {
         Session session = sessionFactory.getCurrentSession();
         FChannel channel = session.get(FChannel.class, channel_id);
         FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+        FCharacter character = user.getCharacter();
 
         if (channel == null)
             throw new ServiceException("the channel_id don't exist.");
@@ -133,17 +133,17 @@ public class RoomChannelMessageDaoService {
 
         boolean XRayRead = false;
         boolean AnonRead = false;
-        if (user.getPlayer_index() == -1 || (channel.getRead_real_username_mask() & (1L << user.getPlayer_index())) != 0) {
+        if (character.getPindex() == -1 || (channel.getRead_real_username_mask() & (1L << character.getPindex())) != 0) {
             XRayRead = true;
         } else {
-            if ((channel.getAnon_read_mask() & (1L << user.getPlayer_index())) != 0) {
+            if ((channel.getAnon_read_mask() & (1L << character.getPindex())) != 0) {
                 AnonRead = true;
             }
         }
 
         List<String> stages = new ArrayList<>();
 
-        FStage last_stage = null;
+        FStage last_stage;
 
         if (!Objects.equals(channel.getName(), "газета")) {
 
@@ -174,7 +174,7 @@ public class RoomChannelMessageDaoService {
                                 " and (m.target=-1 or m.target=:target)", FMessage.class)
                         .setParameter("channel", channel)
                         .setParameter("stage", last_stage)
-                        .setParameter("target", user.getPlayer_index())
+                        .setParameter("target", character.getPindex())
                         .getResultList();
 
         List <String> result_messages = new ArrayList<>();
@@ -193,25 +193,26 @@ public class RoomChannelMessageDaoService {
         Session session = sessionFactory.getCurrentSession();
         FMessage message = session.get(FMessage.class, message_id);
         FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+        FCharacter character = user.getCharacter();
 
         if (message == null)
             throw new ServiceException("the message_id don't exist.");
 
         FChannel channel = message.getChannel();
 
-        if (!channel.getRoom().equals(user.getRoom())) {
+        if (!channel.getRoom().equals(character.getRoom())) {
             throw new ServiceException("user are not unauthorized to read the data.");
         }
 
-        if (user.getPlayer_index() != -1 && (channel.getRead_mask() & (1L << user.getPlayer_index())) == 0) {
+        if (character.getPindex() != -1 && (channel.getRead_mask() & (1L << character.getPindex())) == 0) {
             throw new ServiceException("user are not unauthorized to read the data.");
         }
 
-        if (user.getPlayer_index() == -1
-                || (channel.getRead_real_username_mask() & (1L << user.getPlayer_index())) != 0)
+        if (character.getPindex() == -1
+                || (channel.getRead_real_username_mask() & (1L << character.getPindex())) != 0)
             return message.getJsonXRayString();
 
-        if ((channel.getAnon_read_mask() & (1L << user.getPlayer_index())) != 0)
+        if ((channel.getAnon_read_mask() & (1L << character.getPindex())) != 0)
             return message.getJsonAnonString();
 
         return message.getJsonString();
@@ -248,12 +249,20 @@ public class RoomChannelMessageDaoService {
         if (user == null)
             throw new ServiceException("the user_id don't exist.");
 
-        if (user.getRoom() != null)
+        if (user.getCharacter() != null)
             throw new ServiceException("the creator has joined to another room");
 
-        //user.setPlayer_index(-1);
+        long rooms_cnt = session
+                .createQuery("select count(*) from FRoom r where r.creator=:user and r.status != 'closed'", Long.class)
+                .setParameter("user", user)
+                .getSingleResult();
+
+        if (rooms_cnt != 0) {
+            throw new ServiceException("the another user's room has not been finished yet");
+        }
+
         new_room.setCreator(user);
-        //new_room.addPlayer(user);
+        session.persist(new_room);
 
         FChannel channel_lobby = new FChannel();
         channel_lobby.setName("лобби");
@@ -263,6 +272,14 @@ public class RoomChannelMessageDaoService {
         channel_lobby.setAnon_write_mask(0L);
         channel_lobby.setAnon_read_mask(0L);
         session.persist(channel_lobby);
+        new_room.addChannel(channel_lobby);
+
+        FMessage message = new FMessage();
+        message.setDate(OffsetDateTime.now());
+        message.setUser(user);
+        message.setText(room.help);
+        session.persist(message);
+        channel_lobby.addMessage(message);
 
         FChannel channel_newspaper = new FChannel();
         channel_newspaper.setName("газета");
@@ -272,16 +289,6 @@ public class RoomChannelMessageDaoService {
         channel_newspaper.setAnon_write_mask(0L);
         channel_newspaper.setAnon_read_mask(0L);
         session.persist(channel_newspaper);
-
-        FMessage message = new FMessage();
-        message.setDate(OffsetDateTime.now());
-        message.setUser(user);
-        message.setText(room.help);
-        session.persist(message);
-        channel_lobby.addMessage(message);
-
-        session.persist(new_room);
-        new_room.addChannel(channel_lobby);
         new_room.addChannel(channel_newspaper);
 
         FStage stage = new FStage();
@@ -289,6 +296,12 @@ public class RoomChannelMessageDaoService {
         stage.setDate(OffsetDateTime.now());
         session.persist(stage);
         new_room.addStage(stage);
+
+        FCharacter character = new FCharacter();
+        character.setPindex(-1L);
+        character.setName(null);
+        new_room.addCharacter(character);
+        session.persist(character);
 
         session.flush();
         session.refresh(new_room);
@@ -316,10 +329,10 @@ public class RoomChannelMessageDaoService {
 
         if (!Objects.equals(channel.getRoom().getStatus(), "not started")) {
 
-            if ((channel.getAnon_write_mask() & (1L << user.getPlayer_index())) != 0) {
+            if ((channel.getAnon_write_mask() & (1L << user.getCharacter().getPindex())) != 0) {
                 new_message.setAlias("???");
             } else {
-                new_message.setAlias(String.valueOf(user.getPlayer_index()));
+                new_message.setAlias(String.valueOf(user.getCharacter().getPindex()));
             }
         } else {
             new_message.setAlias(user.getLogin());
@@ -360,11 +373,7 @@ public class RoomChannelMessageDaoService {
                 .setParameter("date", OffsetDateTime.now().minusSeconds(5))
                 .getResultList();
 
-        if (messages.size() >= 5) {
-            return true;
-        }
-
-        return false;
+        return messages.size() >= 5;
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = REQUIRES_NEW)
@@ -389,8 +398,8 @@ public class RoomChannelMessageDaoService {
             throw new ServiceException("the room does not exist");
         }
 
-        if (player.getRoom() != null) {
-            if (!player.getRoom().equals(room)) {
+        if (player.getCharacter() != null) {
+            if (!player.getCharacter().getRoom().equals(room)) {
                 throw new ServiceException("the player have joined to another room yet");
             } else {
                 return;
@@ -401,36 +410,39 @@ public class RoomChannelMessageDaoService {
             throw new ServiceException("the game has already started");
         }
 
-        long cnt = (long) session
-                .createQuery("select count(*) from FUser u where u.room = :room")
+        long cnt = session
+                .createQuery("select count(*) from FUser u where u.character.room = :room", Long.class)
                 .setParameter("room", room).getSingleResult();
 
         if (cnt >= room.getMax_players()) {
             throw new ServiceException("there are no places");
         }
 
+        FCharacter character = room.getCharacters().iterator().next();
+
         player.setSessionId(sessionId);
         player.setDesired_room_id(null);
-        player.setPlayer_index(-1);
-        room.addPlayer(player);
+        player.setCharacter(character);
     }
 
     @Transactional
     public long remove_offline_player(String username, String sessionId) {
         Session session = sessionFactory.getCurrentSession();
         FUser player = session.bySimpleNaturalId(FUser.class).load(username);
+        FCharacter character = player.getCharacter();
 
-        if (!Objects.equals(sessionId, player.getSessionId()))
+        if (character == null || !Objects.equals(sessionId, player.getSessionId()))
             return -1;
 
-        FRoom room = player.getRoom();
+        FRoom room = character.getRoom();
 
         if (Objects.equals(room.getStatus(), "not started")) {
-            room.removePlayer(player);
+
             player.setSessionId(null);
+            player.setCharacter(null);
 
             if (room.getCreator().equals(player)) {
-                room.setStatus("close");
+                room.setStatus("closed");
             }
 
             return room.getId();
@@ -443,24 +455,27 @@ public class RoomChannelMessageDaoService {
     public void remove_player(String username) {
         Session session = sessionFactory.getCurrentSession();
         FUser player = session.bySimpleNaturalId(FUser.class).load(username);
-        FRoom room = player.getRoom();
 
-        if (room == null)
+        if (player.getCharacter() == null)
             return;
 
-        room.removePlayer(player);
+        FRoom room = player.getCharacter().getRoom();
+        player.setCharacter(null);
         player.setSessionId(null);
 
         if (room.getCreator().equals(player)) {
-            room.setStatus("close");
+            room.setStatus("closed");
         }
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED, propagation = REQUIRES_NEW, readOnly = true)
     public List<TmplUser> get_players(long room_id) {
         Session session = sessionFactory.getCurrentSession();
         FRoom room = session.get(FRoom.class, room_id);
-        List<FUser> players = room.getPlayers();
+        List<FUser> players = session.createSelectionQuery(
+                "from FUser u where u.character.room=:room", FUser.class)
+                .setParameter("room", room).getResultList();
+
         List <TmplUser> result = new ArrayList<>();
 
         for (FUser player : players) {
@@ -475,14 +490,14 @@ public class RoomChannelMessageDaoService {
         Session session = sessionFactory.getCurrentSession();
         FUser user = session.bySimpleNaturalId(FUser.class).load(username);
 
-        if (user.getRoom() == null)
+        if (user.getCharacter() == null)
             return false;
 
-        if (!readonly && user.getRoom().getStatus().equals("close")) {
+        if (!readonly && user.getCharacter().getRoom().getStatus().equals("closed")) {
             return false;
         }
 
-        return user.getRoom().getId() == room_id;
+        return user.getCharacter().getRoom().getId() == room_id;
     }
 
     @Transactional
@@ -542,7 +557,11 @@ public class RoomChannelMessageDaoService {
         Session session = sessionFactory.getCurrentSession();
         FRoom room = session.get(FRoom.class, room_id);
 
-        long players_count = room.getPlayers().size();
+        List<FUser> players = session.createSelectionQuery(
+                        "from FUser u where u.character.room=:room", FUser.class)
+                .setParameter("room", room).getResultList();
+
+        long players_count = players.size();
 
         ArrayList <Long> permutation = new ArrayList<>();
         for (long i = 0; i < players_count; i++)
@@ -551,18 +570,21 @@ public class RoomChannelMessageDaoService {
         permutation.set(permutation.indexOf(0L), permutation.getFirst());
         permutation.set(0, 0L);
 
-        for (FUser player : room.getPlayers()) {
-            if (player.equals(room.getCreator())) {
-                player.setPlayer_index(0);
-            }
-        }
+        long cnt = 0;
+        for (FUser player : players) {
+            FCharacter character = new FCharacter();
 
-        int index = 0;
-        for (FUser player : room.getPlayers()) {
             if (player.equals(room.getCreator())) {
-                continue;
+                character.setName(String.valueOf(0));
+                character.setPindex(0L);
+            } else {
+                character.setName(String.valueOf(++cnt));
+                character.setPindex(permutation.get((int)cnt));
             }
-            player.setPlayer_index(permutation.get(++index));
+
+            room.addCharacter(character);
+            session.persist(character);
+            player.setCharacter(character);
         }
 
         return players_count;
@@ -572,7 +594,9 @@ public class RoomChannelMessageDaoService {
     public OutputStateRoom get_state_for_player(long room_id, String username) {
         Session session = sessionFactory.getCurrentSession();
         FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+        FCharacter character = user.getCharacter();
         FRoom room = session.get(FRoom.class, room_id);
+
         OutputStateRoom outputStateRoom = new OutputStateRoom();
         outputStateRoom.setStage(session.createSelectionQuery(
                         "from FStage s where s.room=:room order by s.date desc limit 1", FStage.class)
@@ -588,12 +612,12 @@ public class RoomChannelMessageDaoService {
             outputChannel.setChannel_id(channel.getId());
             outputChannel.setName(channel.getName());
 
-            if (user.getPlayer_index() == -1) {
+            if (character.getPindex() == -1) {
                 outputChannel.setCan_read(channel.getRead_mask()  != 0);
                 outputChannel.setCan_write(channel.getWrite_mask() != 0);
             } else {
-                outputChannel.setCan_read((channel.getRead_mask() & (1L << user.getPlayer_index())) != 0);
-                outputChannel.setCan_write((channel.getWrite_mask() & (1L << user.getPlayer_index())) != 0);
+                outputChannel.setCan_read((channel.getRead_mask() & (1L << character.getPindex())) != 0);
+                outputChannel.setCan_write((channel.getWrite_mask() & (1L << character.getPindex())) != 0);
             }
 
             if (outputChannel.getCan_read() || outputChannel.getCan_write())
@@ -604,14 +628,14 @@ public class RoomChannelMessageDaoService {
         List<OutputStatePoll> outputStatePolls = new ArrayList<>();
         for (FPoll poll : room.getPolls()) {
 
-            if ((poll.getMask_observers() & (1L << user.getPlayer_index())) == 0)
+            if ((poll.getMask_observers() & (1L << character.getPindex())) == 0)
                 continue;
 
             OutputStatePoll outputPoll = new OutputStatePoll();
 
             outputPoll.setPoll_id(poll.getId());
             outputPoll.setName(poll.getName());
-            outputPoll.setCan_vote((poll.getMask_voters() & (1L << user.getPlayer_index())) != 0);
+            outputPoll.setCan_vote((poll.getMask_voters() & (1L << character.getPindex())) != 0);
 
 
             try {
@@ -627,7 +651,7 @@ public class RoomChannelMessageDaoService {
         FMessage message = session.createSelectionQuery(
                 "from FMessage m where m.channel=:channel and m.target=:pindex order by m.date desc limit 1", FMessage.class)
                 .setParameter("channel", get_channel(room, "газета"))
-                .setParameter("pindex", user.getPlayer_index()).getSingleResultOrNull();
+                .setParameter("pindex", character.getPindex()).getSingleResultOrNull();
 
         if (message != null) {
             try {
@@ -824,7 +848,7 @@ public class RoomChannelMessageDaoService {
             return false;
         }
 
-        int index = (int) player.getPlayer_index();
+        long index = player.getCharacter().getPindex();
 
         if ((poll.getMask_voters() & (1L << index)) == 0) {
             return false;
@@ -833,12 +857,12 @@ public class RoomChannelMessageDaoService {
         long[] poll_table = poll.getPoll_table();
         long[] reverse_poll_table = poll.getReverse_poll_table();
 
-        if (reverse_poll_table[index] != 0) {
+        if (reverse_poll_table[(int)index] != 0) {
             return false;
         }
 
         poll_table[(int) candidate] |= (1L << index);
-        reverse_poll_table[index] |= (1L << candidate);
+        reverse_poll_table[(int)index] |= (1L << candidate);
 
         poll.setPoll_table(poll_table);
         poll.setReverse_poll_table(reverse_poll_table);
@@ -870,13 +894,21 @@ public class RoomChannelMessageDaoService {
         Session session = sessionFactory.getCurrentSession();
         FUser player = session.bySimpleNaturalId(FUser.class).load(username);
 
-        player.setPlayer_index(index);
+        FCharacter character = session.createSelectionQuery(
+                "from FCharacter c where c.room = :room and c.pindex = :index", FCharacter.class)
+                .setParameter("room", player.getCharacter().getRoom())
+                .setParameter("index", index).getSingleResultOrNull();
+
+        if (character == null)
+            return;
+
+        player.setCharacter(character);
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = REQUIRES_NEW)
     public Long get_room_id(String username) {
         Session session = sessionFactory.getCurrentSession();
         FUser user = session.bySimpleNaturalId(FUser.class).load(username);
-        return user.getRoom().getId();
+        return user.getCharacter().getRoom().getId();
     }
 }

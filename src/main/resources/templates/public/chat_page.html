@@ -51,7 +51,6 @@
                         }).then( (response) => {
                             if (response.status !== 200) {
                                 console.log("Can't send state of the current stage. Status Code: " + response.status);
-                                return;
                             }
                         });
                     });
@@ -135,24 +134,6 @@
             });
         }
 
-        function change_player(event) {
-            event.preventDefault();
-
-            fetch('/user/change_player/' + room_id.value + "?index=" + player_index.value, {
-                method: 'post',
-                headers: {
-                    "X-CSRF-TOKEN" : _csrf.value,
-                }
-            }).then( (response) => {
-                if (response.status !== 200) {
-                    console.log("Can't start room. Status Code: " + response.status);
-                    return;
-                }
-
-                update_ui({body:"started"});
-            });
-        }
-
         window.onbeforeunload = unloadHandler;
     </script>
 
@@ -184,7 +165,7 @@
                                 <img src="/public_static/icons/people.svg" width="30" height="30">
                             </button>
                             <div class="dropdown-menu p-2" aria-labelledby="switchPlayerButton">
-                                <form onsubmit="change_player(event)">
+                                <form @submit="change_player">
                                     <label>
                                         <input class="form-control" type="number" name="player_index" id = "player_index">
                                     </label>
@@ -460,6 +441,24 @@
                     },
                     function (error) {
                     });
+            },
+
+            change_player: function (event) {
+                event.preventDefault();
+
+                fetch('/user/change_player/' + room_id.value + "?index=" + player_index.value, {
+                    method: 'post',
+                    headers: {
+                        "X-CSRF-TOKEN" : _csrf.value,
+                    }
+                }).then( (response) => {
+                    if (response.status !== 200) {
+                        console.log("Can't start room. Status Code: " + response.status);
+                        return;
+                    }
+
+                    this.update_ui({body:"started"});
+                });
             }
         },
         mounted() {
