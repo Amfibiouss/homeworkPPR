@@ -48,10 +48,12 @@ public class RoomChannelMessageDaoService {
     }
 
     public String get_output_stage_channel(String name,
-                                     long count,
-                                     String messages) {
+                                     long stage_id, long count,
+                                     String messages, boolean loaded) {
 
-        return String.format("{\"stage_name\": \"%s\", \"count\":%d, \"messages\": %s}", name, count, messages);
+        return String.format("{\"stage_name\": \"%s\", \"stage_id\": \"%d\", " +
+                        "\"count\":%d, \"messages\": %s, \"loaded\": %s}",
+                name, stage_id, count, messages, loaded);
     }
 
     public String get_array(List<String> list) {
@@ -126,7 +128,7 @@ public class RoomChannelMessageDaoService {
             throw new ServiceException("the channel_id don't exist.");
 
         List <FStageFChannel> stage_channels = session.createSelectionQuery(
-                "from FStageFChannel s join fetch s.id.stage where s.id.channel=:channel order by s.id.stage.date", FStageFChannel.class)
+                "from FStageFChannel s join fetch s.stage where s.channel=:channel order by s.stage.date", FStageFChannel.class)
                 .setParameter("channel", channel)
                 .getResultList();
 
@@ -153,12 +155,12 @@ public class RoomChannelMessageDaoService {
                     .getSingleResult();
 
             for (FStageFChannel stage_channel : stage_channels) {
-                FStage stage = stage_channel.getId().getStage();
+                FStage stage = stage_channel.getStage();
 
                 if (stage != last_stage) {
-                    String jsonString = (XRayRead) ? stage_channel.getJsonXRayStrings() :
-                            ((AnonRead) ? stage_channel.getJsonAnonStrings() : stage_channel.getJsonStrings());
-                    stages.add(get_output_stage_channel(stage.getName(), stage_channel.getCount(), jsonString));
+                    //String jsonString = (XRayRead) ? stage_channel.getJsonXRayStrings() :
+                    //        ((AnonRead) ? stage_channel.getJsonAnonStrings() : stage_channel.getJsonStrings());
+                    stages.add(get_output_stage_channel(stage.getName(), stage.getId(), stage_channel.getCount(), "[]", false));
                 }
             }
         } else {
@@ -183,9 +185,31 @@ public class RoomChannelMessageDaoService {
             result_messages.add((XRayRead)? message.getJsonXRayString() :
                     ((AnonRead)? message.getJsonAnonString() : message.getJsonString()));
         }
-        stages.add(get_output_stage_channel(last_stage.getName(), messages.size(), get_array(result_messages)));
+        stages.add(get_output_stage_channel(last_stage.getName(), last_stage.getId(), messages.size(), get_array(result_messages), true));
 
         return get_array(stages);
+    }
+
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ, propagation = REQUIRES_NEW)
+    public String get_stage_messages(long channel_id, long stage_id, String username) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+        FCharacter character = user.getCharacter();
+        FStageFChannel stage_channel = session.get(FStageFChannel.class, new FStageFChannelId(stage_id, channel_id));
+
+        if (character.getPindex() == -1) {
+            return stage_channel.getJsonStrings();
+        }
+
+        if ((stage_channel.getReadMask() & (1L << character.getPindex())) == 0) {
+            return "[]";
+        } else if ((stage_channel.getAnonReadMask() & (1L << character.getPindex())) != 0) {
+            return stage_channel.getJsonAnonStrings();
+        } else if ((stage_channel.getXRayReadMask() & (1L << character.getPindex())) != 0) {
+            return stage_channel.getJsonXRayStrings();
+        } else {
+            return stage_channel.getJsonStrings();
+        }
     }
 
     @Transactional
@@ -268,7 +292,7 @@ public class RoomChannelMessageDaoService {
         channel_lobby.setName("лобби");
         channel_lobby.setRead_mask((1L << 30) - 1);
         channel_lobby.setWrite_mask((1L << 30) - 1);
-        channel_lobby.setRead_real_username_mask(0L);
+        channel_lobby.setRead_real_username_mask((1L << 30) - 1);
         channel_lobby.setAnon_write_mask(0L);
         channel_lobby.setAnon_read_mask(0L);
         session.persist(channel_lobby);
@@ -285,7 +309,7 @@ public class RoomChannelMessageDaoService {
         channel_newspaper.setName("газета");
         channel_newspaper.setRead_mask(0L);
         channel_newspaper.setWrite_mask(0L);
-        channel_newspaper.setRead_real_username_mask(0L);
+        channel_newspaper.setRead_real_username_mask((1L << 30) - 1);
         channel_newspaper.setAnon_write_mask(0L);
         channel_newspaper.setAnon_read_mask(0L);
         session.persist(channel_newspaper);
@@ -610,10 +634,12 @@ public class RoomChannelMessageDaoService {
         FRoom room = session.get(FRoom.class, room_id);
 
         OutputStateRoom outputStateRoom = new OutputStateRoom();
-        outputStateRoom.setStage(session.createSelectionQuery(
+        FStage curr_stage = session.createSelectionQuery(
                         "from FStage s where s.room=:room order by s.date desc limit 1", FStage.class)
                 .setParameter("room", room)
-                .getSingleResult().getName());
+                .getSingleResult();
+        outputStateRoom.setStage(curr_stage.getName());
+        outputStateRoom.setStage_id(curr_stage.getId());
         outputStateRoom.setFinish_stage(room.getFinish_stage());
         outputStateRoom.setStatus(room.getStatus());
 
@@ -660,14 +686,25 @@ public class RoomChannelMessageDaoService {
         }
         outputStateRoom.setPolls(outputStatePolls);
 
+        FChannel newspaper = get_channel(room, "газета");
+
         FMessage message = session.createSelectionQuery(
                 "from FMessage m where m.channel=:channel and m.target=:pindex order by m.date desc limit 1", FMessage.class)
-                .setParameter("channel", get_channel(room, "газета"))
+                .setParameter("channel", newspaper)
                 .setParameter("pindex", character.getPindex()).getSingleResultOrNull();
 
         if (message != null) {
             try {
-                outputStateRoom.setNewspaperMessage(objectMapper.readValue(message.getJsonString(), OutputMessage.class));
+                String res = "";
+
+                if ((newspaper.getRead_real_username_mask() & (1L << character.getPindex())) != 0)
+                    res = message.getJsonXRayString();
+                else if ((newspaper.getAnon_read_mask() & (1L << character.getPindex())) != 0)
+                    res = message.getJsonAnonString();
+                else
+                    res = message.getJsonString();
+
+                outputStateRoom.setNewspaperMessage(objectMapper.readValue(res, OutputMessage.class));
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -723,7 +760,11 @@ public class RoomChannelMessageDaoService {
             stage_channel.setJsonXRayStrings(stage_channel.getJsonXRayStrings() + "]");
 
             stage_channel.setCount((long) messages.size());
-            stage_channel.setId(new FStageFChannelId(last_stage, channel));
+            stage_channel.setChannel(channel);
+            stage_channel.setStage(last_stage);
+            stage_channel.setXRayReadMask(channel.getRead_real_username_mask());
+            stage_channel.setReadMask(channel.getRead_mask());
+            stage_channel.setAnonReadMask(channel.getAnon_read_mask());
             session.persist(stage_channel);
         }
 

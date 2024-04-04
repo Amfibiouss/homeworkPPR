@@ -1,42 +1,81 @@
 package com.example.laba.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 
 import java.util.Objects;
 
 import static jakarta.persistence.FetchType.LAZY;
 
 @Entity
+@IdClass(FStageFChannelId.class)
 public class FStageFChannel {
-    @EmbeddedId
-    FStageFChannelId id;
+    @Id
+    @ManyToOne(fetch=LAZY)
+    private FStage stage;
+    @Id
+    @ManyToOne(fetch=LAZY)
+    private FChannel channel;
     @Column(columnDefinition="TEXT")
-    String jsonStrings;
+    private String jsonStrings;
     @Column(columnDefinition="TEXT")
-    String jsonXRayStrings;
+    private String jsonXRayStrings;
     @Column(columnDefinition="TEXT")
-    String jsonAnonStrings;
-    Long count;
+    private String jsonAnonStrings;
+    private Long count;
+    private Long XRayReadMask;
+    private Long ReadMask;
+    private Long AnonReadMask;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof FStageFChannel that)) return false;
-        return Objects.equals(id, that.id);
+        return Objects.equals(getStage(), that.getStage()) && Objects.equals(getChannel(), that.getChannel());
     }
+
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(getStage(), getChannel());
     }
 
-    public FStageFChannelId getId() {
-        return id;
+    public Long getXRayReadMask() {
+        return XRayReadMask;
     }
 
-    public void setId(FStageFChannelId id) {
-        this.id = id;
+    public void setXRayReadMask(Long XRayReadMask) {
+        this.XRayReadMask = XRayReadMask;
+    }
+
+    public Long getReadMask() {
+        return ReadMask;
+    }
+
+    public void setReadMask(Long readMask) {
+        ReadMask = readMask;
+    }
+
+    public Long getAnonReadMask() {
+        return AnonReadMask;
+    }
+
+    public void setAnonReadMask(Long anonReadMask) {
+        AnonReadMask = anonReadMask;
+    }
+
+    public FStage getStage() {
+        return stage;
+    }
+
+    public void setStage(FStage stage) {
+        this.stage = stage;
+    }
+
+    public FChannel getChannel() {
+        return channel;
+    }
+
+    public void setChannel(FChannel channel) {
+        this.channel = channel;
     }
 
     public Long getCount() {

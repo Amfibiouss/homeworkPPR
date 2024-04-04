@@ -14,6 +14,7 @@ public class OutputStateRoom {
 
     public OffsetDateTime finish_stage;
     public String stage;
+    public Long stage_id;
     public OutputMessage newspaperMessage;
 
     public OutputMessage getNewspaperMessage() {
@@ -62,5 +63,13 @@ public class OutputStateRoom {
 
     public void setStage(String stage) {
         this.stage = stage;
+    }
+
+    public Long getStage_id() {
+        return stage_id;
+    }
+
+    public void setStage_id(Long stage_id) {
+        this.stage_id = stage_id;
     }
 }

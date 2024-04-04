@@ -71,7 +71,8 @@ function initialize_room(data) {
         ["странный", "странная"], ["лукавый", "лукавая"], ["пучеглазый", "пучеглазая"], ["сочный", "сочная"],
         ["страшный", "страшная"], ["жуткий", "жуткая"], ["падший", "падшая"], ["тёмный", "темная"],
         ["подозрительный", "подозрительная"], ["волшебный", "волшебная"], ["железный", "железная"],
-        ["кровожадный", "кровожадная"], ["фанатичный", "фанатичная"]];
+        ["кровожадный", "кровожадная"], ["фанатичный", "фанатичная"], ["вкусный", "вкусная"], ["непобедимый", "непобедимая"],
+        ["супер", "супер"], ["хороший", "хорошая"]];
     let maleSecondName = ["суп", "торт", "пирожочек", "салат", "банан", "ИИ", "клоун", "начальник", "бобер",
         "псих", "гений", "чел", "некто", "фрукт", "овощ", "хитрец", "трус", "кукловод", "друг", "незнакомец",
         "[ДАННЫЕ УДАЛЕНЫ]", "пони", "бомж", "король", "мудрец", "доктор", "учёный", "единорог", "маг", "качок"];
@@ -118,7 +119,7 @@ function initialize_room(data) {
     day_count = 1;
 
     for (let i = 0; i < player_count; i++) {
-        messages[i] += "Ваша роль: " + roles[i] + ". ";
+        messages[i] += "Приветствую вас " + names[i] + " (" + i + ") , ваша роль: " + roles[i] + ". \\n";
         if (roles[i] === "мафия") {
             messages[i] += "Ваша цель уничтожить всех мирных."
                 + " Каждую ночь убивайте одного на ночном голосовании. Не попадитесь!";
@@ -130,7 +131,7 @@ function initialize_room(data) {
 
     return {
         "channels" : [
-            {"name" : "газета", "read_real_username_mask":0, "read_mask" : all_mask, "anon_read_mask" : 0, "write_mask" : 0, "anon_write_mask" : 0},
+            {"name" : "газета", "read_real_username_mask":all_mask, "read_mask" : all_mask, "anon_read_mask" : 0, "write_mask" : 0, "anon_write_mask" : 0},
             {"name" : "лобби", "read_real_username_mask":0, "read_mask" : all_mask, "anon_read_mask" : 0, "write_mask" : all_mask, "anon_write_mask" : all_mask},
             {"name" : "общий", "read_real_username_mask":1, "read_mask" : all_mask, "anon_read_mask" : 0, "write_mask" : all_mask, "anon_write_mask" : 0},
             {"name" : "мафия", "read_real_username_mask":1, "read_mask" : mafia_mask, "anon_read_mask" : 0, "write_mask" : mafia_mask, "anon_write_mask" : 0},
@@ -173,7 +174,8 @@ function update_state(data) {
                 dead[index] = 1;
 
                 for (i = 0; i < 30; i++) {
-                     messages[i] = "Был убит игрок " + index + ". Его роль - " + roles[index] + ". Вот бедолага! ";
+                     messages[i] = "Был убит игрок " + names[index] + " (" + index + ") "
+                         + ". Его роль - " + roles[index] + ". Вот бедолага! \\n";
                 }
 
                 messages[index] = "К сожалению вас убили! ";

@@ -129,6 +129,19 @@ public class MessageController {
     }
 
     @ResponseBody
+    @GetMapping("/public/chat/get_stage_messages/{channel_id}/{stage_id}")
+    String get_stage_messages(
+            @PathVariable long stage_id,
+            @PathVariable long channel_id) {
+
+        try {
+            return RCMDAOService.get_stage_messages(channel_id, stage_id, securityService.getUsername());
+        } catch(ServiceException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "bed parameters", exception);
+        }
+    }
+
+    @ResponseBody
     @GetMapping("/public/chat/get_message/{message_id}")
     String get_message(
             @PathVariable long message_id) {

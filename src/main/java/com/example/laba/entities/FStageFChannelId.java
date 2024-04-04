@@ -8,12 +8,9 @@ import java.util.Objects;
 
 import static jakarta.persistence.FetchType.LAZY;
 
-@Embeddable
 public class FStageFChannelId implements Serializable {
-    @ManyToOne(fetch=LAZY)
-    FStage stage;
-    @ManyToOne(fetch=LAZY)
-    FChannel channel;
+    private Long stage;
+    private Long channel;
 
     @Override
     public boolean equals(Object o) {
@@ -28,24 +25,23 @@ public class FStageFChannelId implements Serializable {
     }
 
     public FStageFChannelId() {}
-    public FStageFChannelId(FStage stage, FChannel channel) {
+
+    public FStageFChannelId(Long stage, Long channel) {
         this.stage = stage;
         this.channel = channel;
     }
 
-    public FStage getStage() {
-        return stage;
-    }
+    public Long getStage() {return stage;}
 
-    public void setStage(FStage stage) {
+    public void setStage(Long stage) {
         this.stage = stage;
     }
 
-    public FChannel getChannel() {
+    public Long getChannel() {
         return channel;
     }
 
-    public void setChannel(FChannel channel) {
+    public void setChannel(Long channel) {
         this.channel = channel;
     }
 }
