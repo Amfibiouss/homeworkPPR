@@ -8,7 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"> </script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <!-- -->
-    <script src="/public_static/room_config.js"> </script>
+    <script src="/public_static/infinity_war_config.js"> </script>
     <meta charset="UTF-8">
     <title>Title</title>
 
@@ -179,7 +179,8 @@
                     </div>
 
                     <div class="col-auto">
-                        <nav-pills :channels="channels" :polls="polls" :status="status" :active_tab="active_tab"></nav-pills>
+                        <nav-pills :channels="channels" :polls="polls" :status="status"
+                                   :active_tab="active_tab" @changeactivetab = "change_active_tab"></nav-pills>
                     </div>
                 </div>
             </nav>
@@ -258,29 +259,27 @@
                                 current_stage.innerHTML = "Сейчас " + data.stage;
                             }
 
-                            let active_tab = null;
-                            let tabElement = document.querySelector('button[role="tab"].active');
-                            if (tabElement != null) {
-                                active_tab = tabElement.innerHTML;
-                            }
-
                             let has_active_tab = false;
                             for (const channel of data.channels) {
-                                if (active_tab === channel.name) {
+                                if (self.active_tab === channel.name) {
                                     has_active_tab = true;
                                     break;
                                 }
                             }
+                            for (const poll of data.polls) {
+                                if (self.active_tab === poll.name) {
+                                    has_active_tab = true;
+                                    break;
+                                }
+                            }
+
                             if (!has_active_tab) {
                                 if (data.status === "not started") {
                                     self.active_tab = "лобби";
                                 } else {
                                     self.active_tab = "газета";
                                 }
-                            } else {
-                                self.active_tab = active_tab;
                             }
-
                             self.polls = data.polls;
                             self.status = data.status;
 
@@ -487,6 +486,10 @@
 
                     self.update_ui({body:"started"});
                 });
+            },
+            change_active_tab: function (new_active_tab) {
+                this.active_tab = new_active_tab;
+                //console.log("new active tab:" + new_active_tab);
             }
         },
         mounted() {
@@ -504,33 +507,36 @@
         template: `
           <li class="nav-item" role="presentation">
             <button :class="'nav-link ' + ((channel_name === active_tab) ? 'active' : '')"
-                    :id="channel_id + '-tab'" data-bs-toggle="pill"
-                    :data-bs-target="'#pills-' + channel_id" type="button" role="tab"
-                    :aria-controls="'pills-' + channel_id" aria-selected="true">{{ channel_name }}
+                    :id="channel_id + '-tab'" data-bs-toggle="pill" type="button" role="tab"
+                    :aria-controls="'pills-' + channel_id" aria-selected="true"
+                    @click = "$parent.$emit('changeactivetab', channel_name)">{{ channel_name }}
             </button>
           </li>
         `
     });
 
     app.component("nav-pill-poll", {
-        props: ["poll_id", "poll_name"],
+        props: ["poll_id", "poll_name", "active_tab"],
 
         template: `
           <li class="nav-item" role="presentation">
-            <button class="nav-link"
-                    :id="poll_id + '-poll-tab'" data-bs-toggle="pill"
-                    :data-bs-target="'#pills-poll-' + poll_id" type="button" role="tab"
-                    :aria-controls="'pills-poll-' + poll_id" aria-selected="true">{{ poll_name }}
+            <button :class="'nav-link ' + ((poll_name === active_tab) ? 'active' : '')"
+                    :id="poll_id + '-poll-tab'" data-bs-toggle="pill" type="button" role="tab"
+                    :aria-controls="'pills-poll-' + poll_id" aria-selected="true"
+                    @click = "$parent.$emit('changeactivetab', poll_name)">{{ poll_name }}
             </button>
           </li>
         `
     });
 
     app.component("nav-pill-players", {
+        props: ["active_tab"],
+
         template: `
               <li class="nav-item" role="presentation">
-                <button class="nav-link" id="pills-players-tab" data-bs-toggle="pill" data-bs-target="#pills-players"
-                        type="button" role="tab" aria-controls="pills-players" aria-selected="false">игроки
+                <button class="nav-link" id="pills-players-tab" data-bs-toggle="pill"
+                        type="button" role="tab" aria-controls="pills-players" aria-selected="false"
+                        @click = "$parent.$emit('changeactivetab', 'игроки')">игроки
                 </button>
               </li>
             `
@@ -543,13 +549,16 @@
             <nav-pill-channel v-for="channel in channels"
                               :channel_id="channel.channel_id"
                               :channel_name="channel.name"
-                              :active_tab="active_tab">
+                              :active_tab="active_tab"
+                              :key="channel.channel_id">
             </nav-pill-channel>
             <nav-pill-poll v-for="poll in polls"
                            :poll_id="poll.poll_id"
-                           :poll_name="poll.name">
+                           :poll_name="poll.name"
+                           :active_tab = "active_tab"
+                           :key="poll.poll_id">
             </nav-pill-poll>
-            <nav-pill-players v-if="status==='not started'"></nav-pill-players>
+            <nav-pill-players v-if="status==='not started'" :active_tab="active_tab"></nav-pill-players>
           </ul>
         `
     });
@@ -702,10 +711,10 @@
     });
 
     app.component("tab-panel-poll", {
-        props: ["poll_id", "candidates"],
+        props: ["poll_id", "candidates", "poll_name", "active_tab"],
 
         template: `
-          <div class="tab-pane fade"
+          <div :class="'tab-pane fade ' + ((active_tab === poll_name) ? 'show active' : '')"
                :id="'pills-poll-' + poll_id" role="tabpanel" :aria-labelledby="poll_id + '-poll-tab'">
 
             <form class="row" onsubmit="sendVote(event)" :id="'form-poll-' + poll_id">
@@ -768,7 +777,9 @@
             </tab-panel-channel>
             <tab-panel-poll v-for = "poll in polls"
                             :poll_id = poll.poll_id
-                            :candidates = poll.candidates>
+                            :poll_name = poll.name
+                            :candidates = poll.candidates
+                            :active_tab = active_tab>
             </tab-panel-poll>
             <tab-panel-players v-if="status==='not started'" :players="players"></tab-panel-players>
           </div>

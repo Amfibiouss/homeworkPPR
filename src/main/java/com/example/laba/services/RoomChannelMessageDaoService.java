@@ -298,13 +298,6 @@ public class RoomChannelMessageDaoService {
         session.persist(channel_lobby);
         new_room.addChannel(channel_lobby);
 
-        FMessage message = new FMessage();
-        message.setDate(OffsetDateTime.now());
-        message.setUser(user);
-        message.setText(room.help);
-        session.persist(message);
-        channel_lobby.addMessage(message);
-
         FChannel channel_newspaper = new FChannel();
         channel_newspaper.setName("газета");
         channel_newspaper.setRead_mask(0L);
@@ -327,7 +320,29 @@ public class RoomChannelMessageDaoService {
         new_room.addCharacter(character);
         session.persist(character);
 
+        FMessage message = new FMessage();
+        message.setDate(OffsetDateTime.now());
+        message.setUser(user);
+        message.setAlias(user.getLogin());
+        message.setText(room.help);
+        message.setStage(stage);
+        message.setTarget(-1L);
+        session.persist(message);
+        channel_lobby.addMessage(message);
+
         session.flush();
+
+        session.refresh(message);
+        message.setJsonXRayString(get_output_message(message.getAlias(), message.getAlias(), message.getText(),
+                catMaidService.getUwUDegree(user.getDate_UwU()), user.getAdmin()? "#ff0000" : null, message.getId()));
+
+        message.setJsonAnonString(get_output_message(null, "???", message.getText(),
+                0f, null, message.getId()));
+
+        message.setJsonString(get_output_message(null, message.getAlias(),
+                message.getText(), 0f, null, message.getId()));
+
+
         session.refresh(new_room);
         return new_room.getId();
     }
