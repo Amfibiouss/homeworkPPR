@@ -2,10 +2,8 @@ package com.example.laba.json_objects;
 
 public class OutputStateChannel {
     public long channel_id;
-
     public String name;
-    boolean can_write;
-    boolean can_read;
+    public long cindex;
 
     public long getChannel_id() {
         return channel_id;
@@ -23,19 +21,11 @@ public class OutputStateChannel {
         this.name = name;
     }
 
-    public boolean getCan_write() {
-        return can_write;
+    public long getCindex() {
+        return cindex;
     }
 
-    public void setCan_write(boolean can_write) {
-        this.can_write = can_write;
-    }
-
-    public boolean getCan_read() {
-        return can_read;
-    }
-
-    public void setCan_read(boolean can_read) {
-        this.can_read = can_read;
+    public void setCindex(long cindex) {
+        this.cindex = cindex;
     }
 }

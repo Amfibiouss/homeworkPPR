@@ -1,7 +1,6 @@
 package com.example.laba.entities;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.NaturalId;
 
 import java.util.*;
 
@@ -12,6 +11,7 @@ public class FChannel {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+    Long cindex;
     private String name;
     @OneToMany(mappedBy="channel")
     private Set<FMessage> messages = new HashSet<>();
@@ -111,6 +111,10 @@ public class FChannel {
     public void setAnon_read_mask(Long anon_read_mask) {
         this.anon_read_mask = anon_read_mask;
     }
+
+    public Long getCindex() {return cindex;}
+
+    public void setCindex(Long сindex) {this.cindex = сindex;}
 
     public FChannel() {}
 }

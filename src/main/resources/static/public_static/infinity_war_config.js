@@ -155,11 +155,11 @@ function calculate_polls_channels(init) {
 
         if (init === 1) {
             new_state.channels = [
-            {"name" : "газета", "read_real_username_mask":all_mask, "read_mask" : all_mask, "anon_read_mask" : 0, "write_mask" : 0, "anon_write_mask" : 0},
-            {"name" : "лобби", "read_real_username_mask":0, "read_mask" : all_mask, "anon_read_mask" : 0, "write_mask" : all_mask, "anon_write_mask" : all_mask},
-            {"name" : "Общий", "read_real_username_mask":1, "read_mask" : all_mask, "anon_read_mask" : 0, "write_mask" : all_mask, "anon_write_mask" : 0},
-            {"name" : "Черный Орден", "read_real_username_mask":1, "read_mask" : black_orden_mask, "anon_read_mask" : 0, "write_mask" : black_orden_mask, "anon_write_mask" : 0},
-            {"name" : "Мертвые", "read_real_username_mask": 1, "read_mask" : 0, "anon_read_mask" : 0, "write_mask" : 0, "anon_write_mask" : 0}];
+            {"name" : "газета", "read_real_username_mask":all_mask, "read_mask" : all_mask, "anon_read_mask" : 0, "write_mask" : 0, "anon_write_mask" : 0, "cindex": 2},
+            {"name" : "лобби", "read_real_username_mask":0, "read_mask" : all_mask, "anon_read_mask" : 0, "write_mask" : all_mask, "anon_write_mask" : all_mask, "cindex": 3},
+            {"name" : "Общий", "read_real_username_mask":1, "read_mask" : all_mask, "anon_read_mask" : 0, "write_mask" : all_mask, "anon_write_mask" : 0, "cindex": 4},
+            {"name" : "Черный Орден", "read_real_username_mask":1, "read_mask" : black_orden_mask, "anon_read_mask" : 0, "write_mask" : black_orden_mask, "anon_write_mask" : 0, "cindex": 5},
+            {"name" : "Мертвые", "read_real_username_mask": 1, "read_mask" : 0, "anon_read_mask" : 0, "write_mask" : 0, "anon_write_mask" : 0, "cindex": 6}];
         }
     } else {
         new_state = {

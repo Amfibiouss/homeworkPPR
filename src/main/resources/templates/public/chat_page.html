@@ -186,7 +186,7 @@
             </nav>
 
             <tab-content :channels="channels"  :polls = "polls" :active_tab = "active_tab"
-                         :status = "status" :players = "players"></tab-content>
+                         :status = "status" :players = "players" :channel-read-mask = "channelReadMask" :channel-write-mask = "channelWriteMask"></tab-content>
         </div>
     </div>
     <script>
@@ -194,7 +194,8 @@
     const app = Vue.createApp({
 
         data() {
-            return {channels: [], polls: [], players: [], status: null, active_tab: null};
+            return {channels: [], polls: [], players: [], status: null, active_tab: null,
+                channelReadMask: 0, channelWriteMask: 0};
         },
         methods: {
 
@@ -280,6 +281,9 @@
                                     self.active_tab = "газета";
                                 }
                             }
+
+                            self.channelReadMask = data.channelReadMask;
+                            self.channelWriteMask = data.channelWriteMask;
                             self.polls = data.polls;
                             self.status = data.status;
 
@@ -309,19 +313,9 @@
                             window.subscriptions = new_subscriptions;
 
                             for (let channel of data.channels) {
-
-                                if (window.subscriptions.has(channel.channel_id)) {
-                                    let index = self.channels.findIndex(x => (x.channel_id === channel.channel_id));
-
-                                    if (index !== -1) {
-                                        self.channels[index].can_write = channel.can_write;
-                                        self.channels[index].can_read = channel.can_read;
-                                    }
-
-                                    continue;
+                                if (!window.subscriptions.has(channel.channel_id)) {
+                                    self.channels.push(channel);
                                 }
-
-                                self.channels.push(channel);
                             }
 
                             for (const index of self.channels.keys()) {
@@ -352,7 +346,7 @@
 
                                 channel["stages"] = [];
 
-                                if (channel.can_read === 0)
+                                if ((self.channelReadMask & (1 << channel.cindex)) === 0)
                                     continue;
 
                                 let subscription = stompClient.subscribe('/topic/messages/' + room_id.value + '/' + channel.channel_id,
@@ -752,10 +746,11 @@
     });
 
     app.component("tab-panel-players", {
-        props: ["players"],
+        props: ["players", "active_tab"],
 
         template: `
-            <div class="tab-pane fade" id="pills-players" role="tabpanel" aria-labelledby="pills-players-tab">
+            <div :class="'tab-pane fade ' + ((active_tab === 'игроки') ? 'show active' : '')"
+                 id="pills-players" role="tabpanel" aria-labelledby="pills-players-tab">
                 <div class = "col-12" id="players">
                     <player-info v-for="player in players" :player="player"></player-info>
                 </div>
@@ -764,7 +759,7 @@
     });
 
     app.component("tab-content", {
-        props: ["channels", "polls", "players", "active_tab", "status"],
+        props: ["channels", "polls", "players", "active_tab", "status", "channelReadMask", "channelWriteMask"],
 
         template: `
           <div class="tab-content" id="pills-tabContent">
@@ -772,8 +767,9 @@
                        :channel_id = "channel.channel_id"
                        :active_tab = "active_tab"
                        :channel_name = "channel.name"
-                       :can_read = "channel.can_read"
-                       :can_write="channel.can_write" :stages="channel.stages" :key="channel.channel_id">
+                       :can_read = "((channelReadMask & (1 << channel.cindex)) !== 0)"
+                               :can_write = "((channelWriteMask & (1 << channel.cindex)) !== 0)"
+                               :stages = "channel.stages" :key="channel.channel_id">
             </tab-panel-channel>
             <tab-panel-poll v-for = "poll in polls"
                             :poll_id = poll.poll_id
@@ -781,7 +777,7 @@
                             :candidates = poll.candidates
                             :active_tab = active_tab>
             </tab-panel-poll>
-            <tab-panel-players v-if="status==='not started'" :players="players"></tab-panel-players>
+            <tab-panel-players v-if="status==='not started'" :players="players" :active_tab="active_tab"></tab-panel-players>
           </div>
         `
     });
@@ -792,11 +788,3 @@
 <footer th:replace="~{public/footer :: footer}"></footer>
 </body>
 </html>
-<script setup>
-</script>
-<script setup>
-</script>
-<script setup>
-</script>
-<script setup>
-</script>

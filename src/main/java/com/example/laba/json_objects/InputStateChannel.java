@@ -7,6 +7,7 @@ public class InputStateChannel {
     public Long anon_read_mask;
     public Long write_mask;
     public Long anon_write_mask;
+    public Long cindex;
 
     public Long getRead_real_username_mask() {
         return read_real_username_mask;
@@ -54,5 +55,13 @@ public class InputStateChannel {
 
     public void setAnon_read_mask(Long anon_read_mask) {
         this.anon_read_mask = anon_read_mask;
+    }
+
+    public Long getCindex() {
+        return cindex;
+    }
+
+    public void setCindex(Long cindex) {
+        this.cindex = cindex;
     }
 }

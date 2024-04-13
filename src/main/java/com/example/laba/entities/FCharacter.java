@@ -15,6 +15,11 @@ public class FCharacter {
     @Id
     Long pindex;
     String name;
+    long ChannelReadMask;
+    long ChannelAnonReadMask;
+    long ChannelXRayReadMask;
+    long ChannelWriteMask;
+    long ChannelAnonWriteMask;
 
     @Override
     public boolean equals(Object o) {
@@ -50,5 +55,45 @@ public class FCharacter {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public long getChannelReadMask() {
+        return ChannelReadMask;
+    }
+
+    public void setChannelReadMask(long channelReadMask) {
+        ChannelReadMask = channelReadMask;
+    }
+
+    public long getChannelAnonReadMask() {
+        return ChannelAnonReadMask;
+    }
+
+    public void setChannelAnonReadMask(long channelAnonReadMask) {
+        ChannelAnonReadMask = channelAnonReadMask;
+    }
+
+    public long getChannelXRayReadMask() {
+        return ChannelXRayReadMask;
+    }
+
+    public void setChannelXRayReadMask(long channelXRayReadMask) {
+        ChannelXRayReadMask = channelXRayReadMask;
+    }
+
+    public long getChannelWriteMask() {
+        return ChannelWriteMask;
+    }
+
+    public void setChannelWriteMask(long channelWriteMask) {
+        ChannelWriteMask = channelWriteMask;
+    }
+
+    public long getChannelAnonWriteMask() {
+        return ChannelAnonWriteMask;
+    }
+
+    public void setChannelAnonWriteMask(long channelAnonWriteMask) {
+        ChannelAnonWriteMask = channelAnonWriteMask;
     }
 }
