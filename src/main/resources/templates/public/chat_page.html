@@ -26,41 +26,6 @@
     </style>
 
     <script>
-        function processing_stage() {
-
-            let csrf = document.getElementById('_csrf').value;
-            let room_id = document.getElementById('room_id').value;
-
-            fetch('/user/get_data_for_processing/' + room_id, {
-                headers: {
-                    'Accept': 'application/json'
-                    }
-            }).then(
-                function(response) {
-                    if (response.status !== 200) {
-                        console.log("Can't load results of the previous stage. Status Code: " + response.status);
-                        return;
-                    }
-
-                    response.json().then(function(data) {
-                        let new_state = update_state(data);
-
-                        fetch('/user/update_room_state/' + room_id, {
-                            method: 'post',
-                            headers: {
-                                "X-CSRF-TOKEN" : csrf,
-                                "Content-Type" : "application/json; charset=utf-8"
-                            },
-                            body: JSON.stringify(new_state)
-                        }).then( (response) => {
-                            if (response.status !== 200) {
-                                console.log("Can't send state of the current stage. Status Code: " + response.status);
-                            }
-                        });
-                    });
-                }
-            );
-        }
 
         function sendMessage(event) {
             event.preventDefault();
@@ -75,41 +40,6 @@
 
         function unloadHandler() {
             stompClient.disconnect();
-        }
-
-        function submit_start_room(event) {
-            event.preventDefault();
-
-            let csrf = document.getElementById('_csrf').value;
-            let room_id = document.getElementById('room_id').value;
-
-            fetch('/user/processing_start_room/' + room_id, {
-                method: 'post',
-                headers: {
-                    "X-CSRF-TOKEN" : csrf,
-                }
-            }).then( (response) => {
-                if (response.status !== 200) {
-                    console.log("Can't start room. Status Code: " + response.status);
-                    return;
-                }
-                response.json().then(function(data) {
-                    let initial_state = initialize_room(data);
-
-                    fetch('/user/start_room/' + room_id, {
-                        method: 'post',
-                        headers: {
-                            "X-CSRF-TOKEN" : csrf,
-                            "Content-Type" : "application/json; charset=utf-8"
-                        },
-                        body: JSON.stringify(initial_state)
-                    }).then( (response) => {
-                        if (response.status !== 200) {
-                            console.log("Can't start room. Status Code: " + response.status);
-                        }
-                    });
-                });
-            });
         }
 
         window.onbeforeunload = unloadHandler;
@@ -136,8 +66,8 @@
                 <div id = "chat_menu" class="row collapse navbar-collapse justify-content-between">
                     <div class="col-auto">
                         <a th:href="'/user/exit_room/' + ${room_id}"><button class="btn btn-outline-secondary" type="button" id="quit_button">выйти</button></a>
-                        <button th:if="${host}==true" class="btn btn-outline-secondary" type="button" id="start_button" onclick="submit_start_room(event)">начать</button>
-                        <button th:if="${host}==true" class="btn btn-outline-secondary" type="button" id="skip_button" onclick="processing_stage(event)">далее</button>
+                        <button th:if="${host}==true" class="btn btn-outline-secondary" type="button" id="start_button" @click="submit_start_room">начать</button>
+                        <button th:if="${host}==true" class="btn btn-outline-secondary" type="button" id="skip_button" @click="processing_stage">далее</button>
                         <div th:if="${host}==true" class="dropdown" style="display:inline-block;">
                             <button class="btn btn-secondary dropdown-toggle" data-bs-auto-close="false" type="button" id="switchPlayerButton"
                                     data-bs-toggle="dropdown" aria-expanded="false">
@@ -179,6 +109,89 @@
         },
         methods: {
 
+            submit_start_room: function() {
+                let csrf = document.getElementById('_csrf').value;
+                let room_id = document.getElementById('room_id').value;
+                let self = this;
+
+                fetch('/user/processing_start_room/' + room_id, {
+                    method: 'post',
+                    headers: {
+                        "X-CSRF-TOKEN" : csrf,
+                    }
+                }).then( (response) => {
+                    if (response.status !== 200) {
+                        console.log("Can't start room. Status Code: " + response.status);
+                        return;
+                    }
+                    response.json().then(function(data) {
+                        let initial_state = initialize_room(data);
+
+                        fetch('/user/start_room/' + room_id, {
+                            method: 'post',
+                            headers: {
+                                "X-CSRF-TOKEN" : csrf,
+                                "Content-Type" : "application/json; charset=utf-8"
+                            },
+                            body: JSON.stringify(initial_state)
+                        }).then( (response) => {
+                            if (response.status !== 200) {
+                                console.log("Can't start room. Status Code: " + response.status);
+                                return;
+                            }
+
+                            window.nextStageTimer = setTimeout(function () {
+                                self.processing_stage();
+                            }, initial_state.duration * 1000);
+                        });
+                    });
+                });
+            },
+            processing_stage: function() {
+
+                clearTimeout(window.nextStageTimer);
+                window.nextStageTimer = null;
+
+                let csrf = document.getElementById('_csrf').value;
+                let room_id = document.getElementById('room_id').value;
+                let self = this;
+
+                fetch('/user/get_data_for_processing/' + room_id, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                }).then(
+                    function(response) {
+                        if (response.status !== 200) {
+                            console.log("Can't load results of the previous stage. Status Code: " + response.status);
+                            return;
+                        }
+
+                        response.json().then(function(data) {
+                            let new_state = update_state(data);
+
+                            fetch('/user/update_room_state/' + room_id, {
+                                method: 'post',
+                                headers: {
+                                    "X-CSRF-TOKEN" : csrf,
+                                    "Content-Type" : "application/json; charset=utf-8"
+                                },
+                                body: JSON.stringify(new_state)
+                            }).then( (response) => {
+                                if (response.status !== 200) {
+                                    console.log("Can't send state of the current stage. Status Code: " + response.status);
+                                    return;
+                                }
+
+                                window.nextStageTimer = setTimeout(function () {
+                                    self.processing_stage();
+                                }, new_state.duration * 1000);
+                            });
+                        });
+                    }
+                );
+            },
+
             add_message: function (stage, message) {
                 if (!window.messageIds.has(message.id)) {
                     window.messageIds.add(message.id);
@@ -189,10 +202,6 @@
 
             update_ui: function (status) {
                 let self = this;
-
-                if (status.body === 'processing') {
-                    processing_stage();
-                }
 
                 if (status.body === 'initialization' || status.body === 'processing') {
                     time_until_new_stage.innerHTML = "Идет обработка...";

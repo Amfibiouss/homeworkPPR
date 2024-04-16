@@ -689,6 +689,7 @@ function update_state(data) {
         if (candidate === 1 && yesterday !== -1 && window.time_stone_usage === 0) {
             set_state(yesterday);
             window.time_stone_usage = 1;
+            window.time_branch = 2;
 
             for (let i = 0; i < player_count; i++) {
                 messages[i] += "Вы чувствуете, что время течет в обратном направлении...\\n";

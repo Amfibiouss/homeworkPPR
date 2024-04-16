@@ -565,6 +565,10 @@ public class RoomChannelMessageDaoService {
             return true;
         }
 
+        if (status.equals(room.getStatus())) {
+            return true;
+        }
+
         switch (room.getStatus()) {
 
             case "not_started":

@@ -22,9 +22,6 @@ public class RoomManageController {
     @Autowired
     private SimpMessagingTemplate template;
 
-    @Autowired
-    TimerService timerService;
-
     @GetMapping("/user/exit_room/{room_id}")
     void exit_room(@PathVariable long room_id,
                    HttpServletResponse response) {
@@ -55,7 +52,6 @@ public class RoomManageController {
         if (RCMDAOService.set_room_status(room_id, "started")) {
 
             RCMDAOService.set_state(room_id, inputStateRoom, true);
-            timerService.notify_host_after_delay(room_id, inputStateRoom.duration);
 
             template.convertAndSend("/topic/room_status/" + room_id, "started");
         }
@@ -97,7 +93,13 @@ public class RoomManageController {
             return null;
         }
 
-        return RCMDAOService.get_polls_results(room_id);
+        if (RCMDAOService.set_room_status(room_id, "processing")) {
+            template.convertAndSend("/topic/room_status/" + room_id, "processing");
+            return RCMDAOService.get_polls_results(room_id);
+        }
+
+        response.setStatus(403);
+        return null;
     }
 
     @PostMapping("/user/update_room_state/{room_id}")
@@ -119,10 +121,6 @@ public class RoomManageController {
         if (RCMDAOService.set_room_status(room_id, inputStateRoom.getStatus())) {
 
             RCMDAOService.set_state(room_id, inputStateRoom, false);
-
-            if (!inputStateRoom.getStatus().equals("finished"))
-                timerService.notify_host_after_delay(room_id, inputStateRoom.duration);
-
             template.convertAndSend("/topic/room_status/" + room_id, inputStateRoom.getStatus());
         }
 
@@ -141,7 +139,7 @@ public class RoomManageController {
 
     @PostMapping("/user/change_player/{room_id}")
     @ResponseBody
-    void get_results_of_stage(@PathVariable long room_id,
+    void change_player(@PathVariable long room_id,
                               @RequestParam long index,
                               HttpServletResponse response) {
 
