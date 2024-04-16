@@ -16,6 +16,7 @@ public class OutputStateRoom {
     public long channelXRayReadMask;
     public long channelWriteMask;
     public long channelAnonWriteMask;
+    public long pollVoteMask;
     public OffsetDateTime finish_stage;
     public String stage;
     public Long stage_id;
@@ -115,5 +116,13 @@ public class OutputStateRoom {
 
     public void setChannelAnonWriteMask(long channelAnonWriteMask) {
         this.channelAnonWriteMask = channelAnonWriteMask;
+    }
+
+    public long getPollVoteMask() {
+        return pollVoteMask;
+    }
+
+    public void setPollVoteMask(long pollVoteMask) {
+        this.pollVoteMask = pollVoteMask;
     }
 }

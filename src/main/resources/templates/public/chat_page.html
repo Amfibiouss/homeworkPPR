@@ -28,7 +28,10 @@
     <script>
         function processing_stage() {
 
-            fetch('/user/get_data_for_processing/' + room_id.value, {
+            let csrf = document.getElementById('_csrf').value;
+            let room_id = document.getElementById('room_id').value;
+
+            fetch('/user/get_data_for_processing/' + room_id, {
                 headers: {
                     'Accept': 'application/json'
                     }
@@ -40,12 +43,12 @@
                     }
 
                     response.json().then(function(data) {
-                        var new_state = update_state(data);
+                        let new_state = update_state(data);
 
-                        fetch('/user/update_room_state/' + room_id.value, {
+                        fetch('/user/update_room_state/' + room_id, {
                             method: 'post',
                             headers: {
-                                "X-CSRF-TOKEN" : _csrf.value,
+                                "X-CSRF-TOKEN" : csrf,
                                 "Content-Type" : "application/json; charset=utf-8"
                             },
                             body: JSON.stringify(new_state)
@@ -57,34 +60,6 @@
                     });
                 }
             );
-        }
-
-        function sendVote(event) {
-            event.preventDefault();
-            var csrf_token = document.getElementById('_csrf').value;
-            poll_id = event.target.id.substring(10);
-
-            var radios = document.getElementsByName("radio-" + poll_id);
-            var candidate = -1;
-
-            for (const radio of radios) {
-                if (radio.checked) {
-                    candidate = radio.getAttribute("id").split('-').at(-1);
-                    break;
-                }
-            }
-
-            fetch('/user/vote/' + poll_id + '?candidate=' + candidate, {
-                method: 'post',
-                headers: {
-                    "X-CSRF-TOKEN" : _csrf.value,
-                },
-            }).then( (response) => {
-                if (response.status !== 200) {
-                    console.log("Can't vote. Status Code: " + response.status);
-                    return;
-                }
-            });
         }
 
         function sendMessage(event) {
@@ -105,10 +80,13 @@
         function submit_start_room(event) {
             event.preventDefault();
 
-            fetch('/user/processing_start_room/' + room_id.value, {
+            let csrf = document.getElementById('_csrf').value;
+            let room_id = document.getElementById('room_id').value;
+
+            fetch('/user/processing_start_room/' + room_id, {
                 method: 'post',
                 headers: {
-                    "X-CSRF-TOKEN" : _csrf.value,
+                    "X-CSRF-TOKEN" : csrf,
                 }
             }).then( (response) => {
                 if (response.status !== 200) {
@@ -116,19 +94,18 @@
                     return;
                 }
                 response.json().then(function(data) {
-                    var initial_state = initialize_room(data);
+                    let initial_state = initialize_room(data);
 
-                    fetch('/user/start_room/' + room_id.value, {
+                    fetch('/user/start_room/' + room_id, {
                         method: 'post',
                         headers: {
-                            "X-CSRF-TOKEN" : _csrf.value,
+                            "X-CSRF-TOKEN" : csrf,
                             "Content-Type" : "application/json; charset=utf-8"
                         },
                         body: JSON.stringify(initial_state)
                     }).then( (response) => {
                         if (response.status !== 200) {
                             console.log("Can't start room. Status Code: " + response.status);
-                            return;
                         }
                     });
                 });
@@ -160,6 +137,7 @@
                     <div class="col-auto">
                         <a th:href="'/user/exit_room/' + ${room_id}"><button class="btn btn-outline-secondary" type="button" id="quit_button">выйти</button></a>
                         <button th:if="${host}==true" class="btn btn-outline-secondary" type="button" id="start_button" onclick="submit_start_room(event)">начать</button>
+                        <button th:if="${host}==true" class="btn btn-outline-secondary" type="button" id="skip_button" onclick="processing_stage(event)">далее</button>
                         <div th:if="${host}==true" class="dropdown" style="display:inline-block;">
                             <button class="btn btn-secondary dropdown-toggle" data-bs-auto-close="false" type="button" id="switchPlayerButton"
                                     data-bs-toggle="dropdown" aria-expanded="false">
@@ -186,7 +164,9 @@
             </nav>
 
             <tab-content :channels="channels"  :polls = "polls" :active_tab = "active_tab"
-                         :status = "status" :players = "players" :channel-read-mask = "channelReadMask" :channel-write-mask = "channelWriteMask"></tab-content>
+                         :status = "status" :players = "players"
+                         :channel-read-mask = "channelReadMask" :channel-write-mask = "channelWriteMask"
+                         :poll-vote-mask = "pollVoteMask"></tab-content>
         </div>
     </div>
     <script>
@@ -195,7 +175,7 @@
 
         data() {
             return {channels: [], polls: [], players: [], status: null, active_tab: null,
-                channelReadMask: 0, channelWriteMask: 0};
+                channelReadMask: 0, channelWriteMask: 0, pollVoteMask: 0};
         },
         methods: {
 
@@ -284,6 +264,7 @@
 
                             self.channelReadMask = data.channelReadMask;
                             self.channelWriteMask = data.channelWriteMask;
+                            self.pollVoteMask = data.pollVoteMask;
                             self.polls = data.polls;
                             self.status = data.status;
 
@@ -693,33 +674,79 @@
     });
 
     app.component("vote-button", {
-        props: ["poll_id", "candidate_name", "candidate_index"],
+        props: ["poll_id", "candidate_name", "candidate_index", "selected_candidate_name"],
 
         template: `
-          <input type="radio" class="btn-check"
-                 :name="'radio-' + poll_id"
-                 :id="'radio-' + poll_id + '-' + candidate_index" autocomplete="off">
-          <label class="btn btn-primary m-2"
-                 :for="'radio-' + poll_id + '-' + candidate_index">{{candidate_name}}</label>
+          <label class="m-1">
+            <input type="button" class="btn btn-secondary"
+                   :class="(candidate_name === selected_candidate_name)? 'active' : ''"
+                   @click="$emit('change-vote', candidate_name,  candidate_index)"
+                   :value = "candidate_name">
+          </label>
         `
     });
 
     app.component("tab-panel-poll", {
-        props: ["poll_id", "candidates", "poll_name", "active_tab"],
+        props: ["poll_id", "candidates", "poll_name", "can_vote", "active_tab"],
+
+        data() { return {selected_candidate_name : null, selected_candidate_index : null, voted: false}},
+
+        methods: {
+            sendVote: function (event) {
+                event.preventDefault();
+
+                if (this.selected_candidate_name == null)
+                    return;
+
+                let self = this;
+
+                fetch('/user/vote/' + this.poll_id + '?candidate=' + this.selected_candidate_index, {
+                    method: 'post',
+                    headers: {
+                        "X-CSRF-TOKEN": document.getElementById('_csrf').value,
+                    },
+                }).then((response) => {
+                    if (response.status !== 200) {
+                        console.log("Can't vote. Status Code: " + response.status);
+                    } else {
+                        self.voted = true;
+                    }
+                });
+            },
+
+
+            changeVote: function (candidate_name, candidate_index) {
+
+                console.log("vote change");
+                console.log(candidate_name);
+                console.log(this.voted);
+
+                if (this.selected_candidate_name !== candidate_name) {
+                    this.selected_candidate_name = candidate_name;
+                    this.selected_candidate_index = candidate_index;
+                } else {
+                    this.selected_candidate_name = null;
+                    this.selected_candidate_index = null;
+                }
+            }
+        },
 
         template: `
           <div :class="'tab-pane fade ' + ((active_tab === poll_name) ? 'show active' : '')"
                :id="'pills-poll-' + poll_id" role="tabpanel" :aria-labelledby="poll_id + '-poll-tab'">
 
-            <form class="row" onsubmit="sendVote(event)" :id="'form-poll-' + poll_id">
+            <form class="row" @submit="sendVote" :id="'form-poll-' + poll_id">
               <div class="col-12" :id="'candidates-poll-' + poll_id">
                 <vote-button v-for = "(candidate_index, candidate_name) in candidates"
                              :poll_id="poll_id"
                              :candidate_index="candidate_index"
-                             :candidate_name="candidate_name"></vote-button>
+                             :candidate_name="candidate_name"
+                             :selected_candidate_name="selected_candidate_name"
+                             @change-vote = "changeVote"></vote-button>
               </div>
               <div class="col-auto mt-4">
-                <button class="btn btn-primary">Голосовать</button>
+                <button class="btn btn-primary submit-vote-button"
+                        :class="(can_vote && !voted)? '' : 'disabled'">Голосовать</button>
               </div>
             </form>
           </div>
@@ -759,7 +786,8 @@
     });
 
     app.component("tab-content", {
-        props: ["channels", "polls", "players", "active_tab", "status", "channelReadMask", "channelWriteMask"],
+        props: ["channels", "polls", "players", "active_tab", "status",
+            "channelReadMask", "channelWriteMask", "pollVoteMask"],
 
         template: `
           <div class="tab-content" id="pills-tabContent">
@@ -767,15 +795,17 @@
                        :channel_id = "channel.channel_id"
                        :active_tab = "active_tab"
                        :channel_name = "channel.name"
-                       :can_read = "((channelReadMask & (1 << channel.cindex)) !== 0)"
-                               :can_write = "((channelWriteMask & (1 << channel.cindex)) !== 0)"
+                       :can_read = "(channelReadMask & (1 << channel.cindex)) !== 0"
+                               :can_write = "(channelWriteMask & (1 << channel.cindex)) !== 0"
                                :stages = "channel.stages" :key="channel.channel_id">
             </tab-panel-channel>
             <tab-panel-poll v-for = "poll in polls"
-                            :poll_id = poll.poll_id
-                            :poll_name = poll.name
-                            :candidates = poll.candidates
-                            :active_tab = active_tab>
+                            :poll_id = "poll.poll_id"
+                            :poll_name = "poll.name"
+                            :candidates = "poll.candidates"
+                            :active_tab = "active_tab"
+                            :can_vote = "(pollVoteMask & (1 << poll.lindex)) !== 0"
+                            :key = "poll.poll_id">
             </tab-panel-poll>
             <tab-panel-players v-if="status==='not started'" :players="players" :active_tab="active_tab"></tab-panel-players>
           </div>

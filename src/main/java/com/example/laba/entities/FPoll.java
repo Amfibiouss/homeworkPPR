@@ -26,6 +26,7 @@ public class FPoll {
     private Long mask_candidates;
     @Column(columnDefinition="TEXT")
     private String candidates;
+    private long lindex;
 
     @Override
     public boolean equals(Object o) {
@@ -114,8 +115,15 @@ public class FPoll {
     public Long getMask_candidates() {
         return mask_candidates;
     }
-
     public void setMask_candidates(Long mask_candidates) {
         this.mask_candidates = mask_candidates;
+    }
+
+    public long getLindex() {
+        return lindex;
+    }
+
+    public void setLindex(long lindex) {
+        this.lindex = lindex;
     }
 }

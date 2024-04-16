@@ -11,15 +11,17 @@ import static jakarta.persistence.FetchType.LAZY;
 public class FCharacter {
     @Id
     @ManyToOne(fetch=LAZY)
-    FRoom room;
+    private FRoom room;
     @Id
-    Long pindex;
-    String name;
-    long ChannelReadMask;
-    long ChannelAnonReadMask;
-    long ChannelXRayReadMask;
-    long ChannelWriteMask;
-    long ChannelAnonWriteMask;
+    private Long pindex;
+    private String name;
+    private long channelReadMask;
+    private long channelAnonReadMask;
+    private long channelXRayReadMask;
+    private long channelWriteMask;
+    private long channelAnonWriteMask;
+    private long pollVoteMask;
+    private long pollObserveMask;
 
     @Override
     public boolean equals(Object o) {
@@ -58,42 +60,58 @@ public class FCharacter {
     }
 
     public long getChannelReadMask() {
-        return ChannelReadMask;
+        return channelReadMask;
     }
 
     public void setChannelReadMask(long channelReadMask) {
-        ChannelReadMask = channelReadMask;
+        this.channelReadMask = channelReadMask;
     }
 
     public long getChannelAnonReadMask() {
-        return ChannelAnonReadMask;
+        return channelAnonReadMask;
     }
 
     public void setChannelAnonReadMask(long channelAnonReadMask) {
-        ChannelAnonReadMask = channelAnonReadMask;
+        this.channelAnonReadMask = channelAnonReadMask;
     }
 
     public long getChannelXRayReadMask() {
-        return ChannelXRayReadMask;
+        return channelXRayReadMask;
     }
 
     public void setChannelXRayReadMask(long channelXRayReadMask) {
-        ChannelXRayReadMask = channelXRayReadMask;
+        this.channelXRayReadMask = channelXRayReadMask;
     }
 
     public long getChannelWriteMask() {
-        return ChannelWriteMask;
+        return channelWriteMask;
     }
 
     public void setChannelWriteMask(long channelWriteMask) {
-        ChannelWriteMask = channelWriteMask;
+        this.channelWriteMask = channelWriteMask;
     }
 
     public long getChannelAnonWriteMask() {
-        return ChannelAnonWriteMask;
+        return channelAnonWriteMask;
     }
 
     public void setChannelAnonWriteMask(long channelAnonWriteMask) {
-        ChannelAnonWriteMask = channelAnonWriteMask;
+        this.channelAnonWriteMask = channelAnonWriteMask;
+    }
+
+    public long getPollVoteMask() {
+        return pollVoteMask;
+    }
+
+    public void setPollVoteMask(long pollVoteMask) {
+        this.pollVoteMask = pollVoteMask;
+    }
+
+    public long getPollObserveMask() {
+        return pollObserveMask;
+    }
+
+    public void setPollObserveMask(long pollObserveMask) {
+        this.pollObserveMask = pollObserveMask;
     }
 }
