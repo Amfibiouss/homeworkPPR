@@ -3,10 +3,14 @@ package com.example.laba.controllers;
 import com.example.laba.json_objects.*;
 import com.example.laba.services.*;
 import jakarta.servlet.http.HttpServletResponse;
+import org.hibernate.service.spi.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -132,7 +136,11 @@ public class RoomManageController {
               @RequestParam long[] candidates,
               HttpServletResponse response) {
 
-        RCMDAOService.add_vote(poll_id, securityService.getUsername(), candidates);
+        try {
+            RCMDAOService.add_vote(poll_id, securityService.getUsername(), candidates);
+        } catch (ServiceException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid data", e);
+        }
 
         response.setStatus(200);
     }
