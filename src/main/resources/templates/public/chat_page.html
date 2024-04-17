@@ -709,10 +709,6 @@
             sendVote: function (event) {
                 event.preventDefault();
 
-                //if (this.selection.size < this.min_selection || this.selection.size > this.max_selection) {
-                //    return;
-                //}
-
                 let selection_url = []
                 for (const candidate of this.selection) {
                     if (this.candidates[candidate] !== undefined) {

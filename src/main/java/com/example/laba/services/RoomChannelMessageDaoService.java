@@ -984,7 +984,7 @@ public class RoomChannelMessageDaoService {
     }
 
     @Transactional
-    public boolean add_vote(long poll_id, String username, long[] candidates) {
+    public void add_vote(long poll_id, String username, long[] candidates) {
         Session session = sessionFactory.getCurrentSession();
         FPoll poll = session.get(FPoll.class, poll_id);
         FUser player = session.bySimpleNaturalId(FUser.class).load(username);
@@ -995,7 +995,7 @@ public class RoomChannelMessageDaoService {
         if (poll == null || (poll.getMask_voters() & (1L << pindex)) == 0
                 || candidates.length < poll.getMinSelection()
                 || candidates.length > poll.getMaxSelection()) {
-            return false;
+            throw new ServiceException("Неправильные данные");
         }
 
         long mask = 0;
@@ -1004,7 +1004,7 @@ public class RoomChannelMessageDaoService {
 
             if (candidate < 0 || candidate >= 30
                     || (poll.getMask_candidates() & (1L << candidate)) == 0) {
-                return false;
+                throw new ServiceException("Неправильные данные");
             }
 
             mask |= 1L << candidate;
@@ -1017,8 +1017,6 @@ public class RoomChannelMessageDaoService {
 
         character.setPollVoteMask(character.getPollVoteMask() ^ (1L << poll.getLindex()));
         poll.setMask_voters(poll.getMask_voters() ^ (1L << pindex));
-
-        return true;
     }
 
     @Transactional

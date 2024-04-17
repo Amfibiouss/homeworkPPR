@@ -132,7 +132,7 @@ public class RoomManageController {
               @RequestParam long[] candidates,
               HttpServletResponse response) {
 
-        boolean success_vote = RCMDAOService.add_vote(poll_id, securityService.getUsername(), candidates);
+        RCMDAOService.add_vote(poll_id, securityService.getUsername(), candidates);
 
         response.setStatus(200);
     }
