@@ -683,33 +683,46 @@
     });
 
     app.component("vote-button", {
-        props: ["poll_id", "candidate_name", "candidate_index", "selected_candidate_name"],
+        props: ["poll_id", "candidate_name", "candidate_index", "selection"],
 
         template: `
           <label class="m-1">
             <input type="button" class="btn btn-secondary"
-                   :class="(candidate_name === selected_candidate_name)? 'active' : ''"
-                   @click="$emit('change-vote', candidate_name,  candidate_index)"
+                   :class="(selection.has(candidate_name))? 'active' : ''"
+                   @click="$emit('change-vote', candidate_name)"
                    :value = "candidate_name">
           </label>
         `
     });
 
     app.component("tab-panel-poll", {
-        props: ["poll_id", "poll_name", "description", "candidates", "can_vote", "active_tab"],
+        props: ["poll_id", "poll_name", "description", "max_selection", "min_selection", "candidates", "can_vote", "active_tab"],
 
-        data() { return {selected_candidate_name : null, selected_candidate_index : null, voted: false}},
+        data() { return{
+            selected_candidate_name : null,
+            selected_candidate_index : null,
+            voted: false,
+            selection: new Set()
+        }},
 
         methods: {
             sendVote: function (event) {
                 event.preventDefault();
 
-                if (this.selected_candidate_name == null)
-                    return;
+                //if (this.selection.size < this.min_selection || this.selection.size > this.max_selection) {
+                //    return;
+                //}
+
+                let selection_url = []
+                for (const candidate of this.selection) {
+                    if (this.candidates[candidate] !== undefined) {
+                        selection_url.push("candidates=" + this.candidates[candidate]);
+                    }
+                }
 
                 let self = this;
 
-                fetch('/user/vote/' + this.poll_id + '?candidate=' + this.selected_candidate_index, {
+                fetch('/user/vote/' + this.poll_id + '?' + selection_url.join("&"), {
                     method: 'post',
                     headers: {
                         "X-CSRF-TOKEN": document.getElementById('_csrf').value,
@@ -724,18 +737,17 @@
             },
 
 
-            changeVote: function (candidate_name, candidate_index) {
+            changeVote: function (candidate_name) {
 
                 console.log("vote change");
                 console.log(candidate_name);
                 console.log(this.voted);
 
-                if (this.selected_candidate_name !== candidate_name) {
-                    this.selected_candidate_name = candidate_name;
-                    this.selected_candidate_index = candidate_index;
+                if (this.selection.has(candidate_name)) {
+                    this.selection.delete(candidate_name);
                 } else {
-                    this.selected_candidate_name = null;
-                    this.selected_candidate_index = null;
+                    if (this.selection.size !== this.max_selection)
+                        this.selection.add(candidate_name);
                 }
             }
         },
@@ -751,12 +763,12 @@
                              :poll_id="poll_id"
                              :candidate_index="candidate_index"
                              :candidate_name="candidate_name"
-                             :selected_candidate_name="selected_candidate_name"
+                             :selection="selection"
                              @change-vote = "changeVote"></vote-button>
               </div>
               <div class="col-auto mt-4">
                 <button class="btn btn-primary submit-vote-button"
-                        :class="(can_vote && !voted)? '' : 'disabled'">Голосовать</button>
+                        :class="(can_vote && !voted && this.selection.size >= this.min_selection && this.selection.size <= this.max_selection)? '' : 'disabled'">Голосовать</button>
               </div>
             </form>
           </div>
@@ -814,6 +826,8 @@
                             :poll_name = "poll.name"
                             :description = "poll.description"
                             :candidates = "poll.candidates"
+                            :max_selection = "poll.maxSelection"
+                            :min_selection = "poll.minSelection"
                             :active_tab = "active_tab"
                             :can_vote = "(pollVoteMask & (1 << poll.lindex)) !== 0"
                             :key = "poll.poll_id">

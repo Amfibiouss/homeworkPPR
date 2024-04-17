@@ -10,6 +10,8 @@ public class InputStatePoll {
     public long mask_voters;
     public long mask_observers;
     public long mask_candidates;
+    public Long maxSelection;
+    public Long minSelection;
     public Map<String, Long> candidates;
 
     public String description;
@@ -20,6 +22,22 @@ public class InputStatePoll {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Long getMaxSelection() {
+        return maxSelection;
+    }
+
+    public void setMaxSelection(Long maxSelection) {
+        this.maxSelection = maxSelection;
+    }
+
+    public Long getMinSelection() {
+        return minSelection;
+    }
+
+    public void setMinSelection(Long minSelection) {
+        this.minSelection = minSelection;
     }
 
     public Map<String, Long> getCandidates() {

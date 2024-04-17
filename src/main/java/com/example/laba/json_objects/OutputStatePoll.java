@@ -9,10 +9,10 @@ public class OutputStatePoll {
     public long poll_id;
 
     public String name;
-    public long lindex;
-
     public String description;
-
+    public long lindex;
+    public long maxSelection;
+    public long minSelection;
     @JsonRawValue
     public String candidates;
 
@@ -22,6 +22,22 @@ public class OutputStatePoll {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public long getMaxSelection() {
+        return maxSelection;
+    }
+
+    public void setMaxSelection(long maxSelection) {
+        this.maxSelection = maxSelection;
+    }
+
+    public long getMinSelection() {
+        return minSelection;
+    }
+
+    public void setMinSelection(long minSelection) {
+        this.minSelection = minSelection;
     }
 
     public String getCandidates() {

@@ -24,6 +24,8 @@ public class FPoll {
     private Long mask_candidates;
     @Column(columnDefinition="TEXT")
     private String candidates;
+    private long maxSelection;
+    private long minSelection;
     private long lindex;
 
     @Override
@@ -107,6 +109,22 @@ public class FPoll {
     }
     public void setMask_candidates(Long mask_candidates) {
         this.mask_candidates = mask_candidates;
+    }
+
+    public long getMaxSelection() {
+        return maxSelection;
+    }
+
+    public void setMaxSelection(long maxSelection) {
+        this.maxSelection = maxSelection;
+    }
+
+    public long getMinSelection() {
+        return minSelection;
+    }
+
+    public void setMinSelection(long minSelection) {
+        this.minSelection = minSelection;
     }
 
     public long getLindex() {

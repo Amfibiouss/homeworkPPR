@@ -129,10 +129,10 @@ public class RoomManageController {
 
     @PostMapping("/user/vote/{poll_id}")
     void vote(@PathVariable long poll_id,
-              @RequestParam long candidate,
+              @RequestParam long[] candidates,
               HttpServletResponse response) {
 
-        boolean success_vote = RCMDAOService.add_vote(poll_id, securityService.getUsername(), candidate);
+        boolean success_vote = RCMDAOService.add_vote(poll_id, securityService.getUsername(), candidates);
 
         response.setStatus(200);
     }

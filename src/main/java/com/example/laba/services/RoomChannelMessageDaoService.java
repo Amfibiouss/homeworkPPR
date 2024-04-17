@@ -703,6 +703,8 @@ public class RoomChannelMessageDaoService {
             outputPoll.setName(poll.getName());
             outputPoll.setLindex(poll.getLindex());
             outputPoll.setCandidates(poll.getCandidates());
+            outputPoll.setMaxSelection(poll.getMaxSelection());
+            outputPoll.setMinSelection(poll.getMinSelection());
 
             outputStatePolls.add(outputPoll);
         }
@@ -869,6 +871,8 @@ public class RoomChannelMessageDaoService {
             poll.setMask_voters(inputPoll.getMask_voters());
             poll.setMask_candidates(inputPoll.getMask_candidates());
             poll.setDescription(inputPoll.getDescription());
+            poll.setMaxSelection((inputPoll.getMaxSelection() == null)? 1 : inputPoll.getMaxSelection());
+            poll.setMinSelection((inputPoll.getMinSelection() == null)? 1 : inputPoll.getMinSelection());
             session.persist(poll);
 
             room.addPoll(poll);
@@ -980,26 +984,35 @@ public class RoomChannelMessageDaoService {
     }
 
     @Transactional
-    public boolean add_vote(long poll_id, String username, long candidate) {
+    public boolean add_vote(long poll_id, String username, long[] candidates) {
         Session session = sessionFactory.getCurrentSession();
         FPoll poll = session.get(FPoll.class, poll_id);
         FUser player = session.bySimpleNaturalId(FUser.class).load(username);
         FCharacter character = player.getCharacter();
 
-
-        if (poll == null || candidate < 0 || candidate >= 30
-                || (poll.getMask_candidates() & (1L << candidate)) == 0) {
-            return false;
-        }
-
         long pindex = player.getCharacter().getPindex();
 
-        if ((poll.getMask_voters() & (1L << pindex)) == 0) {
+        if (poll == null || (poll.getMask_voters() & (1L << pindex)) == 0
+                || candidates.length < poll.getMinSelection()
+                || candidates.length > poll.getMaxSelection()) {
             return false;
         }
 
+        long mask = 0;
+
+        for (long candidate : candidates) {
+
+            if (candidate < 0 || candidate >= 30
+                    || (poll.getMask_candidates() & (1L << candidate)) == 0) {
+                return false;
+            }
+
+            mask |= 1L << candidate;
+        }
+
+
         long[] poll_table = poll.getPoll_table();
-        poll_table[(int)pindex] |= (1L << candidate);
+        poll_table[(int) pindex] |= mask;
         poll.setPoll_table(poll_table);
 
         character.setPollVoteMask(character.getPollVoteMask() ^ (1L << poll.getLindex()));
