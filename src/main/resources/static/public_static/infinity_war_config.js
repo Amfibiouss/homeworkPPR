@@ -109,7 +109,7 @@ function calculate_polls_channels(init) {
                 dead[i] = 0;
             }
             messages[i] += "Черный орден победил. Все павшие воины Таноса оживают." +
-                " Танос собрал все камни, вы чувствуете что вселенная меняется... \\n";
+                " Танос собрал все камни, вы чувствуете что вселенная меняется... \n";
         }
 
     } else if ((alive_mask & (collector_mask | black_orden_mask)) === 0) {
@@ -117,14 +117,14 @@ function calculate_polls_channels(init) {
         curr_status = "finished";
         for (let i = 0; i < player_count; i++) {
 
-            messages[i] += "Мстители победили. Многие пали, но баланс Вселенной восстановлен.\\n";
+            messages[i] += "Мстители победили. Многие пали, но баланс Вселенной восстановлен.\n";
         }
     } else if ((free_mask & alive_mask & (avengers_mask | black_orden_mask)) === 0) {
         window.winner = "Коллекционер";
         curr_status = "finished";
         for (let i = 0; i < player_count; i++) {
 
-            messages[i] += "Коллекционер победил. Его коллекция пополнилась ценными экспонатами.\\n";
+            messages[i] += "Коллекционер победил. Его коллекция пополнилась ценными экспонатами.\n";
         }
     }
 
@@ -413,9 +413,9 @@ function initialize_room(data) {
     }
 
     window.messages = new Array(player_count).fill("");
-    messages[0] += "Как Живой Трибунал, вы ,конечно, знаете роль каждого ничтожного смертного.\\n"
+    messages[0] += "Как Живой Трибунал, вы ,конечно, знаете роль каждого ничтожного смертного.\n"
     for (let i = 0; i < player_count; i++) {
-        messages[0] += "Роль игрока " + names[i] + " (" + i + ") " + roles[i] + ". \\n";
+        messages[0] += "Роль игрока " + names[i] + " (" + i + ") " + roles[i] + ". \n";
     }
 
     window.blocked = new Array(30).fill(0);
@@ -436,7 +436,7 @@ function initialize_room(data) {
 
     for (let i = 0; i < player_count; i++) {
 
-        messages[i] += "Приветствую вас " + names[i] + " (" + i + ") , ваша роль: " + roles[i] + ". \\n";
+        messages[i] += "Приветствую вас " + names[i] + " (" + i + ") , ваша роль: " + roles[i] + ". \n";
 
         if (fraction[i] === "Черный Орден") {
             messages[i] +=
@@ -444,15 +444,15 @@ function initialize_room(data) {
                 "Ваша цель собрать все 6 Камней Бесконечности в перчатке Таноса. " +
                 "Благодаря Камню Силы который уже находится в перчатке Таноса, " +
                 "вы можете путем голосования выберать кого убить ночью. " +
-                "Но если вы потеряете Камень Силы, то потеряете эту возможность. \\n";
+                "Но если вы потеряете Камень Силы, то потеряете эту возможность. \n";
         } else if (fraction[i] === "Мстители") {
             messages[i] += "Вы принадлежите к фракции Мстителей. " +
                 "Ваша цель уничтожить Черный Орден и Коллекционера. "
-                + "Каждый день убивайте одного рандо... кхм подозрительного человека на дневном голосовании. \\n";
+                + "Каждый день убивайте одного рандо... кхм подозрительного человека на дневном голосовании. \n";
         } else if (fraction[i] === "Коллекционер") {
             messages[i] += "Вы принадлежите к фракции Коллекционера. " +
                 "Ваша цель похитить для коллекции весь Черный Орден и Мстителей. " +
-                "Каждую ночь похищайте одного человека и принимайте его внешность с помощью Камня Реальности. \\n";
+                "Каждую ночь похищайте одного человека и принимайте его внешность с помощью Камня Реальности. \n";
         } else {
             messages[i] += "Вы должны следить за порядком во вселенной и не огорчать Всевышнего.";
         }
@@ -506,8 +506,8 @@ function give_stones_to_random_murders(candidate, murders_mask) {
 
                      if (ind === 0) {
                          stone_owners.set(entry[0], i);
-                         messages[i] += "Теперь вы новый владелец предмета " + entry[0] + ".\\n";
-                         messages[0] += "Теперь " + names[i] + " новый владелец предмета " + entry[0] + ".\\n";
+                         messages[i] += "Теперь вы новый владелец предмета " + entry[0] + ".\n";
+                         messages[0] += "Теперь " + names[i] + " новый владелец предмета " + entry[0] + ".\n";
                          break;
                      }
 
@@ -524,27 +524,27 @@ function kill_player(candidate, poll) {
     let reason = death_reasons[Math.floor(Math.random() * death_reasons.length)];
 
     for (let i = 0; i < player_count; i++) {
-        messages[i] += 'Нас покинул ' + names[candidate] + ". " + reason + "\\n";
+        messages[i] += 'Нас покинул ' + names[candidate] + ". " + reason + "\n";
 
         if (fraction[i] === 'Черный Орден') {
             messages[i] += "Обыскав труп и дом жертвы вы узнали, что " + names[candidate]
-                + " является " + roles[candidate] + ".\\n";
+                + " является " + roles[candidate] + ".\n";
         }
     }
 
     dead[candidate] = 1;
     give_stones_to_random_murders(candidate, poll.poll_table[candidate]);
     messages[candidate] += ((reason === 'Игрок найден в луже крови в сортире.') ?
-        'Вас позорно замочили в сортире...' : 'Вы пали смертью храбрых, сопротивляясь как лев.') + '\\n';
+        'Вас позорно замочили в сортире...' : 'Вы пали смертью храбрых, сопротивляясь как лев.') + '\n';
 }
 
 function free_player(candidate) {
 
     for (let i = 0; i < player_count; i++) {
         if ((all_mask & (1 << i)) !== 0)
-            messages[i] += "Игрок " + names[candidate] + " освобожден.\\n";
+            messages[i] += "Игрок " + names[candidate] + " освобожден.\n";
     }
-    messages[candidate] += "Вас освободили из плена Коллекционера. \\n";
+    messages[candidate] += "Вас освободили из плена Коллекционера. \n";
 }
 
 function visit_abducted_player(candidate, mask, reason) {
@@ -552,7 +552,7 @@ function visit_abducted_player(candidate, mask, reason) {
         if ((mask & (1 << i)) !== 0)
             messages[i] += "Вы постетили Игрока " + names[candidate] + ", чтобы " + reason + ". " +
                 "Но в его доме пусто, только следы борьбы. Кажется его похитили, или он хочет сделать вид" +
-                " будто его похитили...\\n";
+                " будто его похитили...\n";
     }
 }
 
@@ -604,8 +604,29 @@ function get_stone_user(mask) {
 function update_state(data) {
     window.messages = new Array(player_count).fill("");
 
-    let poll;
+    data.forEach(function(poll, index, polls) {
 
+        let rev_poll_table = [];
+
+        for (let i = 0; i < 30; i++) {
+
+            let mask = 0;
+            let j = 0;
+
+            for (const row of poll.poll_table) {
+                if ((row & (1 << i)) !== 0) {
+                    mask |= (1 << j);
+                }
+                j++;
+            }
+
+            rev_poll_table.push(mask);
+        }
+
+        polls[index].poll_table = rev_poll_table;
+    });
+
+    let poll;
     let ghost_mask;
     let alive_mask;
     let abducted_mask;
@@ -684,7 +705,7 @@ function update_state(data) {
             window.time_prediction = 0;
             messages[stone_owners.get('Камень Времени')] += "Вы перебрали " + MAX_FUTURE_BRANCHES + " вариантов развития событий, из них: " +
                 wins['Мстители'] + " победных у Мстителей, " + wins['Черный Орден'] + " победных у Черного Ордена, " +
-                wins['Коллекционер'] + " победных у Коллекционера, " + wins['Бесконечность'] + " не определены.\\n";
+                wins['Коллекционер'] + " победных у Коллекционера, " + wins['Бесконечность'] + " не определены.\n";
         }
         if (candidate === 1 && yesterday !== -1 && window.time_stone_usage === 0) {
             set_state(yesterday);
@@ -692,7 +713,7 @@ function update_state(data) {
             window.time_branch = 2;
 
             for (let i = 0; i < player_count; i++) {
-                messages[i] += "Вы чувствуете, что время течет в обратном направлении...\\n";
+                messages[i] += "Вы чувствуете, что время течет в обратном направлении...\n";
             }
 
             return calculate_polls_channels(0);
@@ -709,7 +730,7 @@ function update_state(data) {
         let candidate = get_max_voting_candidate(poll);
         if (candidate < 1) {
             for (let i = 0; i < player_count; i++) {
-                messages[i] += 'Несколько кандидатов набрали равное количество голосов. Никто не умер. \\n';
+                messages[i] += 'Несколько кандидатов набрали равное количество голосов. Никто не умер. \n';
             }
         } else {
             let collector_index = window.index_by_role.get('Танелиир Тиван');
@@ -720,7 +741,7 @@ function update_state(data) {
                     messages[i] += "Игрок " + names[candidate] + " попытался сбежать, но его догнали." +
                         " Оказалось, что это коллекционер " + window.collector_name + ". Он был казнен," +
                         " но Камень Реальности, который он использовал для маскировки, был кем-то украден. " +
-                        "Все пленные были освобождены.\\n";
+                        "Все пленные были освобождены.\n";
 
                     if (abducted[i] === 1) {
                         free_player(i);
@@ -730,7 +751,7 @@ function update_state(data) {
 
                 dead[candidate] = 1;
                 give_stones_to_random_murders(candidate, poll.poll_table[candidate]);
-                messages[candidate] += 'Вас казнили на дневном голосовании((( \\n';
+                messages[candidate] += 'Вас казнили на дневном голосовании((( \n';
                 names[candidate] = window.collector_name;
             } else {
 
@@ -740,12 +761,12 @@ function update_state(data) {
 
                 for (let i = 0; i < player_count; i++) {
                     messages[i] += 'Большинство проголосовало за ' + names[candidate] + ". " + reason
-                        + ' После обыска и расследования стало ясно что он ' + fraction[candidate] + ".\\n";
+                        + ' После обыска и расследования стало ясно что он ' + fraction[candidate] + ".\n";
                 }
 
                 dead[candidate] = 1;
                 give_stones_to_random_murders(candidate, poll.poll_table[candidate]);
-                messages[candidate] += 'Вас казнили на дневном голосовании((( \\n';
+                messages[candidate] += 'Вас казнили на дневном голосовании((( \n';
             }
         }
     }
@@ -766,27 +787,27 @@ function update_state(data) {
             if (fraction[stone_user] === 'Коллекционер') {
 
                 if (candidate === stone_owners.get('Камень Силы')) {
-                    messages[candidate] = "На вас пытались применить Камень Реальности, но вы отбились. \\n";
-                    messages[stone_user] = "Вы неудачно попытались похитить игрока " + names[candidate] + ".\\n";
+                    messages[candidate] = "На вас пытались применить Камень Реальности, но вы отбились. \n";
+                    messages[stone_user] = "Вы неудачно попытались похитить игрока " + names[candidate] + ".\n";
                 } else {
                     abducted[candidate] = 1;
 
                     for (let i = 0; i < player_count; i++)
-                        messages[i] += "Игрок " + names[stone_user] + " пропал. \\n";
+                        messages[i] += "Игрок " + names[stone_user] + " пропал. \n";
 
                     names[stone_user] = names[candidate];
                     messages[stone_user] += "Вы успешно похитили игрока " + names[candidate];
-                    messages[candidate] += 'Вас похитил Коллекционер и посадил в гигантскую хомячью клетку!\\n';
+                    messages[candidate] += 'Вас похитил Коллекционер и посадил в гигантскую хомячью клетку!\n';
                 }
             } else {
                 if (candidate !== stone_owners.get('Камень Силы')) {
                     blocked[candidate] = 1;
                     messages[stone_user] += "Вы превратили Игрока " + names[candidate] + " в кубики. " +
-                        "Теперь он не сможет ничего делать этой ночью.\\n";
-                    messages[candidate] += "Вы превратились Игрока в кубики. Теперь он не сможет ничего делать этой ночью.\\n";
+                        "Теперь он не сможет ничего делать этой ночью.\n";
+                    messages[candidate] += "Вы превратились Игрока в кубики. Теперь он не сможет ничего делать этой ночью.\n";
                 } else {
-                    messages[candidate] = "На вас пытались применить Камень Реальности, но вы отбились. \\n";
-                    messages[stone_user] = "Вам не удалось превратить в кубики Игрока " + names[candidate] + ".\\n";
+                    messages[candidate] = "На вас пытались применить Камень Реальности, но вы отбились. \n";
+                    messages[stone_user] = "Вам не удалось превратить в кубики Игрока " + names[candidate] + ". \n";
                 }
             }
         }
@@ -809,7 +830,7 @@ function update_state(data) {
                     if (fraction[i] === 'Черный Орден') {
                         messages[i] += "Игрок " + names[candidate] + " попытался сбежать, но его догнали." +
                             " Оказалось, что это коллекционер " + window.collector_name + ". Он был убит," +
-                            ", все пленные освобождены. \\n";
+                            ", все пленные освобождены. \n";
                     }
 
                     if (abducted[i] === 1) {
@@ -845,11 +866,11 @@ function update_state(data) {
             } else {
                 for (let i = 0; i < player_count; i++) {
                     messages[i] += 'Игрок ' + names[candidate] + " был найден мертвым с электрическими ожогами!" +
-                        "Сюдя по уликам, он был " + roles[candidate] + ".\\n";
+                        "Сюдя по уликам, он был " + roles[candidate] + ". \n";
                 }
 
                 dead[candidate] = 1;
-                messages[candidate] += 'Тор забил вас Громсекирой.\\n';
+                messages[candidate] += 'Тор забил вас Громсекирой. \n';
             }
         }
     }
@@ -865,12 +886,12 @@ function update_state(data) {
         if (candidate !== -1 && roles[candidate] !== 'Гамора' && roles[candidate] !== 'Вижн' && dead[candidate] === 1) {
 
             for (let i = 0; i < player_count; i++) {
-                messages[i] += 'Игрок ' + names[candidate] + " внезапно воскрес!\\n";
+                messages[i] += 'Игрок ' + names[candidate] + " внезапно воскрес! \n";
             }
 
             window.soul_stone_last_usage = day_count;
             dead[candidate] = 0;
-            messages[candidate] += 'Магия Камня Души вернула вас к жизни.\\n';
+            messages[candidate] += 'Магия Камня Души вернула вас к жизни. \n';
         }
     }
 
@@ -892,17 +913,17 @@ function update_state(data) {
                 } else {
 
                     messages[stone_user] += "Вы успешно прочитали мысли и обнаружили что Игрок " + names[candidate]
-                        + " является " + roles[candidate] + "\\n";
+                        + " является " + roles[candidate] + "\n";
 
                     if (fraction[candidate] === 'Черный Орден') {
-                        messages[candidate] += "Вы ощушаете, что в вашей голове покопались...\\n";
+                        messages[candidate] += "Вы ощушаете, что в вашей голове покопались... \n";
                     }
                 }
             }
 
             window.soul_stone_last_usage = day_count;
             dead[candidate] = 0;
-            messages[candidate] += 'Магия Камня Души вернула вас к жизни.\\n';
+            messages[candidate] += 'Магия Камня Души вернула вас к жизни. \n';
         }
     }
 
@@ -927,10 +948,10 @@ function update_state(data) {
                         candidate = index_by_role.get('Танелиир Тиван');
                     }
 
-                    messages[entry[1]] = "Вы передали камень Игроку " + names[candidate] + "\\n";
+                    messages[entry[1]] = "Вы передали камень Игроку " + names[candidate] + " \n";
                     stone_owners.set(entry[0], candidate);
-                    messages[candidate] += "Теперь вы новый владелец предмета " + entry[0] + ".\\n";
-                    messages[0] += "Теперь " + names[candidate] + " новый владелец предмета " + entry[0] + ".\\n";
+                    messages[candidate] += "Теперь вы новый владелец предмета " + entry[0] + ". \n";
+                    messages[0] += "Теперь " + names[candidate] + " новый владелец предмета " + entry[0] + ". \n";
                 }
             }
         }

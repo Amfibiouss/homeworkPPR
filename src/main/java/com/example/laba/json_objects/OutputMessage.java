@@ -59,12 +59,18 @@ public class OutputMessage {
         this.username_color = username_color;
     }
 
-    public OutputMessage(String username, String text, String alias, String username_color, double opacity) {
+    public OutputMessage(String username,
+                                     String alias,
+                                     String text,
+                                     double opacity,
+                                     String username_color,
+                                     long id) {
         this.username = username;
+        this.alias = alias;
         this.text = text;
         this.opacity = opacity;
-        this.alias = alias;
         this.username_color = username_color;
+        this.id = id;
     }
 
     public OutputMessage(String username, String text, double opacity) {

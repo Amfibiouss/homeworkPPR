@@ -19,8 +19,6 @@ public class FPoll {
     private FRoom room;
     @Array(length=30)
     private long[] poll_table = new long[30];
-    @Array(length=30)
-    private long[] reverse_poll_table = new long[30];
     private Long mask_voters;
     private Long mask_observers;
     private Long mask_candidates;
@@ -78,14 +76,6 @@ public class FPoll {
 
     public void setPoll_table(long[] poll_table) {
         this.poll_table = poll_table;
-    }
-
-    public long[] getReverse_poll_table() {
-        return reverse_poll_table;
-    }
-
-    public void setReverse_poll_table(long[] reverse_poll_table) {
-        this.reverse_poll_table = reverse_poll_table;
     }
 
     public String getDescription() {

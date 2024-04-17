@@ -40,20 +40,24 @@ public class RoomChannelMessageDaoService {
                                      String username_color,
                                      long id) {
 
-        return String.format("{\"username\": %s, \"text\": \"%s\", \"alias\":\"%s\"," +
-                        " \"opacity\":\"%s\", \"username_color\": %s, \"id\": %d}",
-                (username == null)? null : "\"" + username + "\"", text, alias, opacity,
-                (username_color == null)? null : "\"" + username_color + "\"", id);
-
+        try {
+            return objectMapper.writeValueAsString(new OutputMessage(username, alias, text, opacity, username_color, id));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String get_output_stage_channel(String name,
-                                     long stage_id, long count,
-                                     String messages, boolean loaded) {
+                                           long stage_id,
+                                           long count,
+                                           List<String> messages,
+                                           boolean loaded) {
 
-        return String.format("{\"stage_name\": \"%s\", \"stage_id\": \"%d\", " +
-                        "\"count\":%d, \"messages\": %s, \"loaded\": %s}",
-                name, stage_id, count, messages, loaded);
+        try {
+            return objectMapper.writeValueAsString(new OutputStageChannel(name, stage_id, count, messages, loaded));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String get_array(List<String> list) {
@@ -160,7 +164,7 @@ public class RoomChannelMessageDaoService {
                 if (stage != last_stage) {
                     //String jsonString = (XRayRead) ? stage_channel.getJsonXRayStrings() :
                     //        ((AnonRead) ? stage_channel.getJsonAnonStrings() : stage_channel.getJsonStrings());
-                    stages.add(get_output_stage_channel(stage.getName(), stage.getId(), stage_channel.getCount(), "[]", false));
+                    stages.add(get_output_stage_channel(stage.getName(), stage.getId(), stage_channel.getCount(), new ArrayList<String>(), false));
                 }
             }
         } else {
@@ -185,7 +189,7 @@ public class RoomChannelMessageDaoService {
             result_messages.add((XRayRead)? message.getJsonXRayString() :
                     ((AnonRead)? message.getJsonAnonString() : message.getJsonString()));
         }
-        stages.add(get_output_stage_channel(last_stage.getName(), last_stage.getId(), messages.size(), get_array(result_messages), true));
+        stages.add(get_output_stage_channel(last_stage.getName(), last_stage.getId(), messages.size(), result_messages, true));
 
         return get_array(stages);
     }
@@ -303,7 +307,7 @@ public class RoomChannelMessageDaoService {
         channel_newspaper.setName("газета");
         channel_newspaper.setRead_mask(0L);
         channel_newspaper.setWrite_mask(0L);
-        channel_newspaper.setRead_real_username_mask((1L << 30) - 1);
+        channel_newspaper.setRead_real_username_mask(0L);
         channel_newspaper.setAnon_write_mask(0L);
         channel_newspaper.setAnon_read_mask(0L);
         channel_newspaper.setCindex(1L);
@@ -329,7 +333,7 @@ public class RoomChannelMessageDaoService {
         message.setDate(OffsetDateTime.now());
         message.setUser(user);
         message.setAlias(user.getLogin());
-        message.setText(room.help.replaceAll("\n", "\\\\n"));
+        message.setText(room.help);
         message.setStage(stage);
         message.setTarget(-1L);
         session.persist(message);
@@ -671,7 +675,6 @@ public class RoomChannelMessageDaoService {
         outputStateRoom.setChannelXRayReadMask(character.getChannelXRayReadMask());
         outputStateRoom.setChannelWriteMask(character.getChannelWriteMask());
         outputStateRoom.setChannelAnonWriteMask(character.getChannelAnonWriteMask());
-        outputStateRoom.setPollVoteMask(character.getPollVoteMask());
 
         List<OutputStateChannel> outputStateChannels = new ArrayList<>();
         for (FChannel channel : room.getChannels()) {
@@ -707,6 +710,8 @@ public class RoomChannelMessageDaoService {
 
             outputStatePolls.add(outputPoll);
         }
+
+        outputStateRoom.setPollVoteMask(character.getPollVoteMask());
         outputStateRoom.setPolls(outputStatePolls);
 
         FChannel newspaper = get_channel(room, "газета");
@@ -982,30 +987,26 @@ public class RoomChannelMessageDaoService {
         Session session = sessionFactory.getCurrentSession();
         FPoll poll = session.get(FPoll.class, poll_id);
         FUser player = session.bySimpleNaturalId(FUser.class).load(username);
+        FCharacter character = player.getCharacter();
 
-        if (player == null || poll == null || candidate < 0 || candidate >= 30
+
+        if (poll == null || candidate < 0 || candidate >= 30
                 || (poll.getMask_candidates() & (1L << candidate)) == 0) {
             return false;
         }
 
-        long index = player.getCharacter().getPindex();
+        long pindex = player.getCharacter().getPindex();
 
-        if ((poll.getMask_voters() & (1L << index)) == 0) {
+        if ((poll.getMask_voters() & (1L << pindex)) == 0) {
             return false;
         }
 
         long[] poll_table = poll.getPoll_table();
-        long[] reverse_poll_table = poll.getReverse_poll_table();
-
-        if (reverse_poll_table[(int)index] != 0) {
-            return false;
-        }
-
-        poll_table[(int) candidate] |= (1L << index);
-        reverse_poll_table[(int)index] |= (1L << candidate);
-
+        poll_table[(int)pindex] |= (1L << candidate);
         poll.setPoll_table(poll_table);
-        poll.setReverse_poll_table(reverse_poll_table);
+
+        character.setPollVoteMask(character.getPollVoteMask() ^ (1L << poll.getLindex()));
+        poll.setMask_voters(poll.getMask_voters() ^ (1L << pindex));
 
         return true;
     }
