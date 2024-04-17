@@ -7,14 +7,20 @@ import java.util.Map;
 
 public class InputStatePoll {
     public String name;
-
     public long mask_voters;
-
     public long mask_observers;
-
     public long mask_candidates;
-
     public Map<String, Long> candidates;
+
+    public String description;
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
     public Map<String, Long> getCandidates() {
         return candidates;

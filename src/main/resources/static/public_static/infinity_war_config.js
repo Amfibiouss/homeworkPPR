@@ -142,7 +142,11 @@ function calculate_polls_channels(init) {
                 {"name" : "Общий", "write_mask": alive_mask},
                 {"name" : "Черный Орден", "write_mask": black_orden_mask & alive_mask}],
             "polls" : [
-                {"name": "Дневное ГС",
+                {
+                    "name": "Дневное ГС",
+                    "description": "Выберите кого хотите казнить.\n " +
+                        "Погибает тот, у кого больше голосов. \n" +
+                        "Если таких несколько, никто не умрет.",
                     "mask_voters": active_mask,
                     "mask_observers": all_mask,
                     "mask_candidates": alive_mask & free_mask,
@@ -186,6 +190,9 @@ function calculate_polls_channels(init) {
             if (fraction[stone_owners.get("Камень Силы")] === "Черный Орден") {
                 new_state.polls.push({
                     "name": "Ночное ГС",
+                    "description": "Выберите кого хотите убить с помощью камня силы.\n " +
+                        "Погибает тот, у кого больше голосов. \n" +
+                        "Если таких несколько, никто не умрет.",
                     "mask_voters": black_orden_mask & active_mask,
                     "mask_observers": black_orden_mask,
                     "mask_candidates": (all_mask ^ black_orden_mask) & alive_mask & free_mask,
@@ -196,6 +203,7 @@ function calculate_polls_channels(init) {
 
                 new_state.polls.push({
                     "name": "Ночное ГС",
+                    "description": "Выберите кого хотите убить с помощью камня силы.",
                     "mask_voters": owner_mask,
                     "mask_observers": owner_mask,
                     "mask_candidates": (all_mask ^ owner_mask) & alive_mask & free_mask,
@@ -209,6 +217,7 @@ function calculate_polls_channels(init) {
 
             new_state.polls.push({
                 "name": "Камень Души",
+                "description": "Выберите кого хотите оживить.",
                 "mask_voters": owner_mask,
                 "mask_observers": owner_mask,
                 "mask_candidates": ghost_mask,
@@ -222,6 +231,7 @@ function calculate_polls_channels(init) {
 
                 new_state.polls.push({
                     "name": "Камень Реальности",
+                    "description": "Выберите человека, которого хотите похитить и личину которого принять.",
                     "mask_voters": owner_mask,
                     "mask_observers": owner_mask,
                     "mask_candidates": (alive_mask & free_mask) ^ owner_mask,
@@ -232,6 +242,8 @@ function calculate_polls_channels(init) {
 
                 new_state.polls.push({
                     "name": "Камень Реальности",
+                    "description": "Выберите человека, которого хотите превратать в кубики. \n" +
+                        "Он не сможет ходить этой ночью.",
                     "mask_voters": owner_mask,
                     "mask_observers": owner_mask,
                     "mask_candidates": (alive_mask & free_mask) ^ owner_mask,
@@ -245,6 +257,7 @@ function calculate_polls_channels(init) {
 
             new_state.polls.push({
                 "name": "Камень Времени",
+                "description": "Выберите либо откатить время к утру этого дня (одноразовая способность!), либо просмотреть возможные варианты будущего.",
                 "mask_voters": owner_mask,
                 "mask_observers": owner_mask,
                 "mask_candidates": 1 ^ ((window.time_stone_usage === 1 || window.yesterday === -1) ? 0 : 2),
@@ -257,6 +270,7 @@ function calculate_polls_channels(init) {
 
             new_state.polls.push({
                 "name": "Камень Разума",
+                "description": "Выберите чьи мысли прочитать. Вы узнаете роль цели.",
                 "mask_voters": owner_mask,
                 "mask_observers": owner_mask,
                 "mask_candidates": (alive_mask & free_mask) ^ owner_mask,
@@ -278,6 +292,7 @@ function calculate_polls_channels(init) {
 
             new_state.polls.push({
                 "name": "Громсекира",
+                "description": "Выберите кого убить громсекирой. Только цельтесь в голову.",
                 "mask_voters": owner_mask,
                 "mask_observers": owner_mask,
                 "mask_candidates": (alive_mask & free_mask) ^ owner_mask,
@@ -294,6 +309,9 @@ function calculate_polls_channels(init) {
                 if ((owner_mask & free_mask) !== 0) {
                     new_state.polls.push({
                         "name": "Отдать " + entry[0],
+                        "description": "Выберите кому отдать " + entry[0] + ".\n " +
+                            "Если на вас применять камень силы, камень реальности, громсекиру и т.д вы не успеете передать его.\n " +
+                            "Можете просто игронировать это голосование, если хотите оставить камень при себе.",
                         "mask_voters": owner_mask,
                         "mask_observers": owner_mask,
                         "mask_candidates": (alive_mask & free_mask) ^ owner_mask,

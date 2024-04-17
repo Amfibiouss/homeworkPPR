@@ -696,7 +696,7 @@
     });
 
     app.component("tab-panel-poll", {
-        props: ["poll_id", "candidates", "poll_name", "can_vote", "active_tab"],
+        props: ["poll_id", "poll_name", "description", "candidates", "can_vote", "active_tab"],
 
         data() { return {selected_candidate_name : null, selected_candidate_index : null, voted: false}},
 
@@ -745,6 +745,7 @@
                :id="'pills-poll-' + poll_id" role="tabpanel" :aria-labelledby="poll_id + '-poll-tab'">
 
             <form class="row" @submit="sendVote" :id="'form-poll-' + poll_id">
+              <span style="display: block; font-size: 1.25rem; white-space:pre-line;" class="m-2">{{description}}</span>
               <div class="col-12" :id="'candidates-poll-' + poll_id">
                 <vote-button v-for = "(candidate_index, candidate_name) in candidates"
                              :poll_id="poll_id"
@@ -811,6 +812,7 @@
             <tab-panel-poll v-for = "poll in polls"
                             :poll_id = "poll.poll_id"
                             :poll_name = "poll.name"
+                            :description = "poll.description"
                             :candidates = "poll.candidates"
                             :active_tab = "active_tab"
                             :can_vote = "(pollVoteMask & (1 << poll.lindex)) !== 0"

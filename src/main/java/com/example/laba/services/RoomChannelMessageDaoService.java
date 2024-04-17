@@ -698,15 +698,11 @@ public class RoomChannelMessageDaoService {
 
             OutputStatePoll outputPoll = new OutputStatePoll();
 
+            outputPoll.setDescription(poll.getDescription());
             outputPoll.setPoll_id(poll.getId());
             outputPoll.setName(poll.getName());
             outputPoll.setLindex(poll.getLindex());
-
-            try {
-                outputPoll.setCandidates(objectMapper.readValue(poll.getCandidates(), Map.class));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
+            outputPoll.setCandidates(poll.getCandidates());
 
             outputStatePolls.add(outputPoll);
         }
@@ -872,6 +868,7 @@ public class RoomChannelMessageDaoService {
             poll.setMask_observers(inputPoll.getMask_observers());
             poll.setMask_voters(inputPoll.getMask_voters());
             poll.setMask_candidates(inputPoll.getMask_candidates());
+            poll.setDescription(inputPoll.getDescription());
             session.persist(poll);
 
             room.addPoll(poll);
