@@ -263,14 +263,6 @@ public class RoomChannelMessageDaoService {
 
     @Transactional
     public long add_room(InputRoom room, String creator) {
-        FRoom new_room = new FRoom();
-        new_room.setName(room.name);
-        new_room.setDescription(room.description);
-        new_room.setMin_players(room.min_players);
-        new_room.setMax_players(room.max_players);
-        new_room.setCode(room.code);
-        new_room.setStatus("not started");
-
         Session session = sessionFactory.getCurrentSession();
         FUser user = session.bySimpleNaturalId(FUser.class).load(creator);
 
@@ -288,6 +280,20 @@ public class RoomChannelMessageDaoService {
         if (rooms_cnt != 0) {
             throw new ServiceException("the another user's room has not been finished yet");
         }
+
+        try {
+            user.setRecentRoom(objectMapper.writeValueAsString(room));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        FRoom new_room = new FRoom();
+        new_room.setName(room.name);
+        new_room.setDescription(room.description);
+        new_room.setMin_players(room.min_players);
+        new_room.setMax_players(room.max_players);
+        new_room.setMode(room.mode);
+        new_room.setStatus("not started");
 
         new_room.setCreator(user);
         session.persist(new_room);
@@ -1059,5 +1065,20 @@ public class RoomChannelMessageDaoService {
         Session session = sessionFactory.getCurrentSession();
         FUser user = session.bySimpleNaturalId(FUser.class).load(username);
         return user.getCharacter().getRoom().getId();
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED, propagation = REQUIRES_NEW)
+    public InputRoom getUserRecentRoom(String username) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+
+        if (user.getRecentRoom() == null)
+            return null;
+
+        try {
+            return objectMapper.readValue(user.getRecentRoom(), InputRoom.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

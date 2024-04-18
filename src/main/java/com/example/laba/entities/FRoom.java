@@ -16,6 +16,7 @@ public class FRoom {
     private FUser creator;
     private String name;
     private String description;
+    private String mode;
     private OffsetDateTime start_time;
     private OffsetDateTime finish_time;
     private Long min_players;
@@ -91,6 +92,14 @@ public class FRoom {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getMode() {
+        return mode;
+    }
+
+    public void setMode(String mode) {
+        this.mode = mode;
     }
 
     public List<FChannel> getChannels() {

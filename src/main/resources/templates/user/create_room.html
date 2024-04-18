@@ -7,37 +7,6 @@
     <link rel=stylesheet type="text/css" href="/public_static/css/bootstrap.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="/public_static/js/bootstrap.bundle.js"></script>
-
-    <script>
-        function submit_form(event) {
-            event.preventDefault();
-
-            fetch('/user/create_room', {
-                method: 'post',
-                headers: {
-                    "X-CSRF-TOKEN" : _csrf.value,
-                    "Content-Type" : "application/json; charset=utf-8"
-                },
-                body: JSON.stringify({
-                    'name' : room_name.value,
-                    'description' : room_description.value,
-                    'help' : room_help.value,
-                    'min_players' : room_min_players.value,
-                    'max_players' : room_max_players.value,
-                    'code' : room_code.value
-                })
-            }).then( (response) => {
-                if (response.status !== 200) {
-                    console.log("Can't send form. Status Code: " + response.status);
-                    return;
-                }
-
-                load_room.innerHTML = `<a href="/user/load_room" download="room_config.json">Загрузить результат</a>`;
-            });
-        }
-    </script>
-
-
 </head>
 <body>
 <header th:replace="~{public/header :: |${@securityService.getAccess()}_header|}"></header>
@@ -46,28 +15,28 @@
     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" id = "_csrf"/>
 
     <div class="row justify-content-center">
-        <form class="col-auto bg-color1 mt-5 p-3" onsubmit="submit_form(event)">
+        <form class="col-auto bg-color1 mt-5 p-3" method="post" th:action="@{/user/add_room}">
             <div class="row">
                 <label class="col-12 mb-3">
-                    <input class="form-control" type="text" name="room_name" id="room_name" placeholder="название." required>
+                    <input class="form-control" type="text" name="room_name" placeholder="название." required>
                 </label>
                 <label class="col-12 mb-3">
-                    <textarea class="form-control" rows="3" name="room_description" id="room_description" placeholder="описание." required></textarea>
+                    <textarea class="form-control" rows="3" name="room_description" placeholder="описание." required></textarea>
                 </label>
                 <label class="col-12 mb-3">
-                    <textarea class="form-control" rows="3" name="room_help" id="room_help"
+                    <textarea class="form-control" rows="3" name="room_help"
                               placeholder="сообщение, которое будет показано в самом верху лобби. Введите например правила режима."></textarea>
                 </label>
                 <div class="col-12 mb-3">
 
                     <label for="room_min_players" id = "label_min_players"></label>
-                    <input type="range" class="form-range" id="room_min_players" min="2" max="25"
+                    <input type="range" class="form-range" name="room_min_players" id="room_min_players" min="2" max="20"
                            oninput="input1Handler(event)">
 
                     <script>
                         function input1Handler() {
                             document.getElementById('label_min_players').innerHTML =
-                               'минимальное количество игроков: ' + room_min_players.value;
+                               'минимальное количество игроков: ' + document.getElementById("room_min_players").value;
                         }
                         input1Handler();
                     </script>
@@ -75,28 +44,30 @@
                 <div class="col-12 mb-3">
 
                     <label for="room_max_players" id = "label_max_players"></label>
-                    <input type="range" class="form-range" id="room_max_players" min="2" max="25"
+                    <input type="range" class="form-range" name="room_max_players" id="room_max_players" min="2" max="20"
                            oninput="input2Handler(event)">
 
                     <script>
                         function input2Handler() {
                             document.getElementById('label_max_players').innerHTML =
-                               'максимальное количество игроков: ' + room_max_players.value;
+                               'максимальное количество игроков: ' + document.getElementById("room_max_players").value;
                         }
                         input2Handler();
                     </script>
                 </div>
 
-                <label class="col-12 mb-3">
-                    <textarea class="form-control" rows="3" name="room_code" id="room_code"
-                              placeholder="Ваш код." required></textarea>
-                </label>
+                <div class="col-12 mb-3">
 
-                <div class="col-12">
-                    <input class="btn btn-primary mb-3" type="submit" value="Создать"/>
+                    <label for="select_mode">Выберите один из режимов</label>
+                    <select class="form-select" id="select_mode" name="mode">
+                        <option value="avengers">Война бесконечности</option>
+                        <option value="empty">Без режима</option>
+                        <option value="debug">Дебаг</option>
+                    </select>
                 </div>
 
-                <div id = "load_room">
+                <div class="col-12">
+                    <button class="btn btn-primary mb-3">Создать комнату</button>
                 </div>
             </div>
         </form>

@@ -54,31 +54,41 @@ public class CreateRoomController {
         response.setStatus(200);
     }
 
-    @GetMapping("/user/load_room")
-    ResponseEntity<String> load_room(HttpServletRequest request) {
-
-        HttpSession session = request.getSession();
-        StringBuffer room_config = (StringBuffer) session.getAttribute("room_config");
-
-        if (room_config == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok()
-                .header("Content-Type", "application/json; charset=utf-8")
-                .body(new String(room_config));
-    }
-
     @PostMapping("/user/add_room")
-    void add_room(@RequestParam MultipartFile file,
+    void add_room(@RequestParam String room_name,
+                  @RequestParam String room_description,
+                  @RequestParam String room_help,
+                  @RequestParam long room_min_players,
+                  @RequestParam long room_max_players,
+                  @RequestParam String mode,
                   HttpServletResponse response,
                   ObjectMapper objectMapper) {
 
-        InputRoom room = null;
-        try {
-            room = objectMapper.readValue(file.getInputStream(), InputRoom.class);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (mode.equals("debug")) {
+            room_min_players = room_max_players = 1;
+        }
+        if (mode.equals("avengers")) {
+            room_min_players = room_max_players = 12;
+        }
+
+        InputRoom room = new InputRoom(room_name, room_description, room_help,
+                room_min_players, room_max_players, mode);
+
+        long room_id = RCMDAOService.add_room(room, securityService.getUsername());
+
+        response.setHeader("Location", "/public/chat/" + room_id);
+        response.setStatus(302);
+    }
+
+    @PostMapping("/user/add_recent_room")
+    void add_room(HttpServletResponse response) {
+
+        InputRoom room = RCMDAOService.getUserRecentRoom(securityService.getUsername());
+
+        if (room == null) {
+            response.setHeader("Location", "/public/rooms");
+            response.setStatus(302);
+            return;
         }
 
         long room_id = RCMDAOService.add_room(room, securityService.getUsername());

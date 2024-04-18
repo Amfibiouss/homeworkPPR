@@ -23,21 +23,17 @@
 <header th:replace="~{public/header :: |${@securityService.getAccess()}_header|}"></header>
 <main class="container">
     <div class="row">
-        <div class="dropdown col-12 gy-2">
-            <button class="btn btn-secondary dropdown-toggle" type="button" id="addRoomButton"
-                    data-bs-toggle="dropdown" aria-expanded="false">
-                <img src="/public_static/icons/plus.svg" width="30" height="30">
-            </button>
-            <div class="dropdown-menu p-2" aria-labelledby="addRoomButton">
-                <form th:action="@{/user/add_room}" method="post" enctype="multipart/form-data">
-                    <div>
-                        <label>
-                            <input class="form-control" type="file" name="file">
-                        </label>
-                    </div>
-                    <input class="mt-2 btn btn-primary" type="submit">
-                </form>
-            </div>
+        <div th:if = "${@securityService.getAccess()} != 'public'" class="col-12 gy-2">
+            <a href="/user/create_room" class="btn btn-secondary">
+                <img src="/public_static/icons/plus.svg" width="30" height="30" alt="plus_button">
+                <span>Создать новую комнату </span>
+            </a>
+            <form th:action="@{/user/add_recent_room}" method="post" style="display: inline-block;">
+                <button type="submit" class="btn btn-secondary">
+                    <img src="/public_static/icons/plus.svg" width="30" height="30" alt="plus_button">
+                    <span>Пересоздать прошлую комнату </span>
+                </button>
+            </form>
         </div>
         <div th:if="${param.error}!=null" class="mb-3 text-danger">
             <span th:text="${param.error}"></span>

@@ -34,6 +34,7 @@ public class FUser {
     FCharacter character;
     private Long desired_room_id;
     private String sessionId;
+    private String recentRoom;
 
     @OneToMany(mappedBy="user")
     private Set<FPunishment> punishments = new HashSet<>();
@@ -158,6 +159,14 @@ public class FUser {
 
     public void setCharacter(FCharacter character) {
         this.character = character;
+    }
+
+    public String getRecentRoom() {
+        return recentRoom;
+    }
+
+    public void setRecentRoom(String recent_room) {
+        this.recentRoom = recent_room;
     }
 
     public FUser() {

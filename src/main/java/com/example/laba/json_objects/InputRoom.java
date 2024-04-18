@@ -7,8 +7,16 @@ public class InputRoom {
     public String help;
     public long max_players;
     public long min_players;
+    public String mode;
 
-    public String code;
+    public InputRoom(String roomName, String roomDescription, String roomHelp, long roomMinPlayers, long roomMaxPlayers, String mode) {
+        this.name = roomName;
+        this.description = roomDescription;
+        this.help = roomHelp;
+        this.max_players = roomMaxPlayers;
+        this.min_players = roomMinPlayers;
+        this.mode = mode;
+    }
 
     public String getName() {
         return name;
@@ -50,11 +58,11 @@ public class InputRoom {
         this.min_players = min_players;
     }
 
-    public String getCode() {
-        return code;
+    public String getMode() {
+        return mode;
     }
 
-    public void setCode(String code) {
-        this.code = code;
+    public void setMode(String mode) {
+        this.mode = mode;
     }
 }
