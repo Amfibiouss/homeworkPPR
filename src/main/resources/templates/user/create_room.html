@@ -67,6 +67,10 @@
                 </div>
 
                 <div class="col-12">
+                    <input class="btn btn-primary mb-3" type="submit" value="Скопировать строку конфигурации" onclick="copyConfigHandler(event)"/>
+                </div>
+
+                <div class="col-12">
                     <button class="btn btn-primary mb-3">Создать комнату</button>
                 </div>
             </div>
@@ -76,3 +80,24 @@
 <footer th:replace="~{public/footer :: footer}"></footer>
 </body>
 </html>
+<script>
+
+    function copyConfigHandler(event) {
+
+        event.preventDefault();
+
+        let json_params = {};
+        json_params["room_name"] = document.getElementsByName("room_name")[0].value;
+        json_params["room_description"] = document.getElementsByName("room_description")[0].value;
+        json_params["room_help"] = document.getElementsByName("room_help")[0].value;
+        json_params["room_max_players"] = document.getElementsByName("room_max_players")[0].value;
+        json_params["room_min_players"] = document.getElementsByName("room_min_players")[0].value;
+        json_params["mode"] = document.getElementsByName("mode")[0].value;
+
+        navigator.clipboard.writeText(JSON.stringify(json_params)).then(function () {},
+            function () {
+                alert('Failure to copy. Check permissions for clipboard')
+            }
+        );
+    }
+</script>

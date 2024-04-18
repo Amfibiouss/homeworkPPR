@@ -81,7 +81,24 @@ public class CreateRoomController {
     }
 
     @PostMapping("/user/add_recent_room")
-    void add_room(HttpServletResponse response) {
+    void add_recent_room(HttpServletResponse response) {
+
+        InputRoom room = RCMDAOService.getUserRecentRoom(securityService.getUsername());
+
+        if (room == null) {
+            response.setHeader("Location", "/public/rooms");
+            response.setStatus(302);
+            return;
+        }
+
+        long room_id = RCMDAOService.add_room(room, securityService.getUsername());
+
+        response.setHeader("Location", "/public/chat/" + room_id);
+        response.setStatus(302);
+    }
+
+    @PostMapping("/user/add_room_by_string")
+    void add_room_by_string(HttpServletResponse response) {
 
         InputRoom room = RCMDAOService.getUserRecentRoom(securityService.getUsername());
 
