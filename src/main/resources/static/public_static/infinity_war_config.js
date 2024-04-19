@@ -12,7 +12,7 @@ function get_mask_of_fraction(fraction_name) {
 
     let mask = 0;
 
-    for (let i = 0; i < player_count; i++) {
+    for (let i = 0; i < window.player_count; i++) {
 
         if (fraction[i] === fraction_name)
             mask = mask | (1 << i);
@@ -25,7 +25,7 @@ function get_mask_of_blocked() {
 
     let mask = 0;
 
-    for (let i = 0; i < player_count; i++) {
+    for (let i = 0; i < window.player_count; i++) {
 
         if (blocked[i] === 1)
             mask = mask | (1 << i);
@@ -38,7 +38,7 @@ function get_mask_of_abducted() {
 
     let mask = 0;
 
-    for (let i = 0; i < player_count; i++) {
+    for (let i = 0; i < window.player_count; i++) {
 
         if (abducted[i] === 1)
             mask = mask | (1 << i);
@@ -51,7 +51,7 @@ function get_mask_of_dead() {
 
     let mask = 0;
 
-    for (let i = 0; i < player_count; i++) {
+    for (let i = 0; i < window.player_count; i++) {
 
         if (dead[i] === 1)
             mask = mask | (1 << i);
@@ -558,7 +558,7 @@ function kill_player(candidate, poll) {
 
 function free_player(candidate) {
 
-    for (let i = 0; i < player_count; i++) {
+    for (let i = 0; i < window.player_count; i++) {
         if ((all_mask & (1 << i)) !== 0)
             messages[i] += "Игрок " + names[candidate] + " освобожден.\n";
     }
@@ -566,7 +566,7 @@ function free_player(candidate) {
 }
 
 function visit_abducted_player(candidate, mask, reason) {
-    for (let i = 0; i < player_count; i++) {
+    for (let i = 0; i < window.player_count; i++) {
         if ((mask & (1 << i)) !== 0)
             messages[i] += "Вы постетили Игрока " + names[candidate] + ", чтобы " + reason + ". " +
                 "Но в его доме пусто, только следы борьбы. Кажется его похитили, или он хочет сделать вид" +
@@ -611,7 +611,7 @@ function set_state(state) {
 }
 
 function get_stone_user(mask) {
-    for (let i = 0; i < player_count; i++) {
+    for (let i = 0; i < window.player_count; i++) {
         if ((mask & (1 << i)) !== 0)
             return i;
     }
@@ -620,7 +620,7 @@ function get_stone_user(mask) {
 
 
 function update_state(data) {
-    window.messages = new Array(player_count).fill("");
+    window.messages = new Array(window.player_count).fill("");
 
     data.forEach(function(poll, index, polls) {
 

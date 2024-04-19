@@ -109,6 +109,90 @@
         },
         methods: {
 
+            finish_state: function (state) {
+                this.stateChannels = state.channels;
+            },
+
+            convert_state: function (state) {
+                let cnt = 0;
+                for (const index of state.polls.keys()) {
+                    state.polls[index].lindex = cnt++;
+                }
+
+                for (const index of state.channels.keys()) {
+                    state.channels[index].cindex = this.cindexMap.get(state.channels[index].name);
+                }
+
+                let tmp_channels = structuredClone(this.stateChannels);
+                for (const index of state.channels.keys()) {
+
+                    let cindex = state.channels[index].cindex;
+                    let curr_channel = state.channels[index];
+
+                    if (curr_channel.read_mask !== undefined) {
+                        tmp_channels[cindex].read_mask = curr_channel.read_mask;
+                    }
+                    if (curr_channel.anon_read_mask !== undefined) {
+                        tmp_channels[cindex].anon_read_mask = curr_channel.anon_read_mask;
+                    }
+                    if (curr_channel.read_real_username_mask !== undefined) {
+                        tmp_channels[cindex].read_real_username_mask = curr_channel.read_real_username_mask;
+                    }
+                    if (curr_channel.write_mask !== undefined) {
+                        tmp_channels[cindex].write_mask = curr_channel.write_mask;
+                    }
+                    if (curr_channel.anon_write_mask !== undefined) {
+                        tmp_channels[cindex].anon_write_mask = curr_channel.anon_write_mask;
+                    }
+                }
+                state.channels = tmp_channels;
+
+                state.characters = [];
+                for (let i = 0; i < this.playerCount; i++) {
+                    let player_mask = 1 << i;
+                    let character_state = {
+                        "channelReadMask": 0, "channelAnonReadMask": 0, "channelXRayReadMask": 0,
+                        "channelWriteMask": 0, "channelAnonWriteMask": 0,
+                        "pollVoteMask": 0, "pollObserveMask": 0, "pindex": i
+                    };
+
+                    if (state.names[i] !== undefined) {
+                        character_state.name = state.names[i];
+                    }
+
+                    for (const channel of state.channels) {
+                        if ((channel.read_mask & player_mask) !== 0) {
+                            character_state.channelReadMask |= 1 << channel.cindex;
+                        }
+                        if ((channel.anon_read_mask & player_mask) !== 0) {
+                            character_state.channelAnonReadMask |= 1 << channel.cindex;
+                        }
+                        if ((channel.read_real_username_mask & player_mask) !== 0) {
+                            character_state.channelXRayReadMask |= 1 << channel.cindex;
+                        }
+                        if ((channel.write_mask & player_mask) !== 0) {
+                            character_state.channelWriteMask |= 1 << channel.cindex;
+                        }
+                        if ((channel.anon_write_mask & player_mask) !== 0) {
+                            character_state.channelAnonWriteMask |= 1 << channel.cindex;
+                        }
+                    }
+
+                    for (const poll of state.polls) {
+                        if ((poll.mask_voters & player_mask) !== 0) {
+                            character_state.pollVoteMask |= 1 << poll.lindex;
+                        }
+                        if ((poll.mask_observers & player_mask) !== 0) {
+                            character_state.pollObserveMask |= 1 << poll.lindex;
+                        }
+                    }
+
+                    state.characters.push(character_state);
+                }
+
+                return state;
+            },
+
             submit_start_room: function() {
                 let csrf = document.getElementById('_csrf').value;
                 let room_id = document.getElementById('room_id').value;
@@ -125,7 +209,30 @@
                         return;
                     }
                     response.json().then(function(data) {
+                        self.playerCount = data;
                         let initial_state = initialize_room(data);
+
+                        self.cindexMap = new Map();
+                        let cnt = 2;
+                        for (const index of initial_state.channels.keys()) {
+                            if (initial_state.channels[index].name === 'лобби')
+                                self.cindexMap.set('лобби', 0)
+                            else if (initial_state.channels[index].name === 'газета')
+                                self.cindexMap.set('газета', 1)
+                            else
+                                self.cindexMap.set(initial_state.channels[index].name, cnt++);
+                        }
+
+                        self.stateChannels = [];
+                        for (const channel of initial_state.channels) {
+                            self.stateChannels[self.cindexMap.get(channel.name)] = {
+                                "read_mask": 0, "anon_read_mask": 0, "read_real_username_mask": 0,
+                                "write_mask": 0, "anon_write_mask": 0,
+                                "name": channel.name, "cindex": self.cindexMap.get(channel.name)
+                            };
+                        }
+
+                        initial_state = self.convert_state(initial_state);
 
                         fetch('/user/start_room/' + room_id, {
                             method: 'post',
@@ -139,6 +246,8 @@
                                 console.log("Can't start room. Status Code: " + response.status);
                                 return;
                             }
+
+                            self.finish_state(initial_state);
 
                             window.nextStageTimer = setTimeout(function () {
                                 self.processing_stage();
@@ -170,6 +279,8 @@
                         response.json().then(function(data) {
                             let new_state = update_state(data);
 
+                            new_state = self.convert_state(new_state);
+
                             fetch('/user/update_room_state/' + room_id, {
                                 method: 'post',
                                 headers: {
@@ -182,6 +293,8 @@
                                     console.log("Can't send state of the current stage. Status Code: " + response.status);
                                     return;
                                 }
+
+                                self.finish_state(new_state);
 
                                 window.nextStageTimer = setTimeout(function () {
                                     self.processing_stage();

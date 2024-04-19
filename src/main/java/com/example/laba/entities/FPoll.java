@@ -19,8 +19,6 @@ public class FPoll {
     private FRoom room;
     @Array(length=30)
     private long[] poll_table = new long[30];
-    private Long mask_voters;
-    private Long mask_observers;
     private Long mask_candidates;
     @Column(columnDefinition="TEXT")
     private String candidates;
@@ -86,22 +84,6 @@ public class FPoll {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public Long getMask_voters() {
-        return mask_voters;
-    }
-
-    public void setMask_voters(Long mask_voters) {
-        this.mask_voters = mask_voters;
-    }
-
-    public Long getMask_observers() {
-        return mask_observers;
-    }
-
-    public void setMask_observers(Long mask_observers) {
-        this.mask_observers = mask_observers;
     }
 
     public Long getMask_candidates() {

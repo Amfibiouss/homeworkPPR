@@ -11,6 +11,8 @@ public class InputStateRoom {
 
     public List<InputStatePoll> polls;
 
+    public List<InputStateCharacter> characters;
+
     public List<String> messages;
 
     public long duration;
@@ -40,6 +42,14 @@ public class InputStateRoom {
 
     public void setPolls(List<InputStatePoll> polls) {
         this.polls = polls;
+    }
+
+    public List<InputStateCharacter> getCharacters() {
+        return characters;
+    }
+
+    public void setCharacters(List<InputStateCharacter> characters) {
+        this.characters = characters;
     }
 
     public List<String> getMessages() {

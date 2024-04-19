@@ -7,6 +7,7 @@ import com.example.laba.objects_to_fill_templates.TmplRoom;
 import com.example.laba.objects_to_fill_templates.TmplUser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.util.RawValue;
 import jakarta.persistence.PersistenceUnit;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -60,19 +61,6 @@ public class RoomChannelMessageDaoService {
         }
     }
 
-    public String get_array(List<String> list) {
-        boolean isFirst = true;
-        StringBuilder result = new StringBuilder("[");
-        for (String s : list) {
-            if (!isFirst)
-                result.append(",");
-            isFirst = false;
-            result.append(s);
-        }
-        result.append("]");
-        return result.toString();
-    }
-
     @Transactional
     public List<TmplMessage> get_messages_of_user(String username, long offset, long limit) {
         Session session = sessionFactory.getCurrentSession();
@@ -82,7 +70,7 @@ public class RoomChannelMessageDaoService {
             throw new ServiceException("the user don't exist.");
 
         List <FMessage> messages =
-                session.createSelectionQuery("from FMessage m join fetch m.channel where m.user = :user order by m.id limit :limit offset :offset", FMessage.class)
+                session.createSelectionQuery("from FMessage m join fetch m.channel where m.user = :user order by m.id", FMessage.class)
                         .setParameter("user", user)
                         .setParameter("offset", offset)
                         .setParameter("limit", limit)
@@ -139,15 +127,15 @@ public class RoomChannelMessageDaoService {
 
         boolean XRayRead = false;
         boolean AnonRead = false;
-        if (character.getPindex() == -1 || (channel.getRead_real_username_mask() & (1L << character.getPindex())) != 0) {
+        if (character.getPindex() == -1 || (character.getChannelXRayReadMask() & (1L << channel.getCindex())) != 0) {
             XRayRead = true;
         } else {
-            if ((channel.getAnon_read_mask() & (1L << character.getPindex())) != 0) {
+            if ((character.getChannelAnonReadMask() & (1L << channel.getCindex())) != 0) {
                 AnonRead = true;
             }
         }
 
-        List<String> stages = new ArrayList<>();
+        List<RawValue> stages = new ArrayList<>();
 
         FStage last_stage;
 
@@ -164,7 +152,7 @@ public class RoomChannelMessageDaoService {
                 if (stage != last_stage) {
                     //String jsonString = (XRayRead) ? stage_channel.getJsonXRayStrings() :
                     //        ((AnonRead) ? stage_channel.getJsonAnonStrings() : stage_channel.getJsonStrings());
-                    stages.add(get_output_stage_channel(stage.getName(), stage.getId(), stage_channel.getCount(), new ArrayList<String>(), false));
+                    stages.add(new RawValue(get_output_stage_channel(stage.getName(), stage.getId(), stage_channel.getCount(), new ArrayList<String>(), false)));
                 }
             }
         } else {
@@ -189,9 +177,13 @@ public class RoomChannelMessageDaoService {
             result_messages.add((XRayRead)? message.getJsonXRayString() :
                     ((AnonRead)? message.getJsonAnonString() : message.getJsonString()));
         }
-        stages.add(get_output_stage_channel(last_stage.getName(), last_stage.getId(), messages.size(), result_messages, true));
+        stages.add(new RawValue(get_output_stage_channel(last_stage.getName(), last_stage.getId(), messages.size(), result_messages, true)));
 
-        return get_array(stages);
+        try {
+            return objectMapper.writeValueAsString(stages);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ, propagation = REQUIRES_NEW)
@@ -220,11 +212,12 @@ public class RoomChannelMessageDaoService {
     public String get_message(long message_id, String username) {
         Session session = sessionFactory.getCurrentSession();
         FMessage message = session.get(FMessage.class, message_id);
-        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
-        FCharacter character = user.getCharacter();
 
         if (message == null)
             throw new ServiceException("the message_id don't exist.");
+
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+        FCharacter character = user.getCharacter();
 
         FChannel channel = message.getChannel();
 
@@ -232,15 +225,16 @@ public class RoomChannelMessageDaoService {
             throw new ServiceException("user are not unauthorized to read the data.");
         }
 
-        if (character.getPindex() != -1 && (channel.getRead_mask() & (1L << character.getPindex())) == 0) {
+        long channel_mask = 1L << channel.getCindex();
+
+        if ((character.getChannelReadMask() & channel_mask) == 0) {
             throw new ServiceException("user are not unauthorized to read the data.");
         }
 
-        if (character.getPindex() == -1
-                || (channel.getRead_real_username_mask() & (1L << character.getPindex())) != 0)
+        if ((character.getChannelXRayReadMask() & channel_mask) != 0)
             return message.getJsonXRayString();
 
-        if ((channel.getAnon_read_mask() & (1L << character.getPindex())) != 0)
+        if ((character.getChannelAnonReadMask() & channel_mask) != 0)
             return message.getJsonAnonString();
 
         return message.getJsonString();
@@ -300,22 +294,12 @@ public class RoomChannelMessageDaoService {
 
         FChannel channel_lobby = new FChannel();
         channel_lobby.setName("лобби");
-        channel_lobby.setRead_mask((1L << 30) - 1);
-        channel_lobby.setWrite_mask((1L << 30) - 1);
-        channel_lobby.setRead_real_username_mask((1L << 30) - 1);
-        channel_lobby.setAnon_write_mask(0L);
-        channel_lobby.setAnon_read_mask(0L);
         channel_lobby.setCindex(0L);
         session.persist(channel_lobby);
         new_room.addChannel(channel_lobby);
 
         FChannel channel_newspaper = new FChannel();
         channel_newspaper.setName("газета");
-        channel_newspaper.setRead_mask(0L);
-        channel_newspaper.setWrite_mask(0L);
-        channel_newspaper.setRead_real_username_mask(0L);
-        channel_newspaper.setAnon_write_mask(0L);
-        channel_newspaper.setAnon_read_mask(0L);
         channel_newspaper.setCindex(1L);
         session.persist(channel_newspaper);
         new_room.addChannel(channel_newspaper);
@@ -328,9 +312,9 @@ public class RoomChannelMessageDaoService {
 
         FCharacter character = new FCharacter();
         character.setPindex(-1L);
-        character.setChannelReadMask(3L);
-        character.setChannelXRayReadMask(3L);
-        character.setChannelWriteMask(3L);
+        character.setChannelReadMask(1L);
+        character.setChannelXRayReadMask(1L);
+        character.setChannelWriteMask(1L);
         character.setName(null);
         new_room.addCharacter(character);
         session.persist(character);
@@ -386,7 +370,7 @@ public class RoomChannelMessageDaoService {
         new_message.setTarget(target);
 
         if (character.getName() != null) {
-            if ((channel.getAnon_write_mask() & (1L << character.getPindex())) != 0) {
+            if ((character.getChannelAnonWriteMask() & (1L << channel.getCindex())) != 0) {
                 new_message.setAlias("???");
             } else {
                 new_message.setAlias(character.getName());
@@ -672,6 +656,7 @@ public class RoomChannelMessageDaoService {
                         "from FStage s where s.room=:room order by s.date desc limit 1", FStage.class)
                 .setParameter("room", room)
                 .getSingleResult();
+
         outputStateRoom.setStage(curr_stage.getName());
         outputStateRoom.setStage_id(curr_stage.getId());
         outputStateRoom.setFinish_stage(room.getFinish_stage());
@@ -729,9 +714,9 @@ public class RoomChannelMessageDaoService {
             try {
                 String res = "";
 
-                if ((newspaper.getRead_real_username_mask() & (1L << character.getPindex())) != 0)
+                if ((character.getChannelXRayReadMask() & 2) != 0)
                     res = message.getJsonXRayString();
-                else if ((newspaper.getAnon_read_mask() & (1L << character.getPindex())) != 0)
+                else if ((character.getChannelAnonReadMask() & 2) != 0)
                     res = message.getJsonAnonString();
                 else
                     res = message.getJsonString();
@@ -770,33 +755,51 @@ public class RoomChannelMessageDaoService {
 
             FStageFChannel stage_channel = new FStageFChannel();
 
-            stage_channel.setJsonStrings("[");
-            stage_channel.setJsonAnonStrings("[");
-            stage_channel.setJsonXRayStrings("[");
-            boolean isFirst = true;
+            List<RawValue> jsonStrings = new ArrayList<>();
+            List<RawValue> jsonAnonStrings = new ArrayList<>();
+            List<RawValue> jsonXRayStrings = new ArrayList<>();
             for (FMessage message : messages) {
-
-                if (isFirst) {
-                    stage_channel.setJsonStrings(stage_channel.getJsonStrings() + message.getJsonString());
-                    stage_channel.setJsonAnonStrings(stage_channel.getJsonAnonStrings() + message.getJsonAnonString());
-                    stage_channel.setJsonXRayStrings(stage_channel.getJsonXRayStrings() + message.getJsonXRayString());
-                } else {
-                    stage_channel.setJsonStrings(stage_channel.getJsonStrings() + "," + message.getJsonString());
-                    stage_channel.setJsonAnonStrings(stage_channel.getJsonAnonStrings() + "," + message.getJsonAnonString());
-                    stage_channel.setJsonXRayStrings(stage_channel.getJsonXRayStrings() + "," + message.getJsonXRayString());
-                }
-                isFirst = false;
+                jsonStrings.add(new RawValue(message.getJsonString()));
+                jsonAnonStrings.add(new RawValue(message.getJsonAnonString()));
+                jsonXRayStrings.add(new RawValue(message.getJsonXRayString()));
             }
-            stage_channel.setJsonStrings(stage_channel.getJsonStrings() + "]");
-            stage_channel.setJsonAnonStrings(stage_channel.getJsonAnonStrings() + "]");
-            stage_channel.setJsonXRayStrings(stage_channel.getJsonXRayStrings() + "]");
+            try {
+                stage_channel.setJsonStrings(objectMapper.writeValueAsString(jsonStrings));
+                stage_channel.setJsonAnonStrings(objectMapper.writeValueAsString(jsonAnonStrings));
+                stage_channel.setJsonXRayStrings(objectMapper.writeValueAsString(jsonXRayStrings));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
 
             stage_channel.setCount((long) messages.size());
             stage_channel.setChannel(channel);
             stage_channel.setStage(last_stage);
-            stage_channel.setXRayReadMask(channel.getRead_real_username_mask());
-            stage_channel.setReadMask(channel.getRead_mask());
-            stage_channel.setAnonReadMask(channel.getAnon_read_mask());
+
+            stage_channel.setXRayReadMask(0L);
+            stage_channel.setReadMask(0L);
+            stage_channel.setAnonReadMask(0L);
+            for (FCharacter character : room.getCharacters()) {
+                long character_mask;
+                if (character.getPindex() == -1) {
+                    if (init) {
+                        character_mask =  (1L << 30) - 1;
+                    } else {
+                        continue;
+                    }
+                } else {
+                    character_mask = 1L << character.getPindex();
+                }
+
+                if ((character.getChannelReadMask() & (1L << channel.getCindex())) != 0) {
+                    stage_channel.setReadMask(stage_channel.getReadMask() | character_mask);
+                }
+                if ((character.getChannelAnonReadMask() & (1L << channel.getCindex())) != 0) {
+                    stage_channel.setAnonReadMask(stage_channel.getAnonReadMask() | character_mask);
+                }
+                if ((character.getChannelXRayReadMask() & (1L << channel.getCindex())) != 0) {
+                    stage_channel.setXRayReadMask(stage_channel.getXRayReadMask() | character_mask);
+                }
+            }
             session.persist(stage_channel);
         }
 
@@ -807,74 +810,33 @@ public class RoomChannelMessageDaoService {
         session.persist(new_stage);
         room.addStage(new_stage);
 
-        long cnt = 2;
+        if (init) {
+            for (InputStateChannel inputChannel : inputStateRoom.getChannels()) {
+                FChannel channel = new FChannel();
 
-        for (InputStateChannel inputChannel : inputStateRoom.getChannels()) {
+                if (inputChannel.getName().equals("газета") || inputChannel.getName().equals("лобби"))
+                    continue;
 
-            FChannel channel = session.createSelectionQuery(
-                            "from FChannel c where c.room=:room and c.name=:name", FChannel.class)
-                    .setParameter("room", room)
-                    .setParameter("name", inputChannel.getName())
-                    .getSingleResultOrNull();
-
-            if (channel == null) {
-                if (init) {
-                    channel = new FChannel();
-                    session.persist(channel);
-
-                    if (inputChannel.getRead_mask() == null
-                    || inputChannel.getWrite_mask() == null
-                    || inputChannel.getRead_real_username_mask() == null
-                    || inputChannel.getAnon_write_mask() == null
-                    || inputChannel.getAnon_read_mask() == null) {
-                        throw new ServiceException("incorrect parameter.");
-                    }
-
-                    channel.setCindex(cnt++);
-                    channel.setRead_mask(inputChannel.getRead_mask());
-                    channel.setWrite_mask(inputChannel.getWrite_mask());
-                    channel.setRead_real_username_mask(inputChannel.getRead_real_username_mask());
-                    channel.setAnon_write_mask(inputChannel.getAnon_write_mask());
-                    channel.setAnon_read_mask(inputChannel.getAnon_read_mask());
-                    channel.setName(inputChannel.getName());
-
-                    room.addChannel(channel);
-                }
-            } else {
-                if (inputChannel.getRead_mask() != null) {
-                    channel.setRead_mask(inputChannel.getRead_mask());
-                }
-                if (inputChannel.getWrite_mask() != null) {
-                    channel.setWrite_mask(inputChannel.getWrite_mask());
-                }
-                if (inputChannel.getRead_real_username_mask() != null) {
-                    channel.setRead_real_username_mask(inputChannel.getRead_real_username_mask());
-                }
-                if (inputChannel.getAnon_write_mask() != null) {
-                    channel.setAnon_write_mask(inputChannel.getAnon_write_mask());
-                }
-                if (inputChannel.getAnon_read_mask() != null) {
-                    channel.setAnon_read_mask(inputChannel.getAnon_read_mask());
-                }
+                channel.setCindex(inputChannel.getCindex());
+                channel.setName(inputChannel.getName());
+                session.persist(channel);
+                room.addChannel(channel);
             }
         }
 
         session.createMutationQuery("delete FPoll p where p.room = :room").setParameter("room", room).executeUpdate();
-        cnt = 0;
 
         for (InputStatePoll inputPoll : inputStateRoom.getPolls()) {
 
             FPoll poll = new FPoll();
 
-            poll.setLindex(cnt++);
+            poll.setLindex(inputPoll.getLindex());
             poll.setName(inputPoll.getName());
             try {
                 poll.setCandidates(objectMapper.writeValueAsString(inputPoll.getCandidates()));
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
-            poll.setMask_observers(inputPoll.getMask_observers());
-            poll.setMask_voters(inputPoll.getMask_voters());
             poll.setMask_candidates(inputPoll.getMask_candidates());
             poll.setDescription(inputPoll.getDescription());
             poll.setMaxSelection((inputPoll.getMaxSelection() == null)? 1 : inputPoll.getMaxSelection());
@@ -884,68 +846,26 @@ public class RoomChannelMessageDaoService {
             room.addPoll(poll);
         }
 
-        for (FCharacter character : room.getCharacters()) {
+        for (InputStateCharacter inputCharacter : inputStateRoom.getCharacters()) {
 
-            if (character.getPindex() == -1)
-                continue;
+            FCharacter character = session.createSelectionQuery(
+                    "from FCharacter c where c.room = :room and c.pindex = :pindex", FCharacter.class)
+                    .setParameter("pindex", inputCharacter.getPindex())
+                    .setParameter("room", room)
+                    .getSingleResult();
 
-            character.setChannelReadMask(0L);
-            character.setChannelAnonReadMask(0L);
-            character.setChannelXRayReadMask(0L);
-            character.setChannelWriteMask(0L);
-            character.setChannelAnonWriteMask(0L);
-
-            character.setPollVoteMask(0L);
-            character.setPollObserveMask(0L);
-
-            long pindex_mask = 1L << character.getPindex();
-
-            for (FChannel channel : room.getChannels()) {
-                long cindex_mask =  1L << channel.getCindex();
-
-                if ((channel.getRead_mask() & pindex_mask) != 0) {
-                    character.setChannelReadMask(character.getChannelReadMask() | cindex_mask);
-                }
-                if ((channel.getRead_real_username_mask() & pindex_mask) != 0) {
-                    character.setChannelXRayReadMask(character.getChannelXRayReadMask() | cindex_mask);
-                }
-                if ((channel.getAnon_read_mask() & pindex_mask) != 0) {
-                    character.setChannelAnonReadMask(character.getChannelAnonReadMask() | cindex_mask);
-                }
-                if ((channel.getRead_real_username_mask() & pindex_mask) != 0) {
-                    character.setChannelXRayReadMask(character.getChannelXRayReadMask() | cindex_mask);
-                }
-                if ((channel.getWrite_mask() & pindex_mask) != 0) {
-                    character.setChannelWriteMask(character.getChannelWriteMask() | cindex_mask);
-                }
-                if ((channel.getAnon_write_mask() & pindex_mask) != 0) {
-                    character.setChannelAnonWriteMask(character.getChannelAnonWriteMask() | cindex_mask);
-                }
-            }
-
-            for (FPoll poll : room.getPolls()) {
-                long lindex_mask = 1L << poll.getLindex();
-
-                if ((poll.getMask_observers() & pindex_mask) != 0)
-                    character.setPollObserveMask(character.getPollObserveMask() | lindex_mask);
-
-                if ((poll.getMask_voters() & pindex_mask) != 0)
-                    character.setPollVoteMask(character.getPollVoteMask() | lindex_mask);
-            }
+            if (inputCharacter.getName() != null)
+                character.setName(inputCharacter.getName());
+            character.setChannelReadMask(inputCharacter.getChannelReadMask());
+            character.setChannelAnonReadMask(inputCharacter.getChannelAnonReadMask());
+            character.setChannelXRayReadMask(inputCharacter.getChannelXRayReadMask());
+            character.setChannelWriteMask(inputCharacter.getChannelWriteMask());
+            character.setChannelAnonWriteMask(inputCharacter.getChannelAnonWriteMask());
+            character.setPollVoteMask(inputCharacter.getPollVoteMask());
+            character.setPollObserveMask(inputCharacter.getPollObserveMask());
         }
 
-        Map <String, String> names = inputStateRoom.getNames();
-        if (names != null) {
-            for (FCharacter character : room.getCharacters()) {
-                String pindex = String.valueOf(character.getPindex());
-
-                if (names.containsKey(pindex)) {
-                    character.setName(names.get(pindex));
-                }
-            }
-        }
-
-        cnt = 0;
+        long cnt = 0;
 
         FChannel newspaper = session.createSelectionQuery(
                 "from FChannel c where c.room=:room and c.name='газета'", FChannel.class)
@@ -998,7 +918,7 @@ public class RoomChannelMessageDaoService {
 
         long pindex = player.getCharacter().getPindex();
 
-        if (poll == null || (poll.getMask_voters() & (1L << pindex)) == 0
+        if (poll == null || (character.getPollVoteMask() & (1L << poll.getLindex())) == 0
                 || candidates.length < poll.getMinSelection()
                 || candidates.length > poll.getMaxSelection()) {
             throw new ServiceException("Неправильные данные");
@@ -1022,7 +942,6 @@ public class RoomChannelMessageDaoService {
         poll.setPoll_table(poll_table);
 
         character.setPollVoteMask(character.getPollVoteMask() ^ (1L << poll.getLindex()));
-        poll.setMask_voters(poll.getMask_voters() ^ (1L << pindex));
     }
 
     @Transactional

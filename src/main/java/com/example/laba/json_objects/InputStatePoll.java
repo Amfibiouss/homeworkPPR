@@ -15,6 +15,15 @@ public class InputStatePoll {
     public Map<String, Long> candidates;
 
     public String description;
+    public Long lindex;
+
+    public Long getLindex() {
+        return lindex;
+    }
+
+    public void setLindex(Long lindex) {
+        this.lindex = lindex;
+    }
 
     public String getDescription() {
         return description;
