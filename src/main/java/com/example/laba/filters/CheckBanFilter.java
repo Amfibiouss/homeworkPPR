@@ -35,9 +35,6 @@ public class CheckBanFilter implements Filter {
                     return;
                 }
             } catch (Exception e) {
-
-                System.out.println("!!!");
-
                 res.setStatus(400);
                 return;
             }

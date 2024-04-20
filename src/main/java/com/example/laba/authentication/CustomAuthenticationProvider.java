@@ -53,6 +53,10 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
             OffsetDateTime date_finish = null;
 
             for (TmplPunishment punishment : punishments) {
+
+                if (punishment.getRule() == 6)
+                    continue;
+
                 if (date_finish == null || punishment.getDate_finish().isAfter(date_finish)) {
                     date_finish =  punishment.getDate_finish();
                 }
@@ -60,8 +64,6 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
             throw new LockedException("user have been banned before " + date_finish);
         }
-
-        //System.out.println( new UsernamePasswordAuthenticationToken(detailsFromDAO, "").se);
 
         return new UsernamePasswordAuthenticationToken(detailsFromDAO, null, detailsFromDAO.getAuthorities());
     }

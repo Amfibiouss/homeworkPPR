@@ -48,7 +48,7 @@ public class PunishController {
                     if (cnt != 6)
                         DAOService.try_punish(username, cnt, description);
                     else
-                        DAOService.punish_UwU(username);
+                        DAOService.punish_UwU(username, description);
                 }
                 cnt++;
             }

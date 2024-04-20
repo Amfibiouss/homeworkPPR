@@ -9,7 +9,7 @@
 <header th:fragment="public_header" class="container-fluid bg-color2" style="position:sticky;top:0;z-index:1001;min-height:80px;">
     <nav class="navbar navbar-expand-sm navbar-light">
         <a class="navbar-brand" href="/" style="font-family: fantasy; font-size: 30px;">
-            <span th:text="(${@securityService.hasUwU()})? 'OwO':'MA'"></span>F<sup>F</sup>F<sub>F</sub><sup>F</sup>OR<sub>U</sub>M
+            <span th:text="(${@securityService.hasUwUStage(1)})? 'OwO':'MA'"></span>F<sup>F</sup>F<sub>F</sub><sup>F</sup>OR<sub>U</sub>M
         </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent1" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,7 @@
 <header th:fragment="user_header" class="container-fluid bg-color2" style="position:sticky;top:0;z-index:1001;min-height:80px;">
     <nav class="navbar navbar-expand-sm navbar-light">
         <a class="navbar-brand" href="/" style="font-family: fantasy; font-size: 33px;">
-            <span th:text="(${@securityService.hasUwU()})? 'OwO':'MA'"></span>F<sup>F</sup>F<sub>F</sub><sup>F</sup>OR<sub>U</sub>M
+            <span th:text="(${@securityService.hasUwUStage(1)})? 'OwO':'MA'"></span>F<sup>F</sup>F<sub>F</sub><sup>F</sup>OR<sub>U</sub>M
         </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent2" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -98,7 +98,7 @@
 <header th:fragment="admin_header" class="container-fluid bg-color2" style="position:sticky;top:0;z-index:1001;min-height:80px;">
     <nav class="navbar navbar-expand-sm navbar-light">
         <a class="navbar-brand" href="/" style="font-family: fantasy; font-size: 33px;">
-            <span th:text="(${@securityService.hasUwU()})? 'OwO':'MA'"></span>F<sup>F</sup>F<sub>F</sub><sup>F</sup>OR<sub>U</sub>M
+            <span th:text="(${@securityService.hasUwUStage(1)})? 'OwO':'MA'"></span>F<sup>F</sup>F<sub>F</sub><sup>F</sup>OR<sub>U</sub>M
         </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">

@@ -65,15 +65,15 @@ public class SecurityService {
         return DAOService.has_ban(username);
     }
 
-    public boolean hasUwU(String username) {
+    public boolean hasUwUStage(String username, int stage) {
 
         if (username == null) {
             return false;
         }
-        return DAOService.has_UwU(username);
-    }
 
-    public boolean hasUwU() {
-        return hasUwU(getUsername());
+        return DAOService.has_UwU_stage(username, stage);
+    }
+    public boolean hasUwUStage(int stage) {
+        return hasUwUStage(getUsername(), stage);
     }
 }

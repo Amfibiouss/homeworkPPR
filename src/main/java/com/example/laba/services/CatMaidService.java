@@ -3,14 +3,23 @@ package com.example.laba.services;
 import com.example.laba.objects_to_fill_templates.TmplPunishment;
 import com.example.laba.objects_to_fill_templates.TmplUser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Random;
 
+import static java.lang.Math.abs;
+
 @Component
 public class CatMaidService {
+    @Value("${catmaid.firstStageSeconds:10}")
+    private long firstStageSeconds;
+    @Value("${catmaid.secondStageSeconds:10}")
+    private long secondStageSeconds;
+    @Value("${catmaid.thirdStageSeconds:10}")
+    private long thirdStageSeconds;
 
     public String addCatMaidAccent(String message) {
 
@@ -48,8 +57,8 @@ public class CatMaidService {
         message = message.replaceAll("Ш", "Ф");
         message = message.replaceAll("ш", "ф");
 
-        message = message.replaceAll("Р", "Л");
-        message = message.replaceAll("р", "л");
+        //message = message.replaceAll("Р", "Л");
+        //message = message.replaceAll("р", "л");
 
         return message;
     }
@@ -58,17 +67,41 @@ public class CatMaidService {
 
         if (date_UwU != null) {
 
-            long seconds = date_UwU.until(OffsetDateTime.now(), ChronoUnit.SECONDS);
+            long seconds = abs(date_UwU.until(OffsetDateTime.now(), ChronoUnit.SECONDS));
 
-            if (seconds < 15) {
+            if (seconds < firstStageSeconds + secondStageSeconds) {
                 return 0;
             }
 
-            if (seconds > 30) {
+            if (seconds > firstStageSeconds + secondStageSeconds + thirdStageSeconds) {
                 return 1;
             }
 
-            return (double) (seconds - 15) / 15;
+            return (double) (seconds - firstStageSeconds - secondStageSeconds) / thirdStageSeconds;
+        }
+
+        return 0;
+    }
+
+    public int getUwUStage(OffsetDateTime date_UwU) {
+
+        if (date_UwU != null) {
+
+            long seconds = abs(date_UwU.until(OffsetDateTime.now(), ChronoUnit.SECONDS));
+
+            if (seconds < firstStageSeconds) {
+                return 1;
+            }
+
+            if (seconds < firstStageSeconds + secondStageSeconds) {
+                return 2;
+            }
+
+            if (seconds < firstStageSeconds + secondStageSeconds + thirdStageSeconds) {
+                return 3;
+            }
+
+            return 4;
         }
 
         return 0;

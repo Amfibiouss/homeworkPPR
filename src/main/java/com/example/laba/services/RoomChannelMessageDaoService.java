@@ -61,6 +61,20 @@ public class RoomChannelMessageDaoService {
         }
     }
 
+    public TmplUser createTmplUser(FUser user) {
+        if (user.getUwUPunishment() == null) {
+            return new TmplUser(user, 0);
+        }
+        return new TmplUser(user, catMaidService.getUwUDegree(user.getUwUPunishment().getDateUwU()));
+    }
+
+    public double getUwUDegree(FUser user) {
+        if (user.getUwUPunishment() == null) {
+            return 0;
+        }
+        return catMaidService.getUwUDegree(user.getUwUPunishment().getDateUwU());
+    }
+
     @Transactional
     public List<TmplMessage> get_messages_of_user(String username, long offset, long limit) {
         Session session = sessionFactory.getCurrentSession();
@@ -333,7 +347,7 @@ public class RoomChannelMessageDaoService {
 
         session.refresh(message);
         message.setJsonXRayString(get_output_message(message.getAlias(), message.getAlias(), message.getText(),
-                catMaidService.getUwUDegree(user.getDate_UwU()), user.getAdmin()? "#ff0000" : null, message.getId()));
+                getUwUDegree(user), user.getAdmin()? "#ff0000" : null, message.getId()));
 
         message.setJsonAnonString(get_output_message(null, "???", message.getText(),
                 0f, null, message.getId()));
@@ -391,7 +405,7 @@ public class RoomChannelMessageDaoService {
         session.refresh(new_message);
 
         new_message.setJsonXRayString(get_output_message(username, new_message.getAlias(), new_message.getText(),
-                catMaidService.getUwUDegree(user.getDate_UwU()), user.getAdmin()? "#ff0000" : null, new_message.getId()));
+                getUwUDegree(user), user.getAdmin()? "#ff0000" : null, new_message.getId()));
 
         new_message.setJsonAnonString(get_output_message(null, "???", new_message.getText(),
                 0f, null, new_message.getId()));
@@ -520,7 +534,7 @@ public class RoomChannelMessageDaoService {
         List <TmplUser> result = new ArrayList<>();
 
         for (FUser player : players) {
-            result.add(new TmplUser(player, catMaidService.getUwUDegree(player.getDate_UwU())));
+            result.add(new TmplUser(player, getUwUDegree(player)));
         }
 
         return result;
@@ -904,7 +918,7 @@ public class RoomChannelMessageDaoService {
                     new_message.getUser().getLogin(),
                     new_message.getAlias(),
                     new_message.getText(),
-                    catMaidService.getUwUDegree(new_message.getUser().getDate_UwU()),
+                    getUwUDegree(new_message.getUser()),
                     new_message.getUser().getAdmin()? "#ff0000" : null, new_message.getId()));
         }
     }

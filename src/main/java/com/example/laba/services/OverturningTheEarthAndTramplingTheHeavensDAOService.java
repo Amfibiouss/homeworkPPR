@@ -9,10 +9,15 @@ import org.hibernate.SessionFactory;
 import org.hibernate.service.spi.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+
+import static java.lang.Math.max;
 
 @Component
 public class OverturningTheEarthAndTramplingTheHeavensDAOService {
@@ -23,6 +28,13 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
     @PersistenceUnit
     SessionFactory sessionFactory;
 
+    public TmplUser createTmplUser(FUser user) {
+        if (user.getUwUPunishment() == null) {
+            return new TmplUser(user, 0);
+        }
+        return new TmplUser(user, catMaidService.getUwUDegree(user.getUwUPunishment().getDateUwU()));
+    }
+
     @Transactional
     public TmplUser get_user_by_login(String login) {
         Session session = sessionFactory.getCurrentSession();
@@ -31,7 +43,7 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
         if (user == null)
             throw new ServiceException("the login don't exist.");
 
-        return new TmplUser(user, catMaidService.getUwUDegree(user.getDate_UwU()));
+        return createTmplUser(user);
     }
 
     @Transactional
@@ -43,7 +55,7 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
                         .setParameter("email", email)
                         .getSingleResult();
 
-        return new TmplUser(user, catMaidService.getUwUDegree(user.getDate_UwU()));
+        return createTmplUser(user);
     }
 
     @Transactional
@@ -186,6 +198,19 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
             }
         }
 
+        FUwUPunishment UwUPunishment = user.getUwUPunishment();
+
+        if (UwUPunishment != null && UwUPunishment.getActive()) {
+            TmplPunishment punishment = new TmplPunishment();
+            punishment.setId(-1);
+            punishment.setRule(6L);
+            punishment.setDescription(UwUPunishment.getUwUDescription());
+            punishment.setDate_start(UwUPunishment.getDateUwU());
+            punishment.setUsername(username);
+
+            punishments.add(punishment);
+        }
+
         return punishments;
     }
 
@@ -203,12 +228,22 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
     }
 
     @Transactional
-    public void punish_UwU(String username) {
+    public void punish_UwU(String username, String description) {
         Session session = sessionFactory.getCurrentSession();
         FUser user = session.bySimpleNaturalId(FUser.class).load(username);
 
-        if (user.getDate_UwU() == null)
-            user.setDate_UwU(OffsetDateTime.now());
+        FUwUPunishment punishment = user.getUwUPunishment();
+
+        if (punishment == null)
+            user.setUwUPunishment(new FUwUPunishment(OffsetDateTime.now(), true, description));
+        else {
+            if (!punishment.getActive()) {
+                long interval = OffsetDateTime.now().until(punishment.getDateUwU(), ChronoUnit.SECONDS);
+                punishment.setDateUwU(OffsetDateTime.now().minusSeconds(max(0, interval)));
+                punishment.setUwUDescription(description);
+                punishment.setActive(true);
+            }
+        }
     }
 
     @Transactional
@@ -216,16 +251,38 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
         Session session = sessionFactory.getCurrentSession();
         FUser user = session.bySimpleNaturalId(FUser.class).load(username);
 
-        user.setDate_UwU(null);
+        FUwUPunishment punishment = user.getUwUPunishment();
+
+        if (punishment != null && punishment.getActive()) {
+
+            if (catMaidService.getUwUStage(punishment.getDateUwU()) >= 4) {
+                return;
+            }
+
+            long interval = punishment.getDateUwU().until(OffsetDateTime.now(), ChronoUnit.SECONDS);
+            punishment.setDateUwU(OffsetDateTime.now().plusSeconds(max(0, interval)));
+            punishment.setActive(false);
+        }
     }
 
-    @Transactional
-    public boolean has_UwU(String username) {
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public boolean has_UwU_stage(String username, int stage) {
         Session session = sessionFactory.getCurrentSession();
         FUser user = session.bySimpleNaturalId(FUser.class).load(username);
 
+        if (user == null)
+            throw new ServiceException("user doesnt exist");
 
-        return user.getDate_UwU() != null;
+        FUwUPunishment punishment = user.getUwUPunishment();
+
+        if (punishment == null)
+            return false;
+
+        if (!punishment.getActive() && punishment.getDateUwU().isBefore(OffsetDateTime.now())) {
+            user.setUwUPunishment(null);
+        }
+
+        return catMaidService.getUwUStage(punishment.getDateUwU()) >= stage;
     }
 
     @Transactional

@@ -70,7 +70,7 @@ public class MessageController {
 
         //if (DAOService.get_last_messages())
 
-        if (securityService.hasUwU(username)) {
+        if (securityService.hasUwUStage(username, 1)) {
             text = catMaidService.addCatMaidAccent(text);
         }
 

@@ -28,7 +28,7 @@ public class FUser {
     private Boolean Admin;
     private String description;
     private String sex;
-    private OffsetDateTime date_UwU;
+    private FUwUPunishment UwUPunishment;
     private String email;
     @ManyToOne(fetch=LAZY)
     FCharacter character;
@@ -129,12 +129,12 @@ public class FUser {
         this.punishments = punishments;
     }
 
-    public OffsetDateTime getDate_UwU() {
-        return date_UwU;
+    public FUwUPunishment getUwUPunishment() {
+        return UwUPunishment;
     }
 
-    public void setDate_UwU(OffsetDateTime date_UwU) {
-        this.date_UwU = date_UwU;
+    public void setUwUPunishment(FUwUPunishment uwUPunishment) {
+        UwUPunishment = uwUPunishment;
     }
 
     public String getEmail() {

@@ -34,16 +34,6 @@ public class ProfileController {
                 DAOService.update_punishments_status(username);
                 List<TmplPunishment> punishments = DAOService.get_punishments(username, true);
 
-                if (DAOService.has_UwU(username)) {
-                    TmplPunishment punishment = new TmplPunishment();
-                    punishment.setId(-1);
-                    punishment.setRule(6L);
-                    punishment.setDescription("UwU");
-                    punishment.setUsername(username);
-
-                    punishments.add(punishment);
-                }
-
                 model.addAttribute("punishments", punishments);
             }
             return "public/profile_page";
