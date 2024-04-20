@@ -128,6 +128,7 @@
                     <div class="dropdown-menu" aria-labelledby="adminMenu">
                         <a class="dropdown-item" th:href="@{'/public/profile/'+${@securityService.getUsername()}}">профиль</a>
                         <a class="dropdown-item" th:href="@{/user/create_room}">редактор комнаты</a>
+                        <a class="dropdown-item text-danger" th:href="@{/user/launch_massive_maidfication_weapon}">НЕ НАЖИМАЙ</a>
                         <a class="dropdown-item" th:href="@{/logout}">выйти</a>
                     </div>
                 </li>

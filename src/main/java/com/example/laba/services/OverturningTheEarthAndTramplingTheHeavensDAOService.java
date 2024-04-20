@@ -227,11 +227,8 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
         return !punishments.isEmpty();
     }
 
-    @Transactional
-    public void punish_UwU(String username, String description) {
-        Session session = sessionFactory.getCurrentSession();
-        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
 
+    private void punish_UwU(FUser user, String description) {
         FUwUPunishment punishment = user.getUwUPunishment();
 
         if (punishment == null)
@@ -243,6 +240,23 @@ public class OverturningTheEarthAndTramplingTheHeavensDAOService {
                 punishment.setUwUDescription(description);
                 punishment.setActive(true);
             }
+        }
+    }
+
+    @Transactional
+    public void punish_UwU(String username, String description) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+        punish_UwU(user, description);
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public void make_massive_maidfication() {
+        Session session = sessionFactory.getCurrentSession();
+        List<FUser> users = session.createSelectionQuery("from FUser", FUser.class).getResultList();
+
+        for (FUser user : users) {
+            punish_UwU(user, "MASSIVE MAIDFICATION WEAPON");
         }
     }
 
