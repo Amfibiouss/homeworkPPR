@@ -66,9 +66,9 @@
                 <div id = "chat_menu" class="row collapse navbar-collapse justify-content-between">
                     <div class="col-auto">
                         <a th:href="'/user/exit_room/' + ${room_id}"><button class="btn btn-outline-secondary" type="button" id="quit_button">выйти</button></a>
-                        <button th:if="${host}==true" class="btn btn-outline-secondary" type="button" id="start_button" @click="submit_start_room">начать</button>
-                        <button th:if="${host}==true" class="btn btn-outline-secondary" type="button" id="skip_button" @click="processing_stage">далее</button>
-                        <div th:if="${host}==true" class="dropdown" style="display:inline-block;">
+                        <button v-if = "status === 'not started'" th:if="${host}==true" class="btn btn-outline-secondary" type="button" id="start_button" @click="submit_start_room">начать</button>
+                        <button v-if = "status === 'started'" th:if="${host}==true" class="btn btn-outline-secondary" type="button" id="skip_button" @click="processing_stage">пропустить</button>
+                        <div v-if = "status !== 'not started'" th:if="${host}==true" class="dropdown" style="display:inline-block;">
                             <button class="btn btn-secondary dropdown-toggle" data-bs-auto-close="false" type="button" id="switchPlayerButton"
                                     data-bs-toggle="dropdown" aria-expanded="false">
                                 <img src="/public_static/icons/people.svg" width="30" height="30">

@@ -30,7 +30,7 @@
             <img src="/public_static/icons/plus.svg" width="30" height="30" alt="plus_button">
             <span>Создать новую комнату </span>
         </a>
-        <form th:action="@{/user/add_recent_room}" method="post" style="display: inline-block;">
+        <form class="m-2" th:action="@{/user/add_recent_room}" method="post" style="display: inline-block;">
             <button type="submit" class="btn btn-secondary">
                 <img src="/public_static/icons/plus.svg" width="30" height="30" alt="plus_button">
                 <span>Пересоздать прошлую комнату </span>
@@ -99,11 +99,10 @@
         input.setAttribute("type", "text");
         input.setAttribute("value", json_params.room_description);
         form.appendChild(input);
-        input = document.createElement('input');
+        input = document.createElement('textarea');
         input.setAttribute("name", "room_help");
-        input.setAttribute("type", "text");
-        input.setAttribute("value", json_params.room_help);
-        form.appendChild(input);
+        input.value = json_params.room_help;
+        form.appendChild(input)
         input = document.createElement('input');
         input.setAttribute("name", "room_max_players");
         input.setAttribute("type", "number");
@@ -126,7 +125,7 @@
 <script>
     const app = Vue.createApp({
         data() {
-            return {not_started_rooms: [], started_rooms: [], closed_rooms: []};
+            return {not_started_rooms: [], started_rooms: [], closed_rooms: [], current_room: null};
         },
 
         methods: {

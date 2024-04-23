@@ -72,32 +72,42 @@ function initialize_room(data) {
         ["страшный", "страшная"], ["жуткий", "жуткая"], ["падший", "падшая"], ["тёмный", "темная"],
         ["подозрительный", "подозрительная"], ["волшебный", "волшебная"], ["железный", "железная"],
         ["кровожадный", "кровожадная"], ["фанатичный", "фанатичная"], ["вкусный", "вкусная"], ["непобедимый", "непобедимая"],
-        ["супер", "супер"], ["хороший", "хорошая"]];
+        ["супер", "супер"], ["хороший", "хорошая"], ["грибной", "грибная"], ["весёлый", "весйлый"]];
     let maleSecondName = ["суп", "торт", "пирожочек", "салат", "банан", "ИИ", "клоун", "начальник", "бобер",
         "псих", "гений", "чел", "некто", "фрукт", "овощ", "хитрец", "трус", "кукловод", "друг", "незнакомец",
         "[ДАННЫЕ УДАЛЕНЫ]", "пони", "бомж", "король", "мудрец", "доктор", "учёный", "единорог", "маг", "качок",
         "космонавт", "психиатр", "воин", "робот", "творожок с изюмом"];
     let femaleSecondName = ["котлета", "колбаса", "булочка", "фея", "волшебница", "начальница",
         "папайя", "королева", "медсестра", "учёная", "горничная", "подруга", "незнакомка", "бомжиха", "[ДАННЫЕ УДАЛЕНЫ]",
-        "лошадка", "принцесса", "злодейка", "корова", "трусиха", "мышь", "птица", "рыба", "энтропия", "тыква"];
+        "лошадка", "принцесса", "злодейка", "корова", "трусиха", "мышь", "птица", "рыба", "энтропия", "тыква", "шиншилла"];
 
+    let firstNameSet = new Set();
+    let secondNameSet = new Set();
     window.names = {};
     for (let i = 0; i < player_count; i++) {
         let name;
+        let first_name;
+        let second_name;
 
         do {
             if (Math.floor(Math.random() * 100) % 3 <= 1) {
                 let ind1 = Math.floor(Math.random() * firstName.length);
                 let ind2 = Math.floor(Math.random() * maleSecondName.length);
+                first_name = firstName[ind1][0];
+                second_name = maleSecondName[ind2];
                 name = firstName[ind1][0] + ' ' + maleSecondName[ind2];
             } else {
                 let ind1 = Math.floor(Math.random() * firstName.length);
                 let ind2 = Math.floor(Math.random() * femaleSecondName.length);
+                first_name = firstName[ind1][1];
+                second_name = femaleSecondName[ind2];
                 name = firstName[ind1][1] + ' ' + femaleSecondName[ind2];
             }
 
-        } while (Object.values(window.names).indexOf(name) !== -1);
+        } while (!firstNameSet.has(first_name) && !second_name.has(second_name));
 
+        firstNameSet.add(first_name);
+        secondNameSet.add(second_name);
         window.names[i] = name;
     }
 
