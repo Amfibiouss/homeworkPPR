@@ -3,7 +3,7 @@ package com.example.laba.services;
 import com.example.laba.entities.*;
 import com.example.laba.json_objects.*;
 import com.example.laba.objects_to_fill_templates.TmplMessage;
-import com.example.laba.objects_to_fill_templates.TmplRoom;
+import com.example.laba.json_objects.OutputRoom;
 import com.example.laba.objects_to_fill_templates.TmplUser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -255,18 +255,30 @@ public class RoomChannelMessageDaoService {
     }
 
     @Transactional
-    public List<TmplRoom> get_rooms() {
+    public List<OutputRoom> get_rooms() {
         Session session = sessionFactory.getCurrentSession();
 
         List <FRoom> rooms = session.createSelectionQuery("from FRoom r join fetch r.creator", FRoom.class).getResultList();
 
-        List<TmplRoom> result = new ArrayList<>();
+        List<OutputRoom> result = new ArrayList<>();
 
         for (FRoom room : rooms) {
-            result.add(new TmplRoom(room.getId(), room.getCreator().getLogin(), room.getName(), room.getDescription()));
+            result.add(new OutputRoom(room.getId(), room.getCreator().getLogin(), room.getName(), room.getDescription(), room.getStatus()));
         }
 
         return result;
+    }
+
+    @Transactional
+    public OutputRoom get_current_room(String username) {
+        Session session = sessionFactory.getCurrentSession();
+        FUser user = session.bySimpleNaturalId(FUser.class).load(username);
+
+        if (user.getCharacter() == null)
+            return null;
+
+        FRoom room = user.getCharacter().getRoom();
+        return new OutputRoom(room.getId(), room.getCreator().getLogin(), room.getName(), room.getDescription(), room.getStatus());
     }
 
     @Transactional
@@ -1014,4 +1026,5 @@ public class RoomChannelMessageDaoService {
             throw new RuntimeException(e);
         }
     }
+
 }

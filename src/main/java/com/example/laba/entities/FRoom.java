@@ -15,6 +15,7 @@ public class FRoom {
     @ManyToOne(fetch=LAZY)
     private FUser creator;
     private String name;
+    @Column(columnDefinition = "TEXT")
     private String description;
     private String mode;
     private OffsetDateTime start_time;

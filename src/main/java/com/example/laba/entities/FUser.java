@@ -34,6 +34,7 @@ public class FUser {
     FCharacter character;
     private Long desired_room_id;
     private String sessionId;
+    @Column(columnDefinition = "TEXT")
     private String recentRoom;
 
     @OneToMany(mappedBy="user")

@@ -77,8 +77,7 @@
                              alt="ваша аватарка" style="border-radius:50%;">
 
                         <img src = "/public_static/catmaid.jpg" alt="кошкогорничная" width="40px" height="40px"
-                             th:style="'position: absolute; z-index: 99; left:45%; border-radius:50%;
-                                        opacity: ' + ${@securityService.getUser().getDegreeUwU()} + ';'">
+                             th:style="'position: absolute; z-index: 99; left:45%; border-radius:50%;opacity: ' + ${@securityService.getUser().getDegreeUwU()} + ';'">
                     </a>
                     <div class="dropdown-menu" aria-labelledby="userMenu">
                         <a class="dropdown-item" th:href="@{'/public/profile/'+${@securityService.getUsername()}}">профиль</a>
@@ -122,8 +121,7 @@
                         <img th:src="'/public/photo/' + ${@securityService.getUsername()}" width="40px" height="40px"
                              alt="ваша аватарка" style="border-radius:50%;">
                         <img src = "/public_static/catmaid.jpg" alt="кошкогорничная" width="50px" height="50px"
-                             th:style="'position: absolute; z-index: 99; left:45%; border-radius:50%;
-                                        opacity: ' + ${@securityService.getUser().getDegreeUwU()} + ';'">
+                             th:style="'position: absolute; z-index: 99; left:45%; border-radius:50%;opacity: ' + ${@securityService.getUser().getDegreeUwU()} + ';'">
                     </a>
                     <div class="dropdown-menu" aria-labelledby="adminMenu">
                         <a class="dropdown-item" th:href="@{'/public/profile/'+${@securityService.getUsername()}}">профиль</a>

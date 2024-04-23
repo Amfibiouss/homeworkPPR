@@ -1,8 +1,6 @@
 package com.example.laba.controllers;
 
 import com.example.laba.json_objects.InputRoom;
-import com.example.laba.objects_to_fill_templates.TmplRoom;
-import com.example.laba.services.OverturningTheEarthAndTramplingTheHeavensDAOService;
 import com.example.laba.services.RoomChannelMessageDaoService;
 import com.example.laba.services.SecurityService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -11,18 +9,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 @Controller
 public class CreateRoomController {

@@ -6,6 +6,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="keywords" content="форум разделы">
     <link rel=stylesheet type="text/css" href="/public_static/css/bootstrap.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="/public_static/js/bootstrap.bundle.js"></script>
     <style>
@@ -14,7 +15,7 @@
             border-radius:10px;
             padding: 10px;
         }
-        #rooms {
+        .rooms-list {
             list-style: none;
         }
     </style>
@@ -24,49 +25,58 @@
 <main class="container">
     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" id = "_csrf"/>
 
-    <div class="row">
-        <div th:if = "${@securityService.getAccess()} != 'public'" class="col-12 gy-2">
-            <a href="/user/create_room" class="btn btn-secondary">
+    <div th:if = "${@securityService.getAccess()} != 'public'" class="m-2">
+        <a href="/user/create_room" class="btn btn-secondary">
+            <img src="/public_static/icons/plus.svg" width="30" height="30" alt="plus_button">
+            <span>Создать новую комнату </span>
+        </a>
+        <form th:action="@{/user/add_recent_room}" method="post" style="display: inline-block;">
+            <button type="submit" class="btn btn-secondary">
                 <img src="/public_static/icons/plus.svg" width="30" height="30" alt="plus_button">
-                <span>Создать новую комнату </span>
-            </a>
-            <form th:action="@{/user/add_recent_room}" method="post" style="display: inline-block;">
-                <button type="submit" class="btn btn-secondary">
-                    <img src="/public_static/icons/plus.svg" width="30" height="30" alt="plus_button">
-                    <span>Пересоздать прошлую комнату </span>
-                </button>
-            </form>
-            <button class="btn btn-secondary dropdown-toggle" type="button" id="addRoomByStringButton"
-                    data-bs-toggle="dropdown" aria-expanded="false">
-                <img src="/public_static/icons/plus.svg" width="30" height="30">
-                <span>Создать комнату с помощью строки </span>
+                <span>Пересоздать прошлую комнату </span>
             </button>
-            <div class="dropdown-menu p-2" aria-labelledby="addRoomByStringButton">
-                <form th:action="@{/user/add_room}" method="post" onsubmit="addRoomByStringHandler(event)">
-                    <div>
-                        <label>
-                            <textarea class="form-control" rows="3" name="room_string" id = "room_string"
-                                      placeholder="Введите строку с конфигурацией комнаты"></textarea>
-                        </label>
-                    </div>
-                    <button class="mt-2 btn btn-primary">Создать комнату</button>
-                </form>
-            </div>
+        </form>
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="addRoomByStringButton"
+                data-bs-toggle="dropdown" aria-expanded="false">
+            <img src="/public_static/icons/plus.svg" width="30" height="30">
+            <span>Создать комнату с помощью строки </span>
+        </button>
+        <div class="dropdown-menu p-2" aria-labelledby="addRoomByStringButton">
+            <form th:action="@{/user/add_room}" method="post" onsubmit="addRoomByStringHandler(event)">
+                <div>
+                    <label>
+                        <textarea class="form-control" rows="3" name="room_string" id = "room_string"
+                                  placeholder="Введите строку с конфигурацией комнаты"></textarea>
+                    </label>
+                </div>
+                <button class="mt-2 btn btn-primary">Создать комнату</button>
+            </form>
         </div>
-        <div th:if="${param.error}!=null" class="mb-3 text-danger">
-            <span th:text="${param.error}"></span>
-        </div>
-        <nav id="rooms" class="col-12 gy-2 row">
-            <li class="col-12 depends-of-parity" th:each="room : ${rooms}">
-                <p>
-                    <a class = "text-primary" style="text-decoration:none;"
-                       th:text="${room.name}" th:href="@{'/public/chat/' + ${room.id}}"></a>
-                </p>
-                <p class="text-secondary" style="font-size:0.75rem;" th:text="${room.description}"></p>
-                <p class="text-secondary" style="font-size:0.75rem;" th:text="'создатель:' + ${room.creator}"></p>
-            </li>
-        </nav>
     </div>
+    <button class="btn btn-secondary m-2" type="button" @click="update_rooms">
+        <img src="/public_static/icons/arrow-clockwise.svg" width="30" height="30" alt="arrow-clockwise">
+        <span>Обновить</span>
+    </button>
+    <div th:if="${param.error}!=null" class="m-2 text-danger">
+        <span th:text="${param.error}"></span>
+    </div>
+    <nav class="m-2 rooms-list">
+        <h4 v-if = "current_room != null">Текущая комната:</h4>
+        <room-section v-if = "current_room != null" :room = "current_room"
+                      :can_join="true" :can_quite="true"></room-section>
+        <h4>Комнаты, в которых игра еще не началась:</h4>
+        <span v-if = "not_started_rooms.length === 0">Пусто</span>
+        <room-section v-for="room in not_started_rooms" :room = "room"
+                      :can_join="true" :can_quite="false"></room-section>
+        <h4>Комнаты, в которых игра уже началась:</h4>
+        <span v-if = "started_rooms.length === 0">Пусто</span>
+        <room-section v-for="room in started_rooms" :room = "room"
+                      :can_join="false" :can_quite="false"></room-section>
+        <h4>Комнаты, в которых игра уже закончилась:</h4>
+        <span v-if = "closed_rooms.length === 0">Пусто</span>
+        <room-section v-for="room in closed_rooms" :room = "room"
+                      :can_join="false" :can_quite="false"></room-section>
+    </nav>
 </main>
 <footer th:replace="~{public/footer :: footer}"></footer>
 </body>
@@ -112,4 +122,98 @@
 
         form.submit();
     }
+</script>
+<script>
+    const app = Vue.createApp({
+        data() {
+            return {not_started_rooms: [], started_rooms: [], closed_rooms: []};
+        },
+
+        methods: {
+            update_rooms: function () {
+
+                let self = this;
+
+                fetch('/public/get_rooms', {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                }).then(
+                    function(response) {
+                        if (response.status !== 200) {
+                            console.log("Can't load rooms. Status Code: " + response.status);
+                            return;
+                        }
+
+                        response.json().then(function(data) {
+
+                            self.not_started_rooms = [];
+                            self.started_rooms = [];
+                            self.closed_rooms = [];
+                            self.current_room = data.current_room;
+
+                            for (const room of data.rooms) {
+                                if (room.status === "not started") {
+                                    self.not_started_rooms.push(room);
+                                } else if (room.status !== "closed") {
+                                    self.started_rooms.push(room);
+                                } else {
+                                    self.closed_rooms.push(room);
+                                }
+                            }
+                        });
+                    }
+                );
+
+            }
+        },
+        
+        mounted() {
+            this.update_rooms();
+        }
+    });
+
+    app.component("room-section", {
+        props: ["room", "can_join", "can_quite"],
+
+        data() {
+            return {collapsed: true};
+        },
+
+        methods: {
+            collapse_handler: function() {
+                this.collapsed = this.collapsed === false;
+            },
+
+            text_is_big: function (text) {
+                return text.length > 300 && this.collapsed;
+            },
+
+            cut_text: function (text) {
+
+                if (!this.text_is_big(text))
+                    return text;
+
+                return text.substring(0, 300);
+            }
+        },
+
+        template: `
+          <li class="depends-of-parity p-2">
+            <p>
+              <a class="text-primary" style="text-decoration:none;"
+                 :href="'/public/chat/' + room.id">{{room.name}}</a>
+            </p>
+            <p class="text-secondary">
+              {{cut_text(room.description)}}
+              <a v-if="text_is_big(room.description)" class="btn p-0" @click="collapse_handler">...читать полностью...</a>
+            </p>
+            <p class="text-secondary">{{'создатель: ' + room.creator}}</p>
+            <a v-if = "can_join" :href="'/public/chat/' + room.id"><button class="btn btn-outline-secondary m-2">Войти</button></a>
+            <a v-if = "can_quite" :href="'/user/exit_room/' + room.id"><button class="btn btn-outline-secondary m-2">Выйти</button></a>
+          </li>
+        `
+    });
+
+    app.mount("main");
 </script>

@@ -1,12 +1,13 @@
-package com.example.laba.objects_to_fill_templates;
+package com.example.laba.json_objects;
 
-public class TmplRoom {
+public class OutputRoom {
     public long id;
     public String creator;
 
     public String name;
 
     public String description;
+    public String status;
     public long getId() {
         return id;
     }
@@ -39,14 +40,21 @@ public class TmplRoom {
         this.description = description;
     }
 
+    public String getStatus() {
+        return status;
+    }
 
+    public void setStatus(String status) {
+        this.status = status;
+    }
 
-    public TmplRoom(long id, String creator, String name, String description) {
+    public OutputRoom(long id, String creator, String name, String description, String status) {
         this.id = id;
         this.creator = creator;
         this.name = name;
         this.description = description;
+        this.status = status;
     }
 
-    public TmplRoom() {}
+    public OutputRoom() {}
 }
