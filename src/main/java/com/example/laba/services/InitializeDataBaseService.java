@@ -27,6 +27,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.List;
 
+//Сервис отвечающий за заполнение БД
 @Component
 public class InitializeDataBaseService {
 

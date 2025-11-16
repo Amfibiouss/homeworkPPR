@@ -11,6 +11,7 @@ import java.io.IOException;
 
 import static java.lang.Math.abs;
 
+//Сервис отвечающий за сжатие и урезание изображений
 @Component
 public class HandleImageService {
 

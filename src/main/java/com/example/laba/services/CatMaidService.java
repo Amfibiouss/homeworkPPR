@@ -12,6 +12,7 @@ import java.util.Random;
 
 import static java.lang.Math.abs;
 
+//Сервис отвечающий за превращение пользователей в кошкогорничных
 @Component
 public class CatMaidService {
     @Value("${catmaid.firstStageSeconds:10}")

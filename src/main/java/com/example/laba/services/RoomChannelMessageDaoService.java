@@ -23,6 +23,8 @@ import java.util.*;
 import static java.util.Collections.shuffle;
 import static org.springframework.transaction.annotation.Propagation.*;
 
+//Сервис отвечающий за работу с базой данных и производящий операции с комнатами, каналами и сообщениями
+
 @Component
 public class RoomChannelMessageDaoService {
     @Autowired

@@ -19,6 +19,8 @@ import java.util.*;
 
 import static java.lang.Math.max;
 
+//Сервис отвечающий за работу с базой данных и производящий операции с пользователями и наказаниями
+
 @Component
 public class OverturningTheEarthAndTramplingTheHeavensDAOService {
 
